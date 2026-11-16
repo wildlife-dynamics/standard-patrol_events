@@ -17,7 +17,6 @@ def test_every_partner_profile_validates(partner):
     assert profile["max_gap_secs"] == 3600
 
 
-@pytest.mark.xfail(strict=False, reason="template added in B2")
 @pytest.mark.parametrize("partner", get_args(Partner))
 def test_every_partner_profile_loads(partner):
     load_partner_profile(partner)
