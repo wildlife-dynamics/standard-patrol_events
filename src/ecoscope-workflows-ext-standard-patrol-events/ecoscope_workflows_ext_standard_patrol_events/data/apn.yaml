@@ -1,0 +1,28 @@
+# event_types: [] means all event types; fill from partner template
+event_types: []
+event_scope: area
+validated_states: [resolved]
+team_groups:
+  - GUARDAPARQUES ZONA SUR
+  - GUARDAPARQUES ZONA NORTE
+  - GUARDAPARQUES ZONA CENTRO
+  - GUARDAPARQUES OPERACIONES
+  - SINEP
+max_gap_secs: 3600
+detail_fields: {}
+max_images: 50
+language: es
+template: standard_patrol_events.docx
+grouper: individual_patrol
+validated_only: false
+detail_mode: generic
+images: auto
+blocks:
+  personnel: true
+  headline_stats: false
+  time_density: false
+  events_by_type: true
+  category_priority: false
+  events_bar: false
+  monthly_stacked: false
+  conclusions: false
