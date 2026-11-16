@@ -1,0 +1,23 @@
+# event_types: [] means all event types; fill from partner template
+event_types: []
+event_scope: area
+validated_states: [resolved]
+team_groups: []
+max_gap_secs: 3600
+detail_fields: {}
+max_images: 50
+language: es
+template: standard_patrol_events.docx
+grouper: patrol_type
+validated_only: true
+detail_mode: per_type
+images: blank
+blocks:
+  personnel: false
+  headline_stats: false
+  time_density: false
+  events_by_type: true
+  category_priority: true
+  events_bar: false
+  monthly_stacked: false
+  conclusions: true
