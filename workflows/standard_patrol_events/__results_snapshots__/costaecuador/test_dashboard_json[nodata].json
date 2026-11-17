@@ -1,0 +1,17 @@
+{
+  "error": null,
+  "result": {
+    "filters": null,
+    "layout": [],
+    "metadata": {
+      "description": "",
+      "time_range": "From 01 Aug 2026 to 01 Nov 2026",
+      "time_zone": "America/Guayaquil",
+      "title": "Standard Patrol & Events Report"
+    },
+    "views": {
+      "{}": []
+    }
+  },
+  "trace": null
+}

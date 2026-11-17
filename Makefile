@@ -1,4 +1,7 @@
 WORKFLOW ?= standard_patrol_events
+PARTNER ?= costaecuador
+PKG_DIR := workflows/$(WORKFLOW)/ecoscope-workflows-$(subst _,-,$(WORKFLOW))-workflow
+OUTPUT_DIR ?= /tmp/$(WORKFLOW)/$(PARTNER)
 
 .PHONY: build compile recompile run
 
@@ -12,5 +15,11 @@ compile: build
 recompile: build
 	./dev/recompile.sh $(WORKFLOW) --update
 
+# Real data (no mock IO): param.yaml with partner and data source set to PARTNER.
 run:
-	@echo "spec added in B3 (usage: make run PARTNER=<name>)"
+	mkdir -p $(OUTPUT_DIR)
+	pixi run yq -y '.partner.var = "$(PARTNER)" | .er_client.data_source.name = "$(PARTNER)"' \
+		workflows/$(WORKFLOW)/param.yaml > $(OUTPUT_DIR)/params.yaml
+	cd $(PKG_DIR) && ECOSCOPE_WORKFLOWS_RESULTS="file://$(OUTPUT_DIR)" \
+		pixi run ecoscope-workflows-$(subst _,-,$(WORKFLOW))-workflow run \
+		--config-file $(OUTPUT_DIR)/params.yaml --execution-mode sequential --no-mock-io

@@ -1,0 +1,249 @@
+costaecuador:
+  name: costaecuador
+  description: Costa Ecuador profile, Aug-Oct 2026.
+  params:
+    workflow_details:
+      name: Standard Patrol & Events Report
+      description: ""
+    er_client:
+      data_source:
+        name: costaecuador
+    time_range:
+      since: "2026-08-01T00:00:00Z"
+      until: "2026-11-01T00:00:00Z"
+      timezone:
+        label: America/Guayaquil
+        tzCode: America/Guayaquil
+        name: (UTC-05:00) Guayaquil
+        utc: "-05:00"
+    partner:
+      var: costaecuador
+    profile: {}
+    report_title:
+      var: Informe de patrullajes y eventos
+    report_subtitle:
+      var: ""
+    report_area:
+      var: ""
+    detail_intro:
+      var: ""
+    base_maps: {}
+    area_scope:
+      level: site
+    patrol_params:
+      patrol_types: []
+
+empty_period:
+  name: empty_period
+  description: Costa Ecuador, a period with no data.
+  params:
+    workflow_details:
+      name: Standard Patrol & Events Report
+      description: ""
+    er_client:
+      data_source:
+        name: costaecuador
+    time_range:
+      since: "2020-01-01T00:00:00Z"
+      until: "2020-01-02T00:00:00Z"
+      timezone:
+        label: America/Guayaquil
+        tzCode: America/Guayaquil
+        name: (UTC-05:00) Guayaquil
+        utc: "-05:00"
+    partner:
+      var: costaecuador
+    profile: {}
+    report_title:
+      var: Informe de patrullajes y eventos
+    report_subtitle:
+      var: ""
+    report_area:
+      var: ""
+    detail_intro:
+      var: ""
+    base_maps: {}
+    area_scope:
+      level: site
+    patrol_params:
+      patrol_types: []
+
+apn:
+  name: apn
+  description: apn profile, Aug-Oct 2026.
+  params:
+    workflow_details:
+      name: Standard Patrol & Events Report
+      description: ""
+    er_client:
+      data_source:
+        name: apn
+    time_range:
+      since: "2026-08-01T00:00:00Z"
+      until: "2026-11-01T00:00:00Z"
+      timezone:
+        label: America/Argentina/Buenos_Aires
+        tzCode: America/Argentina/Buenos_Aires
+        name: America/Argentina/Buenos_Aires
+        utc: "-03:00"
+    partner:
+      var: apn
+    profile: {}
+    report_title:
+      var: Informe de patrullajes y eventos
+    report_subtitle:
+      var: ""
+    report_area:
+      var: ""
+    detail_intro:
+      var: ""
+    base_maps: {}
+    area_scope:
+      level: site
+    patrol_params:
+      patrol_types: []
+
+
+galapagos:
+  name: galapagos
+  description: galapagos profile, Aug-Oct 2026.
+  params:
+    workflow_details:
+      name: Standard Patrol & Events Report
+      description: ""
+    er_client:
+      data_source:
+        name: galapagos
+    time_range:
+      since: "2026-08-01T00:00:00Z"
+      until: "2026-11-01T00:00:00Z"
+      timezone:
+        label: Pacific/Galapagos
+        tzCode: Pacific/Galapagos
+        name: Pacific/Galapagos
+        utc: "-06:00"
+    partner:
+      var: galapagos
+    profile: {}
+    report_title:
+      var: Informe de patrullajes y eventos
+    report_subtitle:
+      var: ""
+    report_area:
+      var: ""
+    detail_intro:
+      var: ""
+    base_maps: {}
+    area_scope:
+      level: site
+    patrol_params:
+      patrol_types: []
+
+
+icf:
+  name: icf
+  description: icf profile, Aug-Oct 2026.
+  params:
+    workflow_details:
+      name: Standard Patrol & Events Report
+      description: ""
+    er_client:
+      data_source:
+        name: icf
+    time_range:
+      since: "2026-08-01T00:00:00Z"
+      until: "2026-11-01T00:00:00Z"
+      timezone:
+        label: America/Tegucigalpa
+        tzCode: America/Tegucigalpa
+        name: America/Tegucigalpa
+        utc: "-06:00"
+    partner:
+      var: icf
+    profile: {}
+    report_title:
+      var: Informe de patrullajes y eventos
+    report_subtitle:
+      var: ""
+    report_area:
+      var: ""
+    detail_intro:
+      var: ""
+    base_maps: {}
+    area_scope:
+      level: site
+    patrol_params:
+      patrol_types: []
+
+
+parnaiguacu:
+  name: parnaiguacu
+  description: parnaiguacu profile, Aug-Oct 2026.
+  params:
+    workflow_details:
+      name: Standard Patrol & Events Report
+      description: ""
+    er_client:
+      data_source:
+        name: parnaiguacu
+    time_range:
+      since: "2026-08-01T00:00:00Z"
+      until: "2026-11-01T00:00:00Z"
+      timezone:
+        label: America/Sao_Paulo
+        tzCode: America/Sao_Paulo
+        name: America/Sao_Paulo
+        utc: "-03:00"
+    partner:
+      var: parnaiguacu
+    profile: {}
+    report_title:
+      var: Informe de patrullajes y eventos
+    report_subtitle:
+      var: ""
+    report_area:
+      var: ""
+    detail_intro:
+      var: ""
+    base_maps: {}
+    area_scope:
+      level: site
+    patrol_params:
+      patrol_types: []
+
+
+mep:
+  name: mep
+  description: mep profile, Aug-Oct 2026.
+  params:
+    workflow_details:
+      name: Standard Patrol & Events Report
+      description: ""
+    er_client:
+      data_source:
+        name: mep
+    time_range:
+      since: "2026-08-01T00:00:00Z"
+      until: "2026-11-01T00:00:00Z"
+      timezone:
+        label: UTC
+        tzCode: UTC
+        name: UTC
+        utc: "+00:00"
+    partner:
+      var: mep
+    profile: {}
+    report_title:
+      var: Informe de patrullajes y eventos
+    report_subtitle:
+      var: ""
+    report_area:
+      var: ""
+    detail_intro:
+      var: ""
+    base_maps: {}
+    area_scope:
+      level: site
+    patrol_params:
+      patrol_types: []
+

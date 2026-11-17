@@ -1,0 +1,1143 @@
+id: standard_patrol_events
+
+requirements:
+  - name: ecoscope-platform
+    version: ">=2.18.4,<3.0.0"
+    channel: https://repo.prefix.dev/ecoscope-workflows/
+
+  # Local-channel "*" pins are for development only; pin both before publishing.
+  - name: ecoscope-workflows-ext-custom
+    version: "*"
+    channel: "file:///tmp/ecoscope-workflows-custom/release/artifacts/"
+
+  - name: ecoscope-workflows-ext-standard-patrol-events
+    version: "*"
+    channel: "file:///tmp/ecoscope-workflows-custom/release/artifacts/"
+
+  - name: pydeck
+    version: 0.9.2
+    channel: conda-forge
+
+rjsf-overrides:
+  properties:
+    partner.properties.var.title: Partner
+    partner.properties.var.enum: [apn, costaecuador, galapagos, icf, parnaiguacu, mep]
+    report_title.properties.var.title: Report Title
+    report_subtitle.properties.var.title: Report Subtitle
+    report_area.properties.var.title: Area Name
+    detail_intro.properties.var.title: Event Details Introduction
+
+task-instance-defaults:
+  skipif:
+    conditions:
+      - any_is_empty_df
+      - any_dependency_skipped
+
+workflow:
+  # ── Header ────────────────────────────────────────────────────────────────────
+  - name: Workflow Details
+    id: workflow_details
+    task: set_workflow_details
+
+  - name: Data Source
+    id: er_client
+    task: set_er_connection
+
+  - id: current_user
+    task: get_current_user
+    partial:
+      client: ${{ workflow.er_client.return }}
+
+  - id: user_first_name
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.current_user.return }}
+      key: first_name
+      default: ""
+
+  - id: user_last_name
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.current_user.return }}
+      key: last_name
+      default: ""
+
+  - id: generated_by
+    task: concat_string_vars
+    partial:
+      values:
+        - ${{ workflow.user_first_name.return }}
+        - " "
+        - ${{ workflow.user_last_name.return }}
+
+  - name: Time Range
+    id: time_range
+    task: set_time_range
+    partial:
+      time_format: "%d %b %Y"
+
+  - id: timezone
+    task: get_timezone_from_time_range
+    partial:
+      time_range: ${{ workflow.time_range.return }}
+
+  - name: Partner
+    id: partner
+    task: set_string_var
+
+  - id: partner_profile
+    task: load_partner_profile
+    partial:
+      partner: ${{ workflow.partner.return }}
+
+  # grouper / validated_only / detail_mode / images stay on the form; null keeps the profile value.
+  - name: Report Options
+    id: profile
+    task: resolve_report_options
+    partial:
+      profile: ${{ workflow.partner_profile.return }}
+
+  - id: template_path
+    task: load_partner_template
+    partial:
+      partner: ${{ workflow.partner.return }}
+
+  - id: language
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: language
+
+  - id: labels
+    task: get_report_labels
+    partial:
+      language: ${{ workflow.language.return }}
+
+  - name: Report Title
+    id: report_title
+    task: set_string_var
+
+  - name: Report Subtitle
+    id: report_subtitle
+    task: set_optional_string_var
+
+  - name: Area Name
+    id: report_area
+    task: set_optional_string_var
+
+  - name: Event Details Introduction
+    id: detail_intro
+    task: set_optional_string_var
+
+  - name: Base Maps
+    id: base_maps
+    task: set_base_maps
+
+  # ── Profile values ────────────────────────────────────────────────────────────
+  - id: event_types
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: event_types
+
+  - id: event_scope
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: event_scope
+
+  - id: validated_states
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: validated_states
+
+  - id: team_groups
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: team_groups
+
+  - id: max_gap_secs
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: max_gap_secs
+
+  - id: detail_fields
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: detail_fields
+
+  - id: max_images
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: max_images
+
+  - id: grouper
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: grouper
+
+  - id: validated_only
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: validated_only
+
+  - id: detail_mode
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: detail_mode
+
+  - id: images_mode
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: images
+
+  # "true"/"false" text: the template's show_* flags compare text, and bool inputs accept it.
+  - id: images_blank
+    task: lookup_string_var
+    partial:
+      var: ${{ workflow.images_mode.return }}
+      value_map: { auto: "false", blank: "true" }
+
+  - id: skip_area_events
+    task: lookup_string_var
+    partial:
+      var: ${{ workflow.event_scope.return }}
+      value_map: { area: "false", patrol: "true" }
+
+  - id: skip_patrol_events
+    task: lookup_string_var
+    partial:
+      var: ${{ workflow.event_scope.return }}
+      value_map: { area: "true", patrol: "false" }
+
+  - id: skip_generic_details
+    task: lookup_string_var
+    partial:
+      var: ${{ workflow.detail_mode.return }}
+      value_map: { generic: "false", per_type: "true" }
+
+  - id: skip_per_type_details
+    task: lookup_string_var
+    partial:
+      var: ${{ workflow.detail_mode.return }}
+      value_map: { generic: "true", per_type: "false" }
+
+  - id: no_data
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.labels.return }}
+      key: no_data
+
+  # ── Block flags ───────────────────────────────────────────────────────────────
+  # show_<block>: the profile bool indexes ["false", "true"]; skip_<block>: it indexes [true, false].
+  - id: block_personnel
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: [blocks, personnel]
+  - id: show_personnel
+    task: get_collection_item
+    partial:
+      collection: ["false", "true"]
+      key: ${{ workflow.block_personnel.return }}
+  - id: skip_personnel
+    task: get_collection_item
+    partial:
+      collection: [true, false]
+      key: ${{ workflow.block_personnel.return }}
+
+  - id: block_headline_stats
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: [blocks, headline_stats]
+  - id: show_headline_stats
+    task: get_collection_item
+    partial:
+      collection: ["false", "true"]
+      key: ${{ workflow.block_headline_stats.return }}
+  - id: skip_headline_stats
+    task: get_collection_item
+    partial:
+      collection: [true, false]
+      key: ${{ workflow.block_headline_stats.return }}
+
+  - id: block_time_density
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: [blocks, time_density]
+  - id: show_time_density
+    task: get_collection_item
+    partial:
+      collection: ["false", "true"]
+      key: ${{ workflow.block_time_density.return }}
+  - id: skip_time_density
+    task: get_collection_item
+    partial:
+      collection: [true, false]
+      key: ${{ workflow.block_time_density.return }}
+
+  - id: block_events_by_type
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: [blocks, events_by_type]
+  - id: show_events_by_type
+    task: get_collection_item
+    partial:
+      collection: ["false", "true"]
+      key: ${{ workflow.block_events_by_type.return }}
+  - id: skip_events_by_type
+    task: get_collection_item
+    partial:
+      collection: [true, false]
+      key: ${{ workflow.block_events_by_type.return }}
+
+  - id: block_category_priority
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: [blocks, category_priority]
+  - id: show_category_priority
+    task: get_collection_item
+    partial:
+      collection: ["false", "true"]
+      key: ${{ workflow.block_category_priority.return }}
+  - id: skip_category_priority
+    task: get_collection_item
+    partial:
+      collection: [true, false]
+      key: ${{ workflow.block_category_priority.return }}
+
+  - id: block_events_bar
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: [blocks, events_bar]
+  - id: show_events_bar
+    task: get_collection_item
+    partial:
+      collection: ["false", "true"]
+      key: ${{ workflow.block_events_bar.return }}
+  - id: skip_events_bar
+    task: get_collection_item
+    partial:
+      collection: [true, false]
+      key: ${{ workflow.block_events_bar.return }}
+
+  - id: block_monthly_stacked
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: [blocks, monthly_stacked]
+  - id: show_monthly_stacked
+    task: get_collection_item
+    partial:
+      collection: ["false", "true"]
+      key: ${{ workflow.block_monthly_stacked.return }}
+  - id: skip_monthly_stacked
+    task: get_collection_item
+    partial:
+      collection: [true, false]
+      key: ${{ workflow.block_monthly_stacked.return }}
+
+  - id: block_conclusions
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.profile.return }}
+      key: [blocks, conclusions]
+  - id: show_conclusions
+    task: get_collection_item
+    partial:
+      collection: ["false", "true"]
+      key: ${{ workflow.block_conclusions.return }}
+
+  # ── Area scope ────────────────────────────────────────────────────────────────
+  - name: Area Scope
+    id: area_scope
+    task: get_area_scope
+    partial:
+      client: ${{ workflow.er_client.return }}
+
+  # site level skips; None lets select_in_area pass everything through.
+  - id: area
+    task: skip_to_none
+    skipif:
+      conditions:
+        - never
+    partial:
+      df: ${{ workflow.area_scope.return }}
+
+  # ── Patrols ───────────────────────────────────────────────────────────────────
+  - name: Patrol Types
+    id: patrol_params
+    task: set_patrols_and_patrol_events_params
+    partial:
+      client: ${{ workflow.er_client.return }}
+      time_range: ${{ workflow.time_range.return }}
+      event_types: ${{ workflow.event_types.return }}
+      status: [done]
+      raise_on_empty: false
+      include_patrol_details: true
+      truncate_to_time_range: true
+      include_null_geometry: false
+      sub_page_size: 100
+
+  - id: patrols
+    task: get_patrols_from_combined_params
+    partial:
+      combined_params: ${{ workflow.patrol_params.return }}
+
+  - id: patrol_observations
+    task: get_patrol_observations_from_patrols_df_and_combined_params
+    partial:
+      patrols_df: ${{ workflow.patrols.return }}
+      combined_params: ${{ workflow.patrol_params.return }}
+
+  - id: patrol_relocations
+    task: process_relocations
+    partial:
+      observations: ${{ workflow.patrol_observations.return }}
+      relocs_columns:
+        - patrol_id
+        - patrol_start_time
+        - patrol_end_time
+        - patrol_type__display
+        - patrol_serial_number
+        - groupby_col
+        - fixtime
+        - junk_status
+        - geometry
+      filter_point_coords:
+        - x: 180.0
+          y: 90.0
+        - x: 0.0
+          y: 0.0
+        - x: 1.0
+          y: 1.0
+
+  # Only the gap limit comes from the profile; the other limits are the loosest the filter allows.
+  - id: patrol_trajectory
+    task: relocations_to_trajectory
+    partial:
+      relocations: ${{ workflow.patrol_relocations.return }}
+      trajectory_segment_filter:
+        min_length_meters: 0.001
+        max_length_meters: 1000000
+        min_time_secs: 1
+        max_time_secs: ${{ workflow.max_gap_secs.return }}
+        min_speed_kmhr: 0.0011
+        max_speed_kmhr: 500
+
+  - id: trajectory
+    task: select_in_area
+    partial:
+      gdf: ${{ workflow.patrol_trajectory.return }}
+      area: ${{ workflow.area.return }}
+      id_column: extra__patrol_id
+
+  - id: team_sources
+    task: get_patrol_team_sources
+    partial:
+      client: ${{ workflow.er_client.return }}
+
+  - id: patrol_teams_utc
+    task: resolve_patrol_team
+    partial:
+      patrols_df: ${{ workflow.patrols.return }}
+      sources: ${{ workflow.team_sources.return }}
+      team_groups: ${{ workflow.team_groups.return }}
+
+  - id: patrol_teams
+    task: convert_values_to_timezone
+    partial:
+      df: ${{ workflow.patrol_teams_utc.return }}
+      timezone: ${{ workflow.timezone.return }}
+      columns: [start, end]
+
+  - id: effort
+    task: patrol_effort_table
+    partial:
+      trajectory: ${{ workflow.trajectory.return }}
+      patrols: ${{ workflow.patrol_teams.return }}
+      grouper: ${{ workflow.grouper.return }}
+      labels: ${{ workflow.labels.return }}
+
+  # ── Events ────────────────────────────────────────────────────────────────────
+  - id: area_events
+    task: get_events
+    partial:
+      client: ${{ workflow.er_client.return }}
+      time_range: ${{ workflow.time_range.return }}
+      event_types: ${{ workflow.event_types.return }}
+      include_details: true
+      include_display_values: true
+      include_null_geometry: false
+      raise_on_empty: false
+
+  - id: patrol_events
+    task: unpack_events_from_patrols_df_and_combined_params
+    partial:
+      patrols_df: ${{ workflow.patrols.return }}
+      combined_params: ${{ workflow.patrol_params.return }}
+
+  # event_scope picks one source: the other is skipped, and concat drops skipped inputs.
+  - id: area_events_in_scope
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.area_events.return }}
+      skip: ${{ workflow.skip_area_events.return }}
+
+  - id: patrol_events_in_scope
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.patrol_events.return }}
+      skip: ${{ workflow.skip_patrol_events.return }}
+
+  - id: scoped_events
+    task: concat_dataframes
+    skipif:
+      conditions:
+        - never
+    partial:
+      dfs:
+        - ${{ workflow.area_events_in_scope.return }}
+        - ${{ workflow.patrol_events_in_scope.return }}
+
+  - id: events_in_area
+    task: select_in_area
+    partial:
+      gdf: ${{ workflow.scoped_events.return }}
+      area: ${{ workflow.area.return }}
+
+  - id: validated_events
+    task: filter_validated
+    partial:
+      events: ${{ workflow.events_in_area.return }}
+      enabled: ${{ workflow.validated_only.return }}
+      states: ${{ workflow.validated_states.return }}
+
+  - id: events_with_details
+    task: process_events_details
+    partial:
+      df: ${{ workflow.validated_events.return }}
+      client: ${{ workflow.er_client.return }}
+
+  - id: event_type_lookup
+    task: get_event_type_lookup
+    partial:
+      client: ${{ workflow.er_client.return }}
+
+  - id: events_display
+    task: add_event_display_columns
+    partial:
+      events: ${{ workflow.events_with_details.return }}
+      lookup: ${{ workflow.event_type_lookup.return }}
+
+  - id: events
+    task: convert_values_to_timezone
+    partial:
+      df: ${{ workflow.events_display.return }}
+      timezone: ${{ workflow.timezone.return }}
+      columns: [time]
+
+  # ── Tracks + events map ───────────────────────────────────────────────────────
+  - id: trajectory_colored
+    task: apply_color_map
+    partial:
+      df: ${{ workflow.trajectory.return }}
+      input_column_name: extra__patrol_type__display
+      colormap: tab10
+      output_column_name: patrol_color
+
+  - id: tracks_for_map
+    task: select_columns
+    partial:
+      df: ${{ workflow.trajectory_colored.return }}
+      columns: [extra__patrol_serial_number, extra__patrol_type__display, patrol_color, geometry]
+
+  - id: tracks_layer
+    task: create_path_layer
+    partial:
+      geodataframe: ${{ workflow.tracks_for_map.return }}
+      layer_style:
+        get_color: patrol_color
+        get_width: 2
+      legend:
+        label_column: extra__patrol_type__display
+        color_column: patrol_color
+
+  - id: events_for_map
+    task: select_columns
+    partial:
+      df: ${{ workflow.events.return }}
+      columns: [serial_number, event_type_display, geometry]
+
+  - id: events_layer
+    task: create_scatterplot_layer
+    partial:
+      geodataframe: ${{ workflow.events_for_map.return }}
+      layer_style:
+        get_fill_color: "#d62728"
+        get_radius: 4
+
+  - id: tracks_view
+    task: view_state_from_layers
+    partial:
+      layers:
+        - ${{ workflow.tracks_layer.return }}
+        - ${{ workflow.events_layer.return }}
+
+  - id: tracks_map_html
+    task: draw_map
+    partial:
+      geo_layers:
+        - ${{ workflow.tracks_layer.return }}
+        - ${{ workflow.events_layer.return }}
+      tile_layers: ${{ workflow.base_maps.return }}
+      view_state: ${{ workflow.tracks_view.return }}
+      static: true
+      title: null
+      legend_style:
+        placement: bottom-right
+
+  - id: tracks_map
+    task: persist_text
+    partial:
+      text: ${{ workflow.tracks_map_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: tracks_map
+
+  # ── Time density (block) ──────────────────────────────────────────────────────
+  - id: td_trajectory
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.trajectory.return }}
+      skip: ${{ workflow.skip_time_density.return }}
+
+  - id: td_meshgrid
+    task: create_meshgrid
+    partial:
+      aoi: ${{ workflow.td_trajectory.return }}
+      intersecting_only: false
+
+  - id: td_density
+    task: calculate_linear_time_density
+    partial:
+      trajectory_gdf: ${{ workflow.td_trajectory.return }}
+      meshgrid: ${{ workflow.td_meshgrid.return }}
+
+  - id: td_drop_nan
+    task: drop_nan_values_by_column
+    partial:
+      df: ${{ workflow.td_density.return }}
+      column_name: percentile
+
+  - id: td_sorted
+    task: sort_values
+    partial:
+      df: ${{ workflow.td_drop_nan.return }}
+      column_name: percentile
+      ascending: true
+      na_position: last
+
+  - id: td_to_str
+    task: convert_column_values_to_string
+    partial:
+      df: ${{ workflow.td_sorted.return }}
+      columns: [percentile]
+
+  - id: td_colored
+    task: apply_color_map
+    partial:
+      df: ${{ workflow.td_to_str.return }}
+      input_column_name: percentile
+      colormap: RdYlGn
+      output_column_name: percentile_colormap
+
+  # the meshgrid is in EPSG:3857; maps need WGS84
+  - id: td_wgs84
+    task: ensure_wgs84
+    partial:
+      df: ${{ workflow.td_colored.return }}
+
+  - id: td_layer
+    task: create_polygon_layer_pydeck
+    partial:
+      geodataframe: ${{ workflow.td_wgs84.return }}
+      layer_style:
+        get_fill_color: percentile_colormap
+        opacity: 0.6
+      legend:
+        label_column: percentile
+        label_suffix: " %"
+        color_column: percentile_colormap
+
+  - id: td_view
+    task: view_state_from_layers
+    partial:
+      layers:
+        - ${{ workflow.td_layer.return }}
+
+  - id: td_map_html
+    task: draw_map
+    partial:
+      geo_layers:
+        - ${{ workflow.td_layer.return }}
+      tile_layers: ${{ workflow.base_maps.return }}
+      view_state: ${{ workflow.td_view.return }}
+      static: true
+      title: null
+      legend_style:
+        placement: bottom-right
+
+  - id: time_density_map
+    task: persist_text
+    partial:
+      text: ${{ workflow.td_map_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: time_density_map
+
+  # ── Event density map ─────────────────────────────────────────────────────────
+  - id: ed_meshgrid
+    task: create_meshgrid
+    skipif:
+      conditions:
+        - any_is_empty_df
+        - any_dependency_skipped
+        - all_geometry_are_none
+    partial:
+      aoi: ${{ workflow.events.return }}
+      intersecting_only: false
+
+  - id: ed_density
+    task: calculate_feature_density
+    partial:
+      geodataframe: ${{ workflow.events.return }}
+      meshgrid: ${{ workflow.ed_meshgrid.return }}
+      geometry_type: point
+
+  - id: ed_sorted
+    task: sort_values
+    partial:
+      df: ${{ workflow.ed_density.return }}
+      column_name: density
+      ascending: true
+      na_position: last
+
+  - id: ed_drop_nan
+    task: drop_nan_values_by_column
+    partial:
+      df: ${{ workflow.ed_sorted.return }}
+      column_name: density
+
+  - id: ed_classified
+    task: apply_classification
+    partial:
+      df: ${{ workflow.ed_drop_nan.return }}
+      input_column_name: density
+      output_column_name: density_bins
+      classification_options:
+        scheme: equal_interval
+        k: 5
+      label_options:
+        label_ranges: true
+        label_decimals: 0
+
+  - id: ed_colored
+    task: apply_color_map
+    partial:
+      df: ${{ workflow.ed_classified.return }}
+      input_column_name: density_bins
+      colormap: RdYlGn_r
+      output_column_name: density_colormap
+
+  # the meshgrid is in EPSG:3857; maps need WGS84
+  - id: ed_wgs84
+    task: ensure_wgs84
+    partial:
+      df: ${{ workflow.ed_colored.return }}
+
+  - id: ed_layer
+    task: create_polygon_layer_pydeck
+    partial:
+      geodataframe: ${{ workflow.ed_wgs84.return }}
+      layer_style:
+        get_fill_color: density_colormap
+        opacity: 0.6
+      legend:
+        label_column: density_bins
+        color_column: density_colormap
+
+  - id: ed_view
+    task: view_state_from_layers
+    partial:
+      layers:
+        - ${{ workflow.ed_layer.return }}
+
+  - id: ed_map_html
+    task: draw_map
+    partial:
+      geo_layers:
+        - ${{ workflow.ed_layer.return }}
+      tile_layers: ${{ workflow.base_maps.return }}
+      view_state: ${{ workflow.ed_view.return }}
+      static: true
+      title: null
+      legend_style:
+        placement: bottom-right
+
+  - id: event_density_map
+    task: persist_text
+    partial:
+      text: ${{ workflow.ed_map_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: event_density_map
+
+  # ── Headline stats (block) ────────────────────────────────────────────────────
+  - id: hs_trajectory
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.trajectory.return }}
+      skip: ${{ workflow.skip_headline_stats.return }}
+
+  # summarize_df rather than dataframe_column_*: it rounds, and the template needs text.
+  - id: hs_patrol_totals
+    task: summarize_df
+    partial:
+      df: ${{ workflow.hs_trajectory.return }}
+      reset_index: true
+      summary_params:
+        - display_name: n_patrols
+          aggregator: nunique
+          column: extra__patrol_id
+          decimal_places: 0
+        - display_name: total_km
+          aggregator: sum
+          column: dist_meters
+          original_unit: m
+          new_unit: km
+          decimal_places: 1
+        - display_name: total_hours
+          aggregator: sum
+          column: timespan_seconds
+          original_unit: s
+          new_unit: h
+          decimal_places: 1
+
+  - id: hs_patrol_totals_str
+    task: convert_column_values_to_string
+    partial:
+      df: ${{ workflow.hs_patrol_totals.return }}
+      columns: [n_patrols, total_km, total_hours]
+
+  - id: hs_patrol_totals_dict
+    task: dataframe_to_dict
+    partial:
+      df: ${{ workflow.hs_patrol_totals_str.return }}
+
+  - id: n_patrols
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.hs_patrol_totals_dict.return }}
+      key: [0, n_patrols]
+
+  - id: total_km
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.hs_patrol_totals_dict.return }}
+      key: [0, total_km]
+
+  - id: total_hours
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.hs_patrol_totals_dict.return }}
+      key: [0, total_hours]
+
+  - id: hs_events
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.events.return }}
+      skip: ${{ workflow.skip_headline_stats.return }}
+
+  - id: hs_event_totals
+    task: summarize_df
+    partial:
+      df: ${{ workflow.hs_events.return }}
+      reset_index: true
+      summary_params:
+        - display_name: n_events
+          aggregator: count
+          column: serial_number
+          decimal_places: 0
+
+  - id: hs_event_totals_str
+    task: convert_column_values_to_string
+    partial:
+      df: ${{ workflow.hs_event_totals.return }}
+      columns: [n_events]
+
+  - id: hs_event_totals_dict
+    task: dataframe_to_dict
+    partial:
+      df: ${{ workflow.hs_event_totals_str.return }}
+
+  - id: n_events
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.hs_event_totals_dict.return }}
+      key: [0, n_events]
+
+  # ── Personnel (block) ─────────────────────────────────────────────────────────
+  - id: label_serial
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.labels.return }}
+      key: serial
+
+  - id: label_team
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.labels.return }}
+      key: team
+
+  - id: label_personnel
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.labels.return }}
+      key: personnel
+
+  - id: label_count
+    task: get_collection_item
+    partial:
+      collection: ${{ workflow.labels.return }}
+      key: count
+
+  - id: personnel_patrols
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.patrol_teams.return }}
+      skip: ${{ workflow.skip_personnel.return }}
+
+  - id: personnel_columns
+    task: select_columns
+    partial:
+      df: ${{ workflow.personnel_patrols.return }}
+      columns: [patrol_serial_number, team, personnel]
+
+  - id: personnel_rows
+    task: exclude_row_values
+    partial:
+      df: ${{ workflow.personnel_columns.return }}
+      column: personnel
+      values: [""]
+
+  - id: personnel
+    task: map_columns
+    partial:
+      df: ${{ workflow.personnel_rows.return }}
+      drop_columns: []
+      retain_columns: []
+      rename_columns:
+        patrol_serial_number: ${{ workflow.label_serial.return }}
+        team: ${{ workflow.label_team.return }}
+        personnel: ${{ workflow.label_personnel.return }}
+      raise_if_not_found: true
+
+  # ── Event summary (blocks) ────────────────────────────────────────────────────
+  - id: ebt_events
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.events.return }}
+      skip: ${{ workflow.skip_events_by_type.return }}
+
+  - id: events_by_type
+    task: events_by_type_table
+    partial:
+      events: ${{ workflow.ebt_events.return }}
+      labels: ${{ workflow.labels.return }}
+
+  - id: cp_events
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.events.return }}
+      skip: ${{ workflow.skip_category_priority.return }}
+
+  - id: category_priority
+    task: category_priority_table
+    partial:
+      events: ${{ workflow.cp_events.return }}
+      labels: ${{ workflow.labels.return }}
+
+  - id: bar_events
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.events.return }}
+      skip: ${{ workflow.skip_events_bar.return }}
+
+  - id: bar_columns
+    task: select_columns
+    partial:
+      df: ${{ workflow.bar_events.return }}
+      columns: [event_type_display, serial_number]
+
+  - id: events_bar_html
+    task: draw_bar_chart
+    partial:
+      dataframe: ${{ workflow.bar_columns.return }}
+      category: event_type_display
+      bar_chart_configs:
+        - column: serial_number
+          agg_func: count
+          label: ${{ workflow.label_count.return }}
+
+  - id: events_bar
+    task: persist_text
+    partial:
+      text: ${{ workflow.events_bar_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: events_bar
+
+  - id: monthly_events
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.events.return }}
+      skip: ${{ workflow.skip_monthly_stacked.return }}
+
+  - id: monthly_columns
+    task: select_columns
+    partial:
+      df: ${{ workflow.monthly_events.return }}
+      columns: [time, event_category_display, serial_number]
+
+  - id: monthly_stacked_html
+    task: draw_time_series_bar_chart
+    partial:
+      dataframe: ${{ workflow.monthly_columns.return }}
+      x_axis: time
+      y_axis: serial_number
+      category: event_category_display
+      agg_function: count
+      time_interval: month
+
+  - id: monthly_stacked
+    task: persist_text
+    partial:
+      text: ${{ workflow.monthly_stacked_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: monthly_stacked
+
+  # ── Event details ─────────────────────────────────────────────────────────────
+  - id: generic_events
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.events.return }}
+      skip: ${{ workflow.skip_generic_details.return }}
+
+  - id: event_details
+    task: event_detail_table
+    partial:
+      events: ${{ workflow.generic_events.return }}
+      labels: ${{ workflow.labels.return }}
+
+  - id: per_type_events
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.events.return }}
+      skip: ${{ workflow.skip_per_type_details.return }}
+
+  - id: event_detail_tables
+    task: event_detail_table_list
+    partial:
+      events: ${{ workflow.per_type_events.return }}
+      detail_fields: ${{ workflow.detail_fields.return }}
+      labels: ${{ workflow.labels.return }}
+
+  # ── Images ────────────────────────────────────────────────────────────────────
+  # images "blank": list the attachments without downloading them; the template leaves the cells empty.
+  - id: attachments
+    task: download_event_attachments
+    partial:
+      client: ${{ workflow.er_client.return }}
+      event_gdf: ${{ workflow.events.return }}
+      output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      use_index_as_id: false
+      list_only: ${{ workflow.images_blank.return }}
+
+  - id: sanitized_attachments
+    task: sanitize_attachments
+    partial:
+      paths: ${{ workflow.attachments.return }}
+      output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      keep_missing: ${{ workflow.images_blank.return }}
+
+  - id: images
+    task: build_image_records
+    partial:
+      events: ${{ workflow.events.return }}
+      attachment_paths: ${{ workflow.sanitized_attachments.return }}
+      output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      max_images: ${{ workflow.max_images.return }}
+      labels: ${{ workflow.labels.return }}
+
+  # ── Report ────────────────────────────────────────────────────────────────────
+  - id: report
+    task: create_docx
+    skipif:
+      conditions:
+        - never
+    partial:
+      template_path: ${{ workflow.template_path.return }}
+      output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_prefix: standard_patrol_events
+      context:
+        items:
+          - { item_type: text, key: title, value: "${{ workflow.report_title.return }}" }
+          - { item_type: text, key: subtitle, value: "${{ workflow.report_subtitle.return }}" }
+          - { item_type: text, key: area, value: "${{ workflow.report_area.return }}" }
+          - { item_type: timerange, key: period, value: "${{ workflow.time_range.return }}" }
+          - { item_type: text, key: generated_by, value: "${{ workflow.generated_by.return }}" }
+          - { item_type: text, key: detail_intro, value: "${{ workflow.detail_intro.return }}" }
+          - { item_type: text, key: no_data, value: "${{ workflow.no_data.return }}" }
+          - { item_type: text, key: show_personnel, value: "${{ workflow.show_personnel.return }}" }
+          - { item_type: text, key: show_headline_stats, value: "${{ workflow.show_headline_stats.return }}" }
+          - { item_type: text, key: show_time_density, value: "${{ workflow.show_time_density.return }}" }
+          - { item_type: text, key: show_events_by_type, value: "${{ workflow.show_events_by_type.return }}" }
+          - { item_type: text, key: show_category_priority, value: "${{ workflow.show_category_priority.return }}" }
+          - { item_type: text, key: show_events_bar, value: "${{ workflow.show_events_bar.return }}" }
+          - { item_type: text, key: show_monthly_stacked, value: "${{ workflow.show_monthly_stacked.return }}" }
+          - { item_type: text, key: show_conclusions, value: "${{ workflow.show_conclusions.return }}" }
+          - { item_type: text, key: show_images_manual, value: "${{ workflow.images_blank.return }}" }
+          - { item_type: text, key: n_patrols, value: "${{ workflow.n_patrols.return }}" }
+          - { item_type: text, key: total_km, value: "${{ workflow.total_km.return }}" }
+          - { item_type: text, key: total_hours, value: "${{ workflow.total_hours.return }}" }
+          - { item_type: text, key: n_events, value: "${{ workflow.n_events.return }}" }
+          - { item_type: table, key: personnel, value: "${{ workflow.personnel.return }}" }
+          - { item_type: table, key: effort, value: "${{ workflow.effort.return }}" }
+          - { item_type: table, key: events_by_type, value: "${{ workflow.events_by_type.return }}" }
+          - { item_type: table, key: category_priority, value: "${{ workflow.category_priority.return }}" }
+          - { item_type: table, key: event_details, value: "${{ workflow.event_details.return }}" }
+          - { item_type: table_list, key: event_detail_tables, value: "${{ workflow.event_detail_tables.return }}" }
+          - { item_type: image, key: tracks_map, value: "${{ workflow.tracks_map.return }}", width_inches: 6.5 }
+          - { item_type: image, key: time_density_map, value: "${{ workflow.time_density_map.return }}", width_inches: 6.5 }
+          - { item_type: image, key: event_density_map, value: "${{ workflow.event_density_map.return }}", width_inches: 6.5 }
+          - { item_type: image, key: events_bar, value: "${{ workflow.events_bar.return }}", width_inches: 6.0 }
+          - { item_type: image, key: monthly_stacked, value: "${{ workflow.monthly_stacked.return }}", width_inches: 6.0 }
+          - { item_type: image_list, key: images, value: "${{ workflow.images.return }}", width_inches: 4.0 }
+
+  - id: dashboard
+    task: gather_dashboard
+    partial:
+      details: ${{ workflow.workflow_details.return }}
+      widgets: []
+      time_range: ${{ workflow.time_range.return }}
