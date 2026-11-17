@@ -535,7 +535,7 @@ workflow:
       crs: "EPSG:3857"
       aoi: ${{ workflow.events_located.return }}
       intersecting_only: false
-      auto_scale_or_custom_cell_size: {auto_scale_or_custom: Customize, grid_cell_size: 2000}
+      auto_scale_or_custom_cell_size: {"auto_scale_or_custom": "Auto-scale"}  # fixed sizes explode on wide sites (mep: 33M cells)
 
   - id: ed_density
     task: calculate_feature_density
