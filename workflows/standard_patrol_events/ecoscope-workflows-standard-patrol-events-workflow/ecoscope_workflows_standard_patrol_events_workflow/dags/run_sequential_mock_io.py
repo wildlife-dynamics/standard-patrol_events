@@ -1580,10 +1580,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             crs="EPSG:3857",
             aoi=events_located,
             intersecting_only=False,
-            auto_scale_or_custom_cell_size={
-                "auto_scale_or_custom": "Customize",
-                "grid_cell_size": 2000,
-            },
+            auto_scale_or_custom_cell_size={"auto_scale_or_custom": "Auto-scale"},
             **(params.get("ed_meshgrid") or {}),
         )
         .call()
