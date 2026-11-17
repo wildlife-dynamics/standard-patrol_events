@@ -40,3 +40,15 @@ def set_report_blocks(
 ) -> Annotated[dict[str, str], Field(description="show_<block> template switches as 'true'/'false'.")]:
     """Optional report blocks, as template switches (docx context values are strings)."""
     return {f"show_{k}": str(v).lower() for k, v in locals().items()}
+
+
+@register()
+def set_images_options(
+    mode: Annotated[
+        Literal["attachments", "blank"],
+        Field(title="Images", description="Fill from event attachments, or leave the photo cells blank to add by hand."),
+    ] = "attachments",
+    max_images: Annotated[int, Field(title="Maximum number of images", ge=0)] = 50,
+) -> Annotated[dict, Field(description="list_only (no download) and max_images for the image tasks.")]:
+    """Images block options; 'blank' lists the photos (captions) without downloading them."""
+    return {"list_only": mode == "blank", "max_images": max_images}
