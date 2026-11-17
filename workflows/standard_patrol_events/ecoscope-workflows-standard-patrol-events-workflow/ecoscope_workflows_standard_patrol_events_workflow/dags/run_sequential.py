@@ -89,6 +89,9 @@ from ecoscope.platform.tasks.transformation import (
 )
 from ecoscope.platform.tasks.transformation import apply_color_map as apply_color_map
 from ecoscope.platform.tasks.transformation import (
+    apply_reloc_coord_filter as apply_reloc_coord_filter,
+)
+from ecoscope.platform.tasks.transformation import (
     convert_column_values_to_string as convert_column_values_to_string,
 )
 from ecoscope.platform.tasks.transformation import (
@@ -1012,8 +1015,25 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    events_located = (
+    events_with_geometry = (
         task(drop_null_geometry)
+        .validate()
+        .set_task_instance_id("events_with_geometry")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(gdf=events, **(params.get("events_with_geometry") or {}))
+        .call()
+    )
+
+    events_located = (
+        task(apply_reloc_coord_filter)
         .validate()
         .set_task_instance_id("events_located")
         .handle_errors()
@@ -1025,7 +1045,24 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(gdf=events, **(params.get("events_located") or {}))
+        .partial(
+            df=events_with_geometry,
+            reset_index=False,
+            roi_gdf=None,
+            roi_name=None,
+            bounding_box={
+                "min_y": -90.0,
+                "max_y": 90.0,
+                "min_x": -180.0,
+                "max_x": 180.0,
+            },
+            filter_point_coords=[
+                {"x": 180.0, "y": 90.0},
+                {"x": 0.0, "y": 0.0},
+                {"x": 1.0, "y": 1.0},
+            ],
+            **(params.get("events_located") or {}),
+        )
         .call()
     )
 
