@@ -17,3 +17,10 @@ def test_report_blocks_defaults_follow_mrd_core_optional_split():
 
 def test_report_blocks_override():
     assert set_report_blocks(personnel=True)["show_personnel"] == "true"
+
+
+def test_images_options():
+    from ecoscope_workflows_ext_standard_patrol_events.tasks import set_images_options
+
+    assert set_images_options() == {"list_only": False, "max_images": 50}
+    assert set_images_options(mode="blank", max_images=5) == {"list_only": True, "max_images": 5}

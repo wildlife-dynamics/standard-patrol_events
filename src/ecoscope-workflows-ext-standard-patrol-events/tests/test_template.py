@@ -30,21 +30,21 @@ def _text(doc):
     return "\n".join(parts)
 
 
-def _render(tmp_path, *, blocks=None, effort=None, detail_mode="general", images_mode="attachments"):
+def _render(tmp_path, *, blocks=None, effort=None, detail_mode="general", photo=None):
     png = tmp_path / "t.png"
     Image.new("RGB", (40, 30), "red").save(png)
     df = pd.DataFrame({"a": ["x1", "x2"], "b": ["y1", "y2"]})
     text = {"title": "TITLE", "subtitle": "SUB", "area": "AREA", "period": "PERIOD", "generated_by": "GENBY",
             "date_generated": "DATE", "n_patrols": "11", "total_km": "22", "total_hours": "33",
             "patrol_days": "9", "n_events": "44", "detail_intro": "INTRO",
-            "detail_mode": detail_mode, "images_mode": images_mode}
+            "detail_mode": detail_mode}
     items = [TextContextItem(key=k, value=v) for k, v in text.items()]
     items += [ImageContextItem(key=k, value=str(png), width_inches=2) for k in MAPS]
     items += [TableContextItem(key=k, value=df) for k in ("events_by_type", "category_priority", "event_details", "personnel")]
     items += [
         TableContextItem(key="effort", value=df if effort is None else effort),
         TableListContextItem(key="event_detail_tables", value=[{"heading": "CAT", "title": "TYPE (2)", "table": df}]),
-        ImageListContextItem(key="images", value=pd.DataFrame({"caption": ["CAP1", "CAP2"], "image_path": [str(png)] * 2}),
+        ImageListContextItem(key="images", value=pd.DataFrame({"caption": ["CAP1", "CAP2"], "image_path": [str(photo or png)] * 2}),
                              width_inches=1),
         ImageListContextItem(key="logos", value=pd.DataFrame({"caption": [""], "image_path": [str(png)]}), width_inches=1),
     ]
@@ -74,7 +74,7 @@ def test_blocks_off_and_empty_table(tmp_path):
 
 
 def test_images_blank_mode_keeps_captions_without_photos(tmp_path):
-    doc = _render(tmp_path, images_mode="blank")
+    doc = _render(tmp_path, photo=tmp_path / "not-downloaded.jpg")
     assert "CAP1" in _text(doc)
     assert len(doc.inline_shapes) == len(MAPS) + 1
 

@@ -1,7 +1,7 @@
 """Builds the packaged report template (docxtpl/Jinja). Every heading and caption
 is a label variable (L_*, from get_report_labels), so one layout serves en/es/pt;
-block switches (show_*) come from set_report_blocks; detail_mode / images_mode
-are the form values. Logos come in as an image list.
+block switches (show_*) come from set_report_blocks; detail_mode
+is the form value. Logos come in as an image list.
 
   pixi run --manifest-path $M python .scripts/build_base_template.py
 
@@ -217,7 +217,7 @@ def images():
     borders(t, "E5E7EB")
     full_width(t)
     t.rows[0].cells[0].text = "{%tr for r in images %}"
-    t.rows[1].cells[0].text = "{% if images_mode != 'blank' %}{{ r.image }}{% endif %}"
+    t.rows[1].cells[0].text = "{{ r.image }}"
     t.rows[1].cells[1].text = "{{ r.caption }}"
     t.rows[1].cells[0].width, t.rows[1].cells[1].width = Cm(9), Cm(8)
     t.rows[2].cells[0].text = "{%tr endfor %}"
