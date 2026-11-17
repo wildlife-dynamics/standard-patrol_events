@@ -340,10 +340,25 @@ workflow:
       layer_style: {get_color: patrol_color, get_width: 2}
       legend: {label_column: extra__patrol_type__display, color_column: patrol_color}
 
-  - id: events_located
+  - id: events_with_geometry
     task: ecoscope.platform.tasks.transformation.drop_null_geometry
     partial:
       gdf: ${{ workflow.events.return }}
+
+  # Placeholder points (e.g. 0,0) stretch maps and the density grid to the whole
+  # globe (APN: 10M cells, 40 min). Maps only; the events still count in tables.
+  - id: events_located
+    task: apply_reloc_coord_filter
+    partial:
+      df: ${{ workflow.events_with_geometry.return }}
+      reset_index: false
+      roi_gdf: null
+      roi_name: null
+      bounding_box: {min_y: -90.0, max_y: 90.0, min_x: -180.0, max_x: 180.0}
+      filter_point_coords:
+        - {x: 180.0, y: 90.0}
+        - {x: 0.0, y: 0.0}
+        - {x: 1.0, y: 1.0}
 
   - id: events_colored
     task: apply_color_map
