@@ -1,0 +1,31 @@
+# Default run: `make run PARTNER=<name>` overrides partner.var and er_client.data_source.name.
+workflow_details:
+  name: Standard Patrol & Events Report
+  description: ""
+er_client:
+  data_source:
+    name: costaecuador
+time_range:
+  since: "2026-08-01T00:00:00Z"
+  until: "2026-11-01T00:00:00Z"
+  timezone:
+    label: UTC
+    tzCode: UTC
+    name: UTC
+    utc: "+00:00"
+partner:
+  var: costaecuador
+profile: {}
+report_title:
+  var: Patrol & Events Report
+report_subtitle:
+  var: ""
+report_area:
+  var: ""
+detail_intro:
+  var: ""
+base_maps: {}
+area_scope:
+  level: site
+patrol_params:
+  patrol_types: []

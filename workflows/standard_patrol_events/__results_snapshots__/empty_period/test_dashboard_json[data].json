@@ -1,0 +1,17 @@
+{
+  "error": null,
+  "result": {
+    "filters": null,
+    "layout": [],
+    "metadata": {
+      "description": "",
+      "time_range": "From 01 Jan 2020 to 02 Jan 2020",
+      "time_zone": "America/Guayaquil",
+      "title": "Standard Patrol & Events Report"
+    },
+    "views": {
+      "{}": []
+    }
+  },
+  "trace": null
+}
