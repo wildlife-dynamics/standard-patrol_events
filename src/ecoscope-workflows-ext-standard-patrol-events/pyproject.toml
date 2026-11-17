@@ -52,7 +52,6 @@ ecoscope-workflows-ext-standard-patrol-events = { path = ".", editable = true }
 # minimal runtime deps: the data package must not depend on ext-custom
 wt-registry = ">=0.2.0,<0.3.0"
 pydantic = ">=2"
-pyyaml = "*"
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]

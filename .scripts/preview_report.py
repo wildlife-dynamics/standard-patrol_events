@@ -23,7 +23,7 @@ CONN = sys.argv[1] if len(sys.argv) > 1 else "costaecuador"
 TEAM_GROUPS = {"costaecuador": ["PONGALILLO", "BELLAVISTA", "COSTA RICA", "EL CONCHAL", "PUERTO ROMA"]}
 MAX_IMAGES, DETAIL_ROWS = 6, 40
 DIR = OUT / f"report_{CONN}"
-TEMPLATE = OUT / "report_template.docx"
+TEMPLATE = OUT.parent.parent / "src/ecoscope-workflows-ext-standard-patrol-events/ecoscope_workflows_ext_standard_patrol_events/data/standard_patrol_events.docx"
 
 # headings/captions per language — becomes part of get_report_labels in the real workflow
 L = {
