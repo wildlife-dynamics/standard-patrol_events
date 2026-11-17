@@ -9,10 +9,16 @@ from ecoscope.platform.tasks.analysis import (
     calculate_linear_time_density as calculate_linear_time_density,
 )
 from ecoscope.platform.tasks.analysis import create_meshgrid as create_meshgrid
-from ecoscope.platform.tasks.analysis import summarize_df as summarize_df
+from ecoscope.platform.tasks.analysis import (
+    dataframe_column_nunique as dataframe_column_nunique,
+)
+from ecoscope.platform.tasks.analysis import (
+    dataframe_column_sum as dataframe_column_sum,
+)
+from ecoscope.platform.tasks.analysis import dataframe_count as dataframe_count
 from ecoscope.platform.tasks.config import concat_string_vars as concat_string_vars
 from ecoscope.platform.tasks.config import (
-    set_optional_string_var as set_optional_string_var,
+    set_list_of_string_vars as set_list_of_string_vars,
 )
 from ecoscope.platform.tasks.config import set_string_var as set_string_var
 from ecoscope.platform.tasks.config import set_workflow_details as set_workflow_details
@@ -42,15 +48,28 @@ from ecoscope.platform.tasks.preprocessing import (
 from ecoscope.platform.tasks.preprocessing import (
     relocations_to_trajectory as relocations_to_trajectory,
 )
+from ecoscope.platform.tasks.results import (
+    create_map_widget_single_view as create_map_widget_single_view,
+)
 from ecoscope.platform.tasks.results import create_path_layer as create_path_layer
+from ecoscope.platform.tasks.results import (
+    create_plot_widget_single_view as create_plot_widget_single_view,
+)
 from ecoscope.platform.tasks.results import (
     create_polygon_layer_pydeck as create_polygon_layer_pydeck,
 )
 from ecoscope.platform.tasks.results import (
     create_scatterplot_layer as create_scatterplot_layer,
 )
+from ecoscope.platform.tasks.results import (
+    create_single_value_widget_single_view as create_single_value_widget_single_view,
+)
+from ecoscope.platform.tasks.results import (
+    create_table_widget_single_view as create_table_widget_single_view,
+)
 from ecoscope.platform.tasks.results import draw_bar_chart as draw_bar_chart
 from ecoscope.platform.tasks.results import draw_map as draw_map
+from ecoscope.platform.tasks.results import draw_table as draw_table
 from ecoscope.platform.tasks.results import (
     draw_time_series_bar_chart as draw_time_series_bar_chart,
 )
@@ -64,15 +83,11 @@ from ecoscope.platform.tasks.skip import (
     any_dependency_skipped as any_dependency_skipped,
 )
 from ecoscope.platform.tasks.skip import any_is_empty_df as any_is_empty_df
-from ecoscope.platform.tasks.skip import maybe_skip_df as maybe_skip_df
 from ecoscope.platform.tasks.skip import never as never
 from ecoscope.platform.tasks.transformation import (
     apply_classification as apply_classification,
 )
 from ecoscope.platform.tasks.transformation import apply_color_map as apply_color_map
-from ecoscope.platform.tasks.transformation import (
-    concat_dataframes as concat_dataframes,
-)
 from ecoscope.platform.tasks.transformation import (
     convert_column_values_to_string as convert_column_values_to_string,
 )
@@ -82,12 +97,15 @@ from ecoscope.platform.tasks.transformation import (
 from ecoscope.platform.tasks.transformation import (
     drop_nan_values_by_column as drop_nan_values_by_column,
 )
-from ecoscope.platform.tasks.transformation import ensure_wgs84 as ensure_wgs84
 from ecoscope.platform.tasks.transformation import (
-    lookup_string_var as lookup_string_var,
+    drop_null_geometry as drop_null_geometry,
 )
-from ecoscope.platform.tasks.transformation import map_columns as map_columns
+from ecoscope.platform.tasks.transformation import ensure_wgs84 as ensure_wgs84
 from ecoscope.platform.tasks.transformation import sort_values as sort_values
+from ecoscope.platform.tasks.transformation import with_unit as with_unit
+from ecoscope_workflows_ext_custom.tasks.analysis import (
+    headline_stats as headline_stats,
+)
 from ecoscope_workflows_ext_custom.tasks.analysis import (
     patrol_effort_table as patrol_effort_table,
 )
@@ -100,6 +118,9 @@ from ecoscope_workflows_ext_custom.tasks.io import (
 )
 from ecoscope_workflows_ext_custom.tasks.io import (
     get_patrol_team_sources as get_patrol_team_sources,
+)
+from ecoscope_workflows_ext_custom.tasks.io import (
+    get_patrol_type_display as get_patrol_type_display,
 )
 from ecoscope_workflows_ext_custom.tasks.io import (
     sanitize_attachments as sanitize_attachments,
@@ -125,9 +146,6 @@ from ecoscope_workflows_ext_custom.tasks.transformation import (
     category_priority_table as category_priority_table,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
-    dataframe_to_dict as dataframe_to_dict,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
     event_detail_table as event_detail_table,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
@@ -137,10 +155,10 @@ from ecoscope_workflows_ext_custom.tasks.transformation import (
     events_by_type_table as events_by_type_table,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
-    exclude_row_values as exclude_row_values,
+    filter_event_state as filter_event_state,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
-    filter_validated as filter_validated,
+    filter_linked_events as filter_linked_events,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
     get_collection_item as get_collection_item,
@@ -152,13 +170,16 @@ from ecoscope_workflows_ext_custom.tasks.transformation import (
     select_columns as select_columns,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
-    load_partner_profile as load_partner_profile,
+    get_report_date as get_report_date,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
-    load_partner_template as load_partner_template,
+    load_report_template as load_report_template,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
-    resolve_report_options as resolve_report_options,
+    set_images_options as set_images_options,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    set_report_blocks as set_report_blocks,
 )
 from wt_contracts import validate as _validate
 from wt_task import task
@@ -204,87 +225,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    current_user = (
-        task(get_current_user)
-        .validate()
-        .set_task_instance_id("current_user")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(client=er_client, **(params.get("current_user") or {}))
-        .call()
-    )
-
-    user_first_name = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("user_first_name")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=current_user,
-            key="first_name",
-            default="",
-            **(params.get("user_first_name") or {}),
-        )
-        .call()
-    )
-
-    user_last_name = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("user_last_name")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=current_user,
-            key="last_name",
-            default="",
-            **(params.get("user_last_name") or {}),
-        )
-        .call()
-    )
-
-    generated_by = (
-        task(concat_string_vars)
-        .validate()
-        .set_task_instance_id("generated_by")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            values=[user_first_name, " ", user_last_name],
-            **(params.get("generated_by") or {}),
-        )
-        .call()
-    )
-
     time_range = (
         task(set_time_range)
         .validate()
@@ -319,10 +259,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    partner = (
-        task(set_string_var)
+    current_user = (
+        task(get_current_user)
         .validate()
-        .set_task_instance_id("partner")
+        .set_task_instance_id("current_user")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -332,65 +272,14 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(**(params.get("partner") or {}))
+        .partial(client=er_client, **(params.get("current_user") or {}))
         .call()
     )
 
-    partner_profile = (
-        task(load_partner_profile)
-        .validate()
-        .set_task_instance_id("partner_profile")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(partner=partner, **(params.get("partner_profile") or {}))
-        .call()
-    )
-
-    profile = (
-        task(resolve_report_options)
-        .validate()
-        .set_task_instance_id("profile")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(profile=partner_profile, **(params.get("profile") or {}))
-        .call()
-    )
-
-    template_path = (
-        task(load_partner_template)
-        .validate()
-        .set_task_instance_id("template_path")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(partner=partner, **(params.get("template_path") or {}))
-        .call()
-    )
-
-    language = (
+    user_first_name = (
         task(get_collection_item)
         .validate()
-        .set_task_instance_id("language")
+        .set_task_instance_id("user_first_name")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -400,14 +289,20 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(collection=profile, key="language", **(params.get("language") or {}))
+        .partial(
+            raise_on_missing=False,
+            collection=current_user,
+            key="first_name",
+            default="",
+            **(params.get("user_first_name") or {}),
+        )
         .call()
     )
 
-    labels = (
-        task(get_report_labels)
+    user_last_name = (
+        task(get_collection_item)
         .validate()
-        .set_task_instance_id("labels")
+        .set_task_instance_id("user_last_name")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -417,14 +312,20 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(language=language, **(params.get("labels") or {}))
+        .partial(
+            raise_on_missing=False,
+            collection=current_user,
+            key="last_name",
+            default="",
+            **(params.get("user_last_name") or {}),
+        )
         .call()
     )
 
-    report_title = (
-        task(set_string_var)
+    generated_by = (
+        task(concat_string_vars)
         .validate()
-        .set_task_instance_id("report_title")
+        .set_task_instance_id("generated_by")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -434,14 +335,17 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(**(params.get("report_title") or {}))
+        .partial(
+            values=[user_first_name, " ", user_last_name],
+            **(params.get("generated_by") or {}),
+        )
         .call()
     )
 
-    report_subtitle = (
-        task(set_optional_string_var)
+    date_generated = (
+        task(get_report_date)
         .validate()
-        .set_task_instance_id("report_subtitle")
+        .set_task_instance_id("date_generated")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -451,41 +355,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(**(params.get("report_subtitle") or {}))
-        .call()
-    )
-
-    report_area = (
-        task(set_optional_string_var)
-        .validate()
-        .set_task_instance_id("report_area")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(**(params.get("report_area") or {}))
-        .call()
-    )
-
-    detail_intro = (
-        task(set_optional_string_var)
-        .validate()
-        .set_task_instance_id("detail_intro")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(**(params.get("detail_intro") or {}))
+        .partial(timezone_info=timezone, **(params.get("date_generated") or {}))
         .call()
     )
 
@@ -503,822 +373,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(**(params.get("base_maps") or {}))
-        .call()
-    )
-
-    event_types = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("event_types")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile, key="event_types", **(params.get("event_types") or {})
-        )
-        .call()
-    )
-
-    event_scope = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("event_scope")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile, key="event_scope", **(params.get("event_scope") or {})
-        )
-        .call()
-    )
-
-    validated_states = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("validated_states")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile,
-            key="validated_states",
-            **(params.get("validated_states") or {}),
-        )
-        .call()
-    )
-
-    team_groups = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("team_groups")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile, key="team_groups", **(params.get("team_groups") or {})
-        )
-        .call()
-    )
-
-    max_gap_secs = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("max_gap_secs")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile, key="max_gap_secs", **(params.get("max_gap_secs") or {})
-        )
-        .call()
-    )
-
-    detail_fields = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("detail_fields")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile,
-            key="detail_fields",
-            **(params.get("detail_fields") or {}),
-        )
-        .call()
-    )
-
-    max_images = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("max_images")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile, key="max_images", **(params.get("max_images") or {})
-        )
-        .call()
-    )
-
-    grouper = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("grouper")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(collection=profile, key="grouper", **(params.get("grouper") or {}))
-        .call()
-    )
-
-    validated_only = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("validated_only")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile,
-            key="validated_only",
-            **(params.get("validated_only") or {}),
-        )
-        .call()
-    )
-
-    detail_mode = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("detail_mode")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile, key="detail_mode", **(params.get("detail_mode") or {})
-        )
-        .call()
-    )
-
-    images_mode = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("images_mode")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(collection=profile, key="images", **(params.get("images_mode") or {}))
-        .call()
-    )
-
-    images_blank = (
-        task(lookup_string_var)
-        .validate()
-        .set_task_instance_id("images_blank")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            var=images_mode,
-            value_map={"auto": "false", "blank": "true"},
-            **(params.get("images_blank") or {}),
-        )
-        .call()
-    )
-
-    skip_area_events = (
-        task(lookup_string_var)
-        .validate()
-        .set_task_instance_id("skip_area_events")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            var=event_scope,
-            value_map={"area": "false", "patrol": "true"},
-            **(params.get("skip_area_events") or {}),
-        )
-        .call()
-    )
-
-    skip_patrol_events = (
-        task(lookup_string_var)
-        .validate()
-        .set_task_instance_id("skip_patrol_events")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            var=event_scope,
-            value_map={"area": "true", "patrol": "false"},
-            **(params.get("skip_patrol_events") or {}),
-        )
-        .call()
-    )
-
-    skip_generic_details = (
-        task(lookup_string_var)
-        .validate()
-        .set_task_instance_id("skip_generic_details")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            var=detail_mode,
-            value_map={"generic": "false", "per_type": "true"},
-            **(params.get("skip_generic_details") or {}),
-        )
-        .call()
-    )
-
-    skip_per_type_details = (
-        task(lookup_string_var)
-        .validate()
-        .set_task_instance_id("skip_per_type_details")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            var=detail_mode,
-            value_map={"generic": "true", "per_type": "false"},
-            **(params.get("skip_per_type_details") or {}),
-        )
-        .call()
-    )
-
-    no_data = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("no_data")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(collection=labels, key="no_data", **(params.get("no_data") or {}))
-        .call()
-    )
-
-    block_personnel = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("block_personnel")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile,
-            key=["blocks", "personnel"],
-            **(params.get("block_personnel") or {}),
-        )
-        .call()
-    )
-
-    show_personnel = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("show_personnel")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=["false", "true"],
-            key=block_personnel,
-            **(params.get("show_personnel") or {}),
-        )
-        .call()
-    )
-
-    skip_personnel = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("skip_personnel")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=[True, False],
-            key=block_personnel,
-            **(params.get("skip_personnel") or {}),
-        )
-        .call()
-    )
-
-    block_headline_stats = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("block_headline_stats")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile,
-            key=["blocks", "headline_stats"],
-            **(params.get("block_headline_stats") or {}),
-        )
-        .call()
-    )
-
-    show_headline_stats = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("show_headline_stats")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=["false", "true"],
-            key=block_headline_stats,
-            **(params.get("show_headline_stats") or {}),
-        )
-        .call()
-    )
-
-    skip_headline_stats = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("skip_headline_stats")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=[True, False],
-            key=block_headline_stats,
-            **(params.get("skip_headline_stats") or {}),
-        )
-        .call()
-    )
-
-    block_time_density = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("block_time_density")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile,
-            key=["blocks", "time_density"],
-            **(params.get("block_time_density") or {}),
-        )
-        .call()
-    )
-
-    show_time_density = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("show_time_density")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=["false", "true"],
-            key=block_time_density,
-            **(params.get("show_time_density") or {}),
-        )
-        .call()
-    )
-
-    skip_time_density = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("skip_time_density")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=[True, False],
-            key=block_time_density,
-            **(params.get("skip_time_density") or {}),
-        )
-        .call()
-    )
-
-    block_events_by_type = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("block_events_by_type")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile,
-            key=["blocks", "events_by_type"],
-            **(params.get("block_events_by_type") or {}),
-        )
-        .call()
-    )
-
-    show_events_by_type = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("show_events_by_type")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=["false", "true"],
-            key=block_events_by_type,
-            **(params.get("show_events_by_type") or {}),
-        )
-        .call()
-    )
-
-    skip_events_by_type = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("skip_events_by_type")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=[True, False],
-            key=block_events_by_type,
-            **(params.get("skip_events_by_type") or {}),
-        )
-        .call()
-    )
-
-    block_category_priority = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("block_category_priority")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile,
-            key=["blocks", "category_priority"],
-            **(params.get("block_category_priority") or {}),
-        )
-        .call()
-    )
-
-    show_category_priority = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("show_category_priority")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=["false", "true"],
-            key=block_category_priority,
-            **(params.get("show_category_priority") or {}),
-        )
-        .call()
-    )
-
-    skip_category_priority = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("skip_category_priority")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=[True, False],
-            key=block_category_priority,
-            **(params.get("skip_category_priority") or {}),
-        )
-        .call()
-    )
-
-    block_events_bar = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("block_events_bar")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile,
-            key=["blocks", "events_bar"],
-            **(params.get("block_events_bar") or {}),
-        )
-        .call()
-    )
-
-    show_events_bar = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("show_events_bar")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=["false", "true"],
-            key=block_events_bar,
-            **(params.get("show_events_bar") or {}),
-        )
-        .call()
-    )
-
-    skip_events_bar = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("skip_events_bar")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=[True, False],
-            key=block_events_bar,
-            **(params.get("skip_events_bar") or {}),
-        )
-        .call()
-    )
-
-    block_monthly_stacked = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("block_monthly_stacked")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile,
-            key=["blocks", "monthly_stacked"],
-            **(params.get("block_monthly_stacked") or {}),
-        )
-        .call()
-    )
-
-    show_monthly_stacked = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("show_monthly_stacked")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=["false", "true"],
-            key=block_monthly_stacked,
-            **(params.get("show_monthly_stacked") or {}),
-        )
-        .call()
-    )
-
-    skip_monthly_stacked = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("skip_monthly_stacked")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=[True, False],
-            key=block_monthly_stacked,
-            **(params.get("skip_monthly_stacked") or {}),
-        )
-        .call()
-    )
-
-    block_conclusions = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("block_conclusions")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=profile,
-            key=["blocks", "conclusions"],
-            **(params.get("block_conclusions") or {}),
-        )
-        .call()
-    )
-
-    show_conclusions = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("show_conclusions")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=["false", "true"],
-            key=block_conclusions,
-            **(params.get("show_conclusions") or {}),
-        )
         .call()
     )
 
@@ -1369,9 +423,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            event_states=None,
+            patrols_overlap_daterange=True,
             client=er_client,
             time_range=time_range,
-            event_types=event_types,
+            event_types=[],
             status=["done"],
             raise_on_empty=False,
             include_patrol_details=True,
@@ -1476,7 +532,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                 "min_length_meters": 0.001,
                 "max_length_meters": 1000000,
                 "min_time_secs": 1,
-                "max_time_secs": max_gap_secs,
+                "max_time_secs": 3600,
                 "min_speed_kmhr": 0.0011,
                 "max_speed_kmhr": 500,
             },
@@ -1524,6 +580,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    team_groups = (
+        task(set_list_of_string_vars)
+        .validate()
+        .set_task_instance_id("team_groups")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("team_groups") or {}))
+        .call()
+    )
+
     patrol_teams_utc = (
         task(resolve_patrol_team)
         .validate()
@@ -1568,6 +641,57 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    patrol_type_display = (
+        task(get_patrol_type_display)
+        .validate()
+        .set_task_instance_id("patrol_type_display")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(client=er_client, **(params.get("patrol_type_display") or {}))
+        .call()
+    )
+
+    effort_grouper = (
+        task(set_string_var)
+        .validate()
+        .set_task_instance_id("effort_grouper")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("effort_grouper") or {}))
+        .call()
+    )
+
+    labels = (
+        task(get_report_labels)
+        .validate()
+        .set_task_instance_id("labels")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("labels") or {}))
+        .call()
+    )
+
     effort = (
         task(patrol_effort_table)
         .validate()
@@ -1584,17 +708,18 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             trajectory=trajectory,
             patrols=patrol_teams,
-            grouper=grouper,
+            grouper=effort_grouper,
             labels=labels,
+            patrol_type_display=patrol_type_display,
             **(params.get("effort") or {}),
         )
         .call()
     )
 
-    area_events = (
-        task(get_events)
+    personnel = (
+        task(select_columns)
         .validate()
-        .set_task_instance_id("area_events")
+        .set_task_instance_id("personnel")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -1605,22 +730,62 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            client=er_client,
-            time_range=time_range,
-            event_types=event_types,
-            include_details=True,
-            include_display_values=True,
-            include_null_geometry=False,
-            raise_on_empty=False,
-            **(params.get("area_events") or {}),
+            raise_on_missing=False,
+            df=patrol_teams,
+            columns=["patrol_serial_number", "team", "personnel"],
+            **(params.get("personnel") or {}),
         )
         .call()
     )
 
-    patrol_events = (
+    period_events = (
+        task(get_events)
+        .validate()
+        .set_task_instance_id("period_events")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            event_columns=[
+                "id",
+                "time",
+                "event_type",
+                "event_category",
+                "title",
+                "reported_by",
+                "serial_number",
+                "event_details",
+                "geometry",
+                "state",
+                "priority",
+                "priority_label",
+                "patrol_segments",
+            ],
+            event_states=None,
+            include_updates=False,
+            include_related_events=False,
+            force_point_geometry=True,
+            client=er_client,
+            time_range=time_range,
+            include_details=True,
+            include_display_values=False,
+            include_null_geometry=True,
+            raise_on_empty=False,
+            **(params.get("period_events") or {}),
+        )
+        .call()
+    )
+
+    linked_events = (
         task(unpack_events_from_patrols_df_and_combined_params)
         .validate()
-        .set_task_instance_id("patrol_events")
+        .set_task_instance_id("linked_events")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -1633,68 +798,27 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             patrols_df=patrols,
             combined_params=patrol_params,
-            **(params.get("patrol_events") or {}),
+            **(params.get("linked_events") or {}),
         )
         .call()
     )
 
-    area_events_in_scope = (
-        task(maybe_skip_df)
+    retrieved_events = (
+        task(filter_linked_events)
         .validate()
-        .set_task_instance_id("area_events_in_scope")
+        .set_task_instance_id("retrieved_events")
         .handle_errors()
         .with_tracing()
         .skipif(
             conditions=[
-                any_is_empty_df,
                 any_dependency_skipped,
             ],
             unpack_depth=1,
         )
         .partial(
-            df=area_events,
-            skip=skip_area_events,
-            **(params.get("area_events_in_scope") or {}),
-        )
-        .call()
-    )
-
-    patrol_events_in_scope = (
-        task(maybe_skip_df)
-        .validate()
-        .set_task_instance_id("patrol_events_in_scope")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=patrol_events,
-            skip=skip_patrol_events,
-            **(params.get("patrol_events_in_scope") or {}),
-        )
-        .call()
-    )
-
-    scoped_events = (
-        task(concat_dataframes)
-        .validate()
-        .set_task_instance_id("scoped_events")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            dfs=[area_events_in_scope, patrol_events_in_scope],
-            **(params.get("scoped_events") or {}),
+            events=period_events,
+            patrol_events=linked_events,
+            **(params.get("retrieved_events") or {}),
         )
         .call()
     )
@@ -1712,14 +836,19 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(gdf=scoped_events, area=area, **(params.get("events_in_area") or {}))
+        .partial(
+            id_column=None,
+            gdf=retrieved_events,
+            area=area,
+            **(params.get("events_in_area") or {}),
+        )
         .call()
     )
 
-    validated_events = (
-        task(filter_validated)
+    state_events = (
+        task(filter_event_state)
         .validate()
-        .set_task_instance_id("validated_events")
+        .set_task_instance_id("state_events")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -1729,12 +858,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(
-            events=events_in_area,
-            enabled=validated_only,
-            states=validated_states,
-            **(params.get("validated_events") or {}),
-        )
+        .partial(events=events_in_area, **(params.get("state_events") or {}))
         .call()
     )
 
@@ -1752,7 +876,9 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=validated_events,
+            map_to_titles=True,
+            ordered=True,
+            df=state_events,
             client=er_client,
             **(params.get("events_with_details") or {}),
         )
@@ -1819,10 +945,27 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    trajectory_colored = (
+    event_grouping = (
+        task(set_string_var)
+        .validate()
+        .set_task_instance_id("event_grouping")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("event_grouping") or {}))
+        .call()
+    )
+
+    tracks_colored = (
         task(apply_color_map)
         .validate()
-        .set_task_instance_id("trajectory_colored")
+        .set_task_instance_id("tracks_colored")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -1837,33 +980,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             input_column_name="extra__patrol_type__display",
             colormap="tab10",
             output_column_name="patrol_color",
-            **(params.get("trajectory_colored") or {}),
-        )
-        .call()
-    )
-
-    tracks_for_map = (
-        task(select_columns)
-        .validate()
-        .set_task_instance_id("tracks_for_map")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=trajectory_colored,
-            columns=[
-                "extra__patrol_serial_number",
-                "extra__patrol_type__display",
-                "patrol_color",
-                "geometry",
-            ],
-            **(params.get("tracks_for_map") or {}),
+            **(params.get("tracks_colored") or {}),
         )
         .call()
     )
@@ -1882,7 +999,9 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            geodataframe=tracks_for_map,
+            data_url=None,
+            tooltip_columns=None,
+            geodataframe=tracks_colored,
             layer_style={"get_color": "patrol_color", "get_width": 2},
             legend={
                 "label_column": "extra__patrol_type__display",
@@ -1893,10 +1012,27 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    events_for_map = (
-        task(select_columns)
+    events_located = (
+        task(drop_null_geometry)
         .validate()
-        .set_task_instance_id("events_for_map")
+        .set_task_instance_id("events_located")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(gdf=events, **(params.get("events_located") or {}))
+        .call()
+    )
+
+    events_colored = (
+        task(apply_color_map)
+        .validate()
+        .set_task_instance_id("events_colored")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -1907,9 +1043,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=events,
-            columns=["serial_number", "event_type_display", "geometry"],
-            **(params.get("events_for_map") or {}),
+            df=events_located,
+            input_column_name=event_grouping,
+            colormap="tab20",
+            output_column_name="event_color",
+            **(params.get("events_colored") or {}),
         )
         .call()
     )
@@ -1928,8 +1066,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            geodataframe=events_for_map,
-            layer_style={"get_fill_color": "#d62728", "get_radius": 4},
+            data_url=None,
+            geodataframe=events_colored,
+            layer_style={"get_fill_color": "event_color", "get_radius": 5},
+            legend={"label_column": event_grouping, "color_column": "event_color"},
+            tooltip_columns=["serial_number", "event_type_display"],
             **(params.get("events_layer") or {}),
         )
         .call()
@@ -1949,7 +1090,9 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            layers=[tracks_layer, events_layer], **(params.get("tracks_view") or {})
+            max_zoom=20,
+            layers=[tracks_layer, events_layer],
+            **(params.get("tracks_view") or {}),
         )
         .call()
     )
@@ -1968,10 +1111,12 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            output_type="html",
+            max_zoom=20,
             geo_layers=[tracks_layer, events_layer],
             tile_layers=base_maps,
             view_state=tracks_view,
-            static=True,
+            static=False,
             title=None,
             legend_style={"placement": "bottom-right"},
             **(params.get("tracks_map_html") or {}),
@@ -2001,10 +1146,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    td_trajectory = (
-        task(maybe_skip_df)
+    tracks_map_static_html = (
+        task(draw_map)
         .validate()
-        .set_task_instance_id("td_trajectory")
+        .set_task_instance_id("tracks_map_static_html")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -2015,7 +1160,37 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=trajectory, skip=skip_time_density, **(params.get("td_trajectory") or {})
+            output_type="html",
+            max_zoom=20,
+            geo_layers=[tracks_layer, events_layer],
+            tile_layers=base_maps,
+            view_state=tracks_view,
+            static=True,
+            title=None,
+            legend_style={"placement": "bottom-right"},
+            **(params.get("tracks_map_static_html") or {}),
+        )
+        .call()
+    )
+
+    tracks_map_static = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("tracks_map_static")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=tracks_map_static_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="tracks_map_static",
+            **(params.get("tracks_map_static") or {}),
         )
         .call()
     )
@@ -2034,7 +1209,9 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            aoi=td_trajectory,
+            auto_scale_or_custom_cell_size={"auto_scale_or_custom": "Auto-scale"},
+            crs="EPSG:3857",
+            aoi=trajectory,
             intersecting_only=False,
             **(params.get("td_meshgrid") or {}),
         )
@@ -2055,7 +1232,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            trajectory_gdf=td_trajectory,
+            percentiles=["50", "60", "70", "80", "90", "100"],
+            trajectory_gdf=trajectory,
             meshgrid=td_meshgrid,
             **(params.get("td_density") or {}),
         )
@@ -2139,7 +1317,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             df=td_to_str,
             input_column_name="percentile",
-            colormap="RdYlGn",
+            colormap="RdYlGn_r",
             output_column_name="percentile_colormap",
             **(params.get("td_colored") or {}),
         )
@@ -2177,6 +1355,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            data_url=None,
+            tooltip_columns=None,
             geodataframe=td_wgs84,
             layer_style={"get_fill_color": "percentile_colormap", "opacity": 0.6},
             legend={
@@ -2202,7 +1382,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(layers=[td_layer], **(params.get("td_view") or {}))
+        .partial(max_zoom=20, layers=[td_layer], **(params.get("td_view") or {}))
         .call()
     )
 
@@ -2220,10 +1400,12 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            output_type="html",
+            max_zoom=20,
             geo_layers=[td_layer],
             tile_layers=base_maps,
             view_state=td_view,
-            static=True,
+            static=False,
             title=None,
             legend_style={"placement": "bottom-right"},
             **(params.get("td_map_html") or {}),
@@ -2253,6 +1435,55 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    td_map_static_html = (
+        task(draw_map)
+        .validate()
+        .set_task_instance_id("td_map_static_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            output_type="html",
+            max_zoom=20,
+            geo_layers=[td_layer],
+            tile_layers=base_maps,
+            view_state=td_view,
+            static=True,
+            title=None,
+            legend_style={"placement": "bottom-right"},
+            **(params.get("td_map_static_html") or {}),
+        )
+        .call()
+    )
+
+    time_density_map_static = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("time_density_map_static")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=td_map_static_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="time_density_map_static",
+            **(params.get("time_density_map_static") or {}),
+        )
+        .call()
+    )
+
     ed_meshgrid = (
         task(create_meshgrid)
         .validate()
@@ -2268,7 +1499,14 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            aoi=events, intersecting_only=False, **(params.get("ed_meshgrid") or {})
+            crs="EPSG:3857",
+            aoi=events_located,
+            intersecting_only=False,
+            auto_scale_or_custom_cell_size={
+                "auto_scale_or_custom": "Customize",
+                "grid_cell_size": 2000,
+            },
+            **(params.get("ed_meshgrid") or {}),
         )
         .call()
     )
@@ -2287,10 +1525,30 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            geodataframe=events,
+            sum_column=None,
+            geodataframe=events_located,
             meshgrid=ed_meshgrid,
             geometry_type="point",
             **(params.get("ed_density") or {}),
+        )
+        .call()
+    )
+
+    ed_nonzero = (
+        task(drop_nan_values_by_column)
+        .validate()
+        .set_task_instance_id("ed_nonzero")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=ed_density, column_name="density", **(params.get("ed_nonzero") or {})
         )
         .call()
     )
@@ -2309,30 +1567,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=ed_density,
+            df=ed_nonzero,
             column_name="density",
             ascending=True,
             na_position="last",
             **(params.get("ed_sorted") or {}),
-        )
-        .call()
-    )
-
-    ed_drop_nan = (
-        task(drop_nan_values_by_column)
-        .validate()
-        .set_task_instance_id("ed_drop_nan")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=ed_sorted, column_name="density", **(params.get("ed_drop_nan") or {})
         )
         .call()
     )
@@ -2351,7 +1590,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=ed_drop_nan,
+            df=ed_sorted,
             input_column_name="density",
             output_column_name="density_bins",
             classification_options={"scheme": "equal_interval", "k": 5},
@@ -2415,6 +1654,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            data_url=None,
+            tooltip_columns=None,
             geodataframe=ed_wgs84,
             layer_style={"get_fill_color": "density_colormap", "opacity": 0.6},
             legend={"label_column": "density_bins", "color_column": "density_colormap"},
@@ -2436,7 +1677,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(layers=[ed_layer], **(params.get("ed_view") or {}))
+        .partial(max_zoom=20, layers=[ed_layer], **(params.get("ed_view") or {}))
         .call()
     )
 
@@ -2454,10 +1695,12 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            output_type="html",
+            max_zoom=20,
             geo_layers=[ed_layer],
             tile_layers=base_maps,
             view_state=ed_view,
-            static=True,
+            static=False,
             title=None,
             legend_style={"placement": "bottom-right"},
             **(params.get("ed_map_html") or {}),
@@ -2487,10 +1730,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    hs_trajectory = (
-        task(maybe_skip_df)
+    ed_map_static_html = (
+        task(draw_map)
         .validate()
-        .set_task_instance_id("hs_trajectory")
+        .set_task_instance_id("ed_map_static_html")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -2501,17 +1744,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=trajectory,
-            skip=skip_headline_stats,
-            **(params.get("hs_trajectory") or {}),
+            output_type="html",
+            max_zoom=20,
+            geo_layers=[ed_layer],
+            tile_layers=base_maps,
+            view_state=ed_view,
+            static=True,
+            title=None,
+            legend_style={"placement": "bottom-right"},
+            **(params.get("ed_map_static_html") or {}),
         )
         .call()
     )
 
-    hs_patrol_totals = (
-        task(summarize_df)
+    event_density_map_static = (
+        task(persist_text)
         .validate()
-        .set_task_instance_id("hs_patrol_totals")
+        .set_task_instance_id("event_density_map_static")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -2522,515 +1771,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=hs_trajectory,
-            reset_index=True,
-            summary_params=[
-                {
-                    "display_name": "n_patrols",
-                    "aggregator": "nunique",
-                    "column": "extra__patrol_id",
-                    "decimal_places": 0,
-                },
-                {
-                    "display_name": "total_km",
-                    "aggregator": "sum",
-                    "column": "dist_meters",
-                    "original_unit": "m",
-                    "new_unit": "km",
-                    "decimal_places": 1,
-                },
-                {
-                    "display_name": "total_hours",
-                    "aggregator": "sum",
-                    "column": "timespan_seconds",
-                    "original_unit": "s",
-                    "new_unit": "h",
-                    "decimal_places": 1,
-                },
-            ],
-            **(params.get("hs_patrol_totals") or {}),
-        )
-        .call()
-    )
-
-    hs_patrol_totals_str = (
-        task(convert_column_values_to_string)
-        .validate()
-        .set_task_instance_id("hs_patrol_totals_str")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=hs_patrol_totals,
-            columns=["n_patrols", "total_km", "total_hours"],
-            **(params.get("hs_patrol_totals_str") or {}),
-        )
-        .call()
-    )
-
-    hs_patrol_totals_dict = (
-        task(dataframe_to_dict)
-        .validate()
-        .set_task_instance_id("hs_patrol_totals_dict")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(df=hs_patrol_totals_str, **(params.get("hs_patrol_totals_dict") or {}))
-        .call()
-    )
-
-    n_patrols = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("n_patrols")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=hs_patrol_totals_dict,
-            key=[0, "n_patrols"],
-            **(params.get("n_patrols") or {}),
-        )
-        .call()
-    )
-
-    total_km = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("total_km")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=hs_patrol_totals_dict,
-            key=[0, "total_km"],
-            **(params.get("total_km") or {}),
-        )
-        .call()
-    )
-
-    total_hours = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("total_hours")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=hs_patrol_totals_dict,
-            key=[0, "total_hours"],
-            **(params.get("total_hours") or {}),
-        )
-        .call()
-    )
-
-    hs_events = (
-        task(maybe_skip_df)
-        .validate()
-        .set_task_instance_id("hs_events")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(df=events, skip=skip_headline_stats, **(params.get("hs_events") or {}))
-        .call()
-    )
-
-    hs_event_totals = (
-        task(summarize_df)
-        .validate()
-        .set_task_instance_id("hs_event_totals")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=hs_events,
-            reset_index=True,
-            summary_params=[
-                {
-                    "display_name": "n_events",
-                    "aggregator": "count",
-                    "column": "serial_number",
-                    "decimal_places": 0,
-                }
-            ],
-            **(params.get("hs_event_totals") or {}),
-        )
-        .call()
-    )
-
-    hs_event_totals_str = (
-        task(convert_column_values_to_string)
-        .validate()
-        .set_task_instance_id("hs_event_totals_str")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=hs_event_totals,
-            columns=["n_events"],
-            **(params.get("hs_event_totals_str") or {}),
-        )
-        .call()
-    )
-
-    hs_event_totals_dict = (
-        task(dataframe_to_dict)
-        .validate()
-        .set_task_instance_id("hs_event_totals_dict")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(df=hs_event_totals_str, **(params.get("hs_event_totals_dict") or {}))
-        .call()
-    )
-
-    n_events = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("n_events")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=hs_event_totals_dict,
-            key=[0, "n_events"],
-            **(params.get("n_events") or {}),
-        )
-        .call()
-    )
-
-    label_serial = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("label_serial")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(collection=labels, key="serial", **(params.get("label_serial") or {}))
-        .call()
-    )
-
-    label_team = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("label_team")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(collection=labels, key="team", **(params.get("label_team") or {}))
-        .call()
-    )
-
-    label_personnel = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("label_personnel")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            collection=labels, key="personnel", **(params.get("label_personnel") or {})
-        )
-        .call()
-    )
-
-    label_count = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("label_count")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(collection=labels, key="count", **(params.get("label_count") or {}))
-        .call()
-    )
-
-    personnel_patrols = (
-        task(maybe_skip_df)
-        .validate()
-        .set_task_instance_id("personnel_patrols")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=patrol_teams,
-            skip=skip_personnel,
-            **(params.get("personnel_patrols") or {}),
-        )
-        .call()
-    )
-
-    personnel_columns = (
-        task(select_columns)
-        .validate()
-        .set_task_instance_id("personnel_columns")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=personnel_patrols,
-            columns=["patrol_serial_number", "team", "personnel"],
-            **(params.get("personnel_columns") or {}),
-        )
-        .call()
-    )
-
-    personnel_rows = (
-        task(exclude_row_values)
-        .validate()
-        .set_task_instance_id("personnel_rows")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=personnel_columns,
-            column="personnel",
-            values=[""],
-            **(params.get("personnel_rows") or {}),
-        )
-        .call()
-    )
-
-    personnel = (
-        task(map_columns)
-        .validate()
-        .set_task_instance_id("personnel")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=personnel_rows,
-            drop_columns=[],
-            retain_columns=[],
-            rename_columns={
-                "patrol_serial_number": label_serial,
-                "team": label_team,
-                "personnel": label_personnel,
-            },
-            raise_if_not_found=True,
-            **(params.get("personnel") or {}),
-        )
-        .call()
-    )
-
-    ebt_events = (
-        task(maybe_skip_df)
-        .validate()
-        .set_task_instance_id("ebt_events")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=events, skip=skip_events_by_type, **(params.get("ebt_events") or {})
-        )
-        .call()
-    )
-
-    events_by_type = (
-        task(events_by_type_table)
-        .validate()
-        .set_task_instance_id("events_by_type")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            events=ebt_events, labels=labels, **(params.get("events_by_type") or {})
-        )
-        .call()
-    )
-
-    cp_events = (
-        task(maybe_skip_df)
-        .validate()
-        .set_task_instance_id("cp_events")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=events, skip=skip_category_priority, **(params.get("cp_events") or {})
-        )
-        .call()
-    )
-
-    category_priority = (
-        task(category_priority_table)
-        .validate()
-        .set_task_instance_id("category_priority")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            events=cp_events, labels=labels, **(params.get("category_priority") or {})
-        )
-        .call()
-    )
-
-    bar_events = (
-        task(maybe_skip_df)
-        .validate()
-        .set_task_instance_id("bar_events")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(df=events, skip=skip_events_bar, **(params.get("bar_events") or {}))
-        .call()
-    )
-
-    bar_columns = (
-        task(select_columns)
-        .validate()
-        .set_task_instance_id("bar_columns")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=bar_events,
-            columns=["event_type_display", "serial_number"],
-            **(params.get("bar_columns") or {}),
+            text=ed_map_static_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="event_density_map_static",
+            **(params.get("event_density_map_static") or {}),
         )
         .call()
     )
@@ -3049,10 +1793,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            dataframe=bar_columns,
-            category="event_type_display",
+            layout_kwargs=None,
+            dataframe=events,
+            category=event_grouping,
             bar_chart_configs=[
-                {"column": "serial_number", "agg_func": "count", "label": label_count}
+                {"column": "serial_number", "agg_func": "count", "label": "Events"}
             ],
             **(params.get("events_bar_html") or {}),
         )
@@ -3081,50 +1826,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    monthly_events = (
-        task(maybe_skip_df)
-        .validate()
-        .set_task_instance_id("monthly_events")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=events, skip=skip_monthly_stacked, **(params.get("monthly_events") or {})
-        )
-        .call()
-    )
-
-    monthly_columns = (
-        task(select_columns)
-        .validate()
-        .set_task_instance_id("monthly_columns")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=monthly_events,
-            columns=["time", "event_category_display", "serial_number"],
-            **(params.get("monthly_columns") or {}),
-        )
-        .call()
-    )
-
-    monthly_stacked_html = (
+    monthly_html = (
         task(draw_time_series_bar_chart)
         .validate()
-        .set_task_instance_id("monthly_stacked_html")
+        .set_task_instance_id("monthly_html")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -3135,21 +1840,24 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            dataframe=monthly_columns,
+            color_column=None,
+            plot_style=None,
+            layout_style=None,
+            dataframe=events,
             x_axis="time",
             y_axis="serial_number",
-            category="event_category_display",
+            category=event_grouping,
             agg_function="count",
             time_interval="month",
-            **(params.get("monthly_stacked_html") or {}),
+            **(params.get("monthly_html") or {}),
         )
         .call()
     )
 
-    monthly_stacked = (
+    monthly_chart = (
         task(persist_text)
         .validate()
-        .set_task_instance_id("monthly_stacked")
+        .set_task_instance_id("monthly_chart")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -3160,18 +1868,35 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            text=monthly_stacked_html,
+            text=monthly_html,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            filename_suffix="monthly_stacked",
-            **(params.get("monthly_stacked") or {}),
+            filename_suffix="monthly_chart",
+            **(params.get("monthly_chart") or {}),
         )
         .call()
     )
 
-    generic_events = (
-        task(maybe_skip_df)
+    events_by_type = (
+        task(events_by_type_table)
         .validate()
-        .set_task_instance_id("generic_events")
+        .set_task_instance_id("events_by_type")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(events=events, labels=labels, **(params.get("events_by_type") or {}))
+        .call()
+    )
+
+    category_priority = (
+        task(category_priority_table)
+        .validate()
+        .set_task_instance_id("category_priority")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -3182,7 +1907,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=events, skip=skip_generic_details, **(params.get("generic_events") or {})
+            events=events, labels=labels, **(params.get("category_priority") or {})
         )
         .call()
     )
@@ -3200,16 +1925,14 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(
-            events=generic_events, labels=labels, **(params.get("event_details") or {})
-        )
+        .partial(events=events, labels=labels, **(params.get("event_details") or {}))
         .call()
     )
 
-    per_type_events = (
-        task(maybe_skip_df)
+    detail_mode = (
+        task(set_string_var)
         .validate()
-        .set_task_instance_id("per_type_events")
+        .set_task_instance_id("detail_mode")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -3219,11 +1942,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(
-            df=events,
-            skip=skip_per_type_details,
-            **(params.get("per_type_events") or {}),
-        )
+        .partial(**(params.get("detail_mode") or {}))
         .call()
     )
 
@@ -3241,10 +1960,73 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            events=per_type_events,
-            detail_fields=detail_fields,
+            fallback_n=3,
+            events=events,
             labels=labels,
             **(params.get("event_detail_tables") or {}),
+        )
+        .call()
+    )
+
+    images_options = (
+        task(set_images_options)
+        .validate()
+        .set_task_instance_id("images_options")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("images_options") or {}))
+        .call()
+    )
+
+    images_list_only = (
+        task(get_collection_item)
+        .validate()
+        .set_task_instance_id("images_list_only")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            default=False,
+            raise_on_missing=True,
+            collection=images_options,
+            key="list_only",
+            **(params.get("images_list_only") or {}),
+        )
+        .call()
+    )
+
+    images_max = (
+        task(get_collection_item)
+        .validate()
+        .set_task_instance_id("images_max")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            default=50,
+            raise_on_missing=True,
+            collection=images_options,
+            key="max_images",
+            **(params.get("images_max") or {}),
         )
         .call()
     )
@@ -3263,11 +2045,14 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            attachments_subdir="attachments",
+            use_index_as_id=False,
+            skip_download=False,
             client=er_client,
             event_gdf=events,
             output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            use_index_as_id=False,
-            list_only=images_blank,
+            list_only=images_list_only,
+            max_files=images_max,
             **(params.get("attachments") or {}),
         )
         .call()
@@ -3289,7 +2074,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             paths=attachments,
             output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            keep_missing=images_blank,
+            keep_missing=images_list_only,
             **(params.get("sanitized_attachments") or {}),
         )
         .call()
@@ -3312,10 +2097,133 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             events=events,
             attachment_paths=sanitized_attachments,
             output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            max_images=max_images,
+            max_images=images_max,
             labels=labels,
             **(params.get("images") or {}),
         )
+        .call()
+    )
+
+    report_blocks = (
+        task(set_report_blocks)
+        .validate()
+        .set_task_instance_id("report_blocks")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("report_blocks") or {}))
+        .call()
+    )
+
+    headline = (
+        task(headline_stats)
+        .validate()
+        .set_task_instance_id("headline")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            patrols=patrol_teams,
+            trajectory=trajectory,
+            events=events,
+            **(params.get("headline") or {}),
+        )
+        .call()
+    )
+
+    template_path = (
+        task(load_report_template)
+        .validate()
+        .set_task_instance_id("template_path")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("template_path") or {}))
+        .call()
+    )
+
+    report_title = (
+        task(set_string_var)
+        .validate()
+        .set_task_instance_id("report_title")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("report_title") or {}))
+        .call()
+    )
+
+    report_subtitle = (
+        task(set_string_var)
+        .validate()
+        .set_task_instance_id("report_subtitle")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("report_subtitle") or {}))
+        .call()
+    )
+
+    report_area = (
+        task(set_string_var)
+        .validate()
+        .set_task_instance_id("report_area")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("report_area") or {}))
+        .call()
+    )
+
+    detail_intro = (
+        task(set_string_var)
+        .validate()
+        .set_task_instance_id("detail_intro")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("detail_intro") or {}))
         .call()
     )
 
@@ -3332,9 +2240,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            groupers=None,
+            skip=False,
+            missing_text=None,
             template_path=template_path,
             output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             filename_prefix="standard_patrol_events",
+            extra_text=[headline, report_blocks, labels],
             context={
                 "items": [
                     {"item_type": "text", "key": "title", "value": report_title},
@@ -3342,57 +2254,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                     {"item_type": "text", "key": "area", "value": report_area},
                     {"item_type": "timerange", "key": "period", "value": time_range},
                     {"item_type": "text", "key": "generated_by", "value": generated_by},
+                    {
+                        "item_type": "text",
+                        "key": "date_generated",
+                        "value": date_generated,
+                    },
                     {"item_type": "text", "key": "detail_intro", "value": detail_intro},
-                    {"item_type": "text", "key": "no_data", "value": no_data},
-                    {
-                        "item_type": "text",
-                        "key": "show_personnel",
-                        "value": show_personnel,
-                    },
-                    {
-                        "item_type": "text",
-                        "key": "show_headline_stats",
-                        "value": show_headline_stats,
-                    },
-                    {
-                        "item_type": "text",
-                        "key": "show_time_density",
-                        "value": show_time_density,
-                    },
-                    {
-                        "item_type": "text",
-                        "key": "show_events_by_type",
-                        "value": show_events_by_type,
-                    },
-                    {
-                        "item_type": "text",
-                        "key": "show_category_priority",
-                        "value": show_category_priority,
-                    },
-                    {
-                        "item_type": "text",
-                        "key": "show_events_bar",
-                        "value": show_events_bar,
-                    },
-                    {
-                        "item_type": "text",
-                        "key": "show_monthly_stacked",
-                        "value": show_monthly_stacked,
-                    },
-                    {
-                        "item_type": "text",
-                        "key": "show_conclusions",
-                        "value": show_conclusions,
-                    },
-                    {
-                        "item_type": "text",
-                        "key": "show_images_manual",
-                        "value": images_blank,
-                    },
-                    {"item_type": "text", "key": "n_patrols", "value": n_patrols},
-                    {"item_type": "text", "key": "total_km", "value": total_km},
-                    {"item_type": "text", "key": "total_hours", "value": total_hours},
-                    {"item_type": "text", "key": "n_events", "value": n_events},
+                    {"item_type": "text", "key": "detail_mode", "value": detail_mode},
                     {"item_type": "table", "key": "personnel", "value": personnel},
                     {"item_type": "table", "key": "effort", "value": effort},
                     {
@@ -3418,42 +2286,538 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                     {
                         "item_type": "image",
                         "key": "tracks_map",
-                        "value": tracks_map,
-                        "width_inches": 6.5,
+                        "value": tracks_map_static,
+                        "width_inches": 6.6,
                     },
                     {
                         "item_type": "image",
                         "key": "time_density_map",
-                        "value": time_density_map,
-                        "width_inches": 6.5,
+                        "value": time_density_map_static,
+                        "width_inches": 6.6,
                     },
                     {
                         "item_type": "image",
                         "key": "event_density_map",
-                        "value": event_density_map,
-                        "width_inches": 6.5,
+                        "value": event_density_map_static,
+                        "width_inches": 6.6,
                     },
                     {
                         "item_type": "image",
                         "key": "events_bar",
                         "value": events_bar,
-                        "width_inches": 6.0,
+                        "width_inches": 6.6,
                     },
                     {
                         "item_type": "image",
-                        "key": "monthly_stacked",
-                        "value": monthly_stacked,
-                        "width_inches": 6.0,
+                        "key": "monthly_chart",
+                        "value": monthly_chart,
+                        "width_inches": 6.6,
                     },
                     {
                         "item_type": "image_list",
                         "key": "images",
                         "value": images,
-                        "width_inches": 4.0,
+                        "width_inches": 3.4,
                     },
                 ]
             },
             **(params.get("report") or {}),
+        )
+        .call()
+    )
+
+    kpi_patrols = (
+        task(dataframe_column_nunique)
+        .validate()
+        .set_task_instance_id("kpi_patrols")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=patrol_teams,
+            column_name="patrol_id",
+            **(params.get("kpi_patrols") or {}),
+        )
+        .call()
+    )
+
+    kpi_patrols_widget = (
+        task(create_single_value_widget_single_view)
+        .validate()
+        .set_task_instance_id("kpi_patrols_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            decimal_places=0,
+            title="Patrols",
+            data=kpi_patrols,
+            **(params.get("kpi_patrols_widget") or {}),
+        )
+        .call()
+    )
+
+    kpi_km = (
+        task(dataframe_column_sum)
+        .validate()
+        .set_task_instance_id("kpi_km")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=trajectory, column_name="dist_meters", **(params.get("kpi_km") or {})
+        )
+        .call()
+    )
+
+    kpi_km_unit = (
+        task(with_unit)
+        .validate()
+        .set_task_instance_id("kpi_km_unit")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            value=kpi_km,
+            original_unit="m",
+            new_unit="km",
+            **(params.get("kpi_km_unit") or {}),
+        )
+        .call()
+    )
+
+    kpi_km_widget = (
+        task(create_single_value_widget_single_view)
+        .validate()
+        .set_task_instance_id("kpi_km_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Distance",
+            data=kpi_km_unit,
+            decimal_places=0,
+            **(params.get("kpi_km_widget") or {}),
+        )
+        .call()
+    )
+
+    kpi_hours = (
+        task(dataframe_column_sum)
+        .validate()
+        .set_task_instance_id("kpi_hours")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=trajectory,
+            column_name="timespan_seconds",
+            **(params.get("kpi_hours") or {}),
+        )
+        .call()
+    )
+
+    kpi_hours_unit = (
+        task(with_unit)
+        .validate()
+        .set_task_instance_id("kpi_hours_unit")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            value=kpi_hours,
+            original_unit="s",
+            new_unit="h",
+            **(params.get("kpi_hours_unit") or {}),
+        )
+        .call()
+    )
+
+    kpi_hours_widget = (
+        task(create_single_value_widget_single_view)
+        .validate()
+        .set_task_instance_id("kpi_hours_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Patrol hours",
+            data=kpi_hours_unit,
+            decimal_places=0,
+            **(params.get("kpi_hours_widget") or {}),
+        )
+        .call()
+    )
+
+    kpi_events = (
+        task(dataframe_count)
+        .validate()
+        .set_task_instance_id("kpi_events")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(df=events, **(params.get("kpi_events") or {}))
+        .call()
+    )
+
+    kpi_events_widget = (
+        task(create_single_value_widget_single_view)
+        .validate()
+        .set_task_instance_id("kpi_events_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            decimal_places=0,
+            title="Events",
+            data=kpi_events,
+            **(params.get("kpi_events_widget") or {}),
+        )
+        .call()
+    )
+
+    tracks_widget = (
+        task(create_map_widget_single_view)
+        .validate()
+        .set_task_instance_id("tracks_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Patrol tracks and events",
+            data=tracks_map,
+            **(params.get("tracks_widget") or {}),
+        )
+        .call()
+    )
+
+    effort_table_html = (
+        task(draw_table)
+        .validate()
+        .set_task_instance_id("effort_table_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            columns=None,
+            table_config=None,
+            dataframe=effort,
+            **(params.get("effort_table_html") or {}),
+        )
+        .call()
+    )
+
+    effort_table = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("effort_table")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=effort_table_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="effort_table",
+            **(params.get("effort_table") or {}),
+        )
+        .call()
+    )
+
+    effort_widget = (
+        task(create_table_widget_single_view)
+        .validate()
+        .set_task_instance_id("effort_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Patrol effort",
+            data=effort_table,
+            **(params.get("effort_widget") or {}),
+        )
+        .call()
+    )
+
+    td_widget = (
+        task(create_map_widget_single_view)
+        .validate()
+        .set_task_instance_id("td_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Patrol time density",
+            data=time_density_map,
+            **(params.get("td_widget") or {}),
+        )
+        .call()
+    )
+
+    ed_widget = (
+        task(create_map_widget_single_view)
+        .validate()
+        .set_task_instance_id("ed_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Event density",
+            data=event_density_map,
+            **(params.get("ed_widget") or {}),
+        )
+        .call()
+    )
+
+    events_bar_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("events_bar_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Events", data=events_bar, **(params.get("events_bar_widget") or {})
+        )
+        .call()
+    )
+
+    monthly_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("monthly_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Events by month",
+            data=monthly_chart,
+            **(params.get("monthly_widget") or {}),
+        )
+        .call()
+    )
+
+    event_summary_html = (
+        task(draw_table)
+        .validate()
+        .set_task_instance_id("event_summary_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            columns=None,
+            table_config=None,
+            dataframe=events_by_type,
+            **(params.get("event_summary_html") or {}),
+        )
+        .call()
+    )
+
+    event_summary_table = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("event_summary_table")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=event_summary_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="event_summary_table",
+            **(params.get("event_summary_table") or {}),
+        )
+        .call()
+    )
+
+    event_summary_widget = (
+        task(create_table_widget_single_view)
+        .validate()
+        .set_task_instance_id("event_summary_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Event summary",
+            data=event_summary_table,
+            **(params.get("event_summary_widget") or {}),
+        )
+        .call()
+    )
+
+    event_records_html = (
+        task(draw_table)
+        .validate()
+        .set_task_instance_id("event_records_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            columns=None,
+            table_config=None,
+            dataframe=event_details,
+            **(params.get("event_records_html") or {}),
+        )
+        .call()
+    )
+
+    event_records_table = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("event_records_table")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=event_records_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="event_records_table",
+            **(params.get("event_records_table") or {}),
+        )
+        .call()
+    )
+
+    event_records_widget = (
+        task(create_table_widget_single_view)
+        .validate()
+        .set_task_instance_id("event_records_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Event records",
+            data=event_records_table,
+            **(params.get("event_records_widget") or {}),
         )
         .call()
     )
@@ -3466,15 +2830,27 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .with_tracing()
         .skipif(
             conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
+                never,
             ],
             unpack_depth=1,
         )
         .partial(
             details=workflow_details,
-            widgets=[],
             time_range=time_range,
+            widgets=[
+                kpi_patrols_widget,
+                kpi_km_widget,
+                kpi_hours_widget,
+                kpi_events_widget,
+                tracks_widget,
+                effort_widget,
+                td_widget,
+                ed_widget,
+                events_bar_widget,
+                monthly_widget,
+                event_summary_widget,
+                event_records_widget,
+            ],
             **(params.get("dashboard") or {}),
         )
         .call()

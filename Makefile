@@ -15,11 +15,10 @@ compile: build
 recompile: build
 	./dev/recompile.sh $(WORKFLOW) --update
 
-# Real data (no mock IO): param.yaml with partner and data source set to PARTNER.
+# Real data (no mock IO): the PARTNER case's params from test-cases.yaml.
 run:
 	mkdir -p $(OUTPUT_DIR)
-	pixi run yq -y '.partner.var = "$(PARTNER)" | .er_client.data_source.name = "$(PARTNER)"' \
-		workflows/$(WORKFLOW)/param.yaml > $(OUTPUT_DIR)/params.yaml
+	pixi run yq -y '."$(PARTNER)".params' workflows/$(WORKFLOW)/test-cases.yaml > $(OUTPUT_DIR)/params.yaml
 	cd $(PKG_DIR) && ECOSCOPE_WORKFLOWS_RESULTS="file://$(OUTPUT_DIR)" \
 		pixi run ecoscope-workflows-$(subst _,-,$(WORKFLOW))-workflow run \
 		--config-file $(OUTPUT_DIR)/params.yaml --execution-mode sequential --no-mock-io
