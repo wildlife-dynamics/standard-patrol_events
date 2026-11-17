@@ -43,9 +43,12 @@ TEST_CASES_YAML = ARTIFACTS.parent / "test-cases.yaml"
 MATCHSPEC_OVERRIDE = "ecoscope-workflows-standard-patrol-events-workflow"
 RESULTS_ENV_VAR = "ECOSCOPE_WORKFLOWS_RESULTS"
 IO_TASKS_IMPORTABLE_REFERENCES = [
+    "ecoscope_workflows_ext_custom.tasks.io.get_current_user",
+    "ecoscope_workflows_ext_custom.tasks.spatial_ops.get_area_scope",
     "ecoscope.platform.tasks.io.get_patrols_from_combined_params",
     "ecoscope.platform.tasks.io.get_patrol_observations_from_patrols_df_and_combined_params",
     "ecoscope_workflows_ext_custom.tasks.io.get_patrol_team_sources",
+    "ecoscope_workflows_ext_custom.tasks.io.get_patrol_type_display",
     "ecoscope.platform.tasks.io.get_events",
     "ecoscope.platform.tasks.io.process_events_details",
     "ecoscope_workflows_ext_custom.tasks.io.get_event_type_lookup",

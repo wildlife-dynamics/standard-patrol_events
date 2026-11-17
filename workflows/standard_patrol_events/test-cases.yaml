@@ -1,249 +1,237 @@
+# One case per site; `make run PARTNER=<case>` runs a case against live EarthRanger.
 costaecuador:
   name: costaecuador
-  description: Costa Ecuador profile, Aug-Oct 2026.
+  description: Costa Ecuador, Aug-Oct 2026, grouped by team (community).
   params:
     workflow_details:
-      name: Standard Patrol & Events Report
-      description: ""
+      name: Reporte de patrullajes y eventos
+      description: Costa Ecuador
     er_client:
       data_source:
         name: costaecuador
     time_range:
-      since: "2026-08-01T00:00:00Z"
-      until: "2026-11-01T00:00:00Z"
+      since: '2026-08-01T00:00:00'
+      until: '2026-11-01T00:00:00'
       timezone:
         label: America/Guayaquil
         tzCode: America/Guayaquil
-        name: (UTC-05:00) Guayaquil
-        utc: "-05:00"
-    partner:
-      var: costaecuador
-    profile: {}
-    report_title:
-      var: Informe de patrullajes y eventos
-    report_subtitle:
-      var: ""
-    report_area:
-      var: ""
-    detail_intro:
-      var: ""
+        name: (UTC-05:00) America/Guayaquil
+        utc: -05:00
     base_maps: {}
     area_scope:
       level: site
+      unit: null
     patrol_params:
       patrol_types: []
-
-empty_period:
-  name: empty_period
-  description: Costa Ecuador, a period with no data.
-  params:
-    workflow_details:
-      name: Standard Patrol & Events Report
-      description: ""
-    er_client:
-      data_source:
-        name: costaecuador
-    time_range:
-      since: "2020-01-01T00:00:00Z"
-      until: "2020-01-02T00:00:00Z"
-      timezone:
-        label: America/Guayaquil
-        tzCode: America/Guayaquil
-        name: (UTC-05:00) Guayaquil
-        utc: "-05:00"
-    partner:
-      var: costaecuador
-    profile: {}
+    team_groups:
+      vars:
+      - PONGALILLO
+      - BELLAVISTA
+      - COSTA RICA
+      - EL CONCHAL
+      - PUERTO ROMA
+    effort_grouper:
+      var: team
+    labels:
+      language: es
+    period_events:
+      event_types: []
+    retrieved_events:
+      retrieval: all_in_period
+    state_events:
+      state: all
+    event_grouping:
+      var: event_type_display
+    detail_mode:
+      var: general
+    event_detail_tables:
+      detail_fields: {}
+    images_options:
+      mode: attachments
+      max_images: 12
+    report_blocks: {}
+    template_path:
+      template: standard
     report_title:
-      var: Informe de patrullajes y eventos
+      var: Reporte de patrullajes y eventos
     report_subtitle:
-      var: ""
+      var: Costa Ecuador
     report_area:
-      var: ""
+      var: Golfo de Guayaquil
     detail_intro:
-      var: ""
-    base_maps: {}
-    area_scope:
-      level: site
-    patrol_params:
-      patrol_types: []
-
+      var: ''
 apn:
   name: apn
-  description: apn profile, Aug-Oct 2026.
+  description: APN Los Alerces, Aug-Oct 2026, individual patrols (new patrol model site).
   params:
     workflow_details:
-      name: Standard Patrol & Events Report
-      description: ""
+      name: Reporte de patrullajes y eventos
+      description: Parque Nacional Los Alerces
     er_client:
       data_source:
         name: apn
     time_range:
-      since: "2026-08-01T00:00:00Z"
-      until: "2026-11-01T00:00:00Z"
+      since: '2026-08-01T00:00:00'
+      until: '2026-11-01T00:00:00'
       timezone:
         label: America/Argentina/Buenos_Aires
         tzCode: America/Argentina/Buenos_Aires
-        name: America/Argentina/Buenos_Aires
-        utc: "-03:00"
-    partner:
-      var: apn
-    profile: {}
-    report_title:
-      var: Informe de patrullajes y eventos
-    report_subtitle:
-      var: ""
-    report_area:
-      var: ""
-    detail_intro:
-      var: ""
+        name: (UTC-03:00) America/Argentina/Buenos_Aires
+        utc: -03:00
     base_maps: {}
     area_scope:
       level: site
+      unit: null
     patrol_params:
       patrol_types: []
-
-
-galapagos:
-  name: galapagos
-  description: galapagos profile, Aug-Oct 2026.
-  params:
-    workflow_details:
-      name: Standard Patrol & Events Report
-      description: ""
-    er_client:
-      data_source:
-        name: galapagos
-    time_range:
-      since: "2026-08-01T00:00:00Z"
-      until: "2026-11-01T00:00:00Z"
-      timezone:
-        label: Pacific/Galapagos
-        tzCode: Pacific/Galapagos
-        name: Pacific/Galapagos
-        utc: "-06:00"
-    partner:
-      var: galapagos
-    profile: {}
+    team_groups:
+      vars:
+      - GUARDAPARQUES ZONA SUR
+      - GUARDAPARQUES ZONA NORTE
+      - GUARDAPARQUES ZONA CENTRO
+      - GUARDAPARQUES OPERACIONES
+      - SINEP
+    effort_grouper:
+      var: individual_patrol
+    labels:
+      language: es
+    period_events:
+      event_types: []
+    retrieved_events:
+      retrieval: all_in_period
+    state_events:
+      state: all
+    event_grouping:
+      var: event_type_display
+    detail_mode:
+      var: general
+    event_detail_tables:
+      detail_fields: {}
+    images_options:
+      mode: attachments
+      max_images: 12
+    report_blocks:
+      personnel: true
+    template_path:
+      template: standard
     report_title:
-      var: Informe de patrullajes y eventos
+      var: Reporte de patrullajes y eventos
     report_subtitle:
-      var: ""
+      var: Parque Nacional Los Alerces
     report_area:
-      var: ""
+      var: Los Alerces
     detail_intro:
-      var: ""
-    base_maps: {}
-    area_scope:
-      level: site
-    patrol_params:
-      patrol_types: []
-
-
-icf:
-  name: icf
-  description: icf profile, Aug-Oct 2026.
-  params:
-    workflow_details:
-      name: Standard Patrol & Events Report
-      description: ""
-    er_client:
-      data_source:
-        name: icf
-    time_range:
-      since: "2026-08-01T00:00:00Z"
-      until: "2026-11-01T00:00:00Z"
-      timezone:
-        label: America/Tegucigalpa
-        tzCode: America/Tegucigalpa
-        name: America/Tegucigalpa
-        utc: "-06:00"
-    partner:
-      var: icf
-    profile: {}
-    report_title:
-      var: Informe de patrullajes y eventos
-    report_subtitle:
-      var: ""
-    report_area:
-      var: ""
-    detail_intro:
-      var: ""
-    base_maps: {}
-    area_scope:
-      level: site
-    patrol_params:
-      patrol_types: []
-
-
-parnaiguacu:
-  name: parnaiguacu
-  description: parnaiguacu profile, Aug-Oct 2026.
-  params:
-    workflow_details:
-      name: Standard Patrol & Events Report
-      description: ""
-    er_client:
-      data_source:
-        name: parnaiguacu
-    time_range:
-      since: "2026-08-01T00:00:00Z"
-      until: "2026-11-01T00:00:00Z"
-      timezone:
-        label: America/Sao_Paulo
-        tzCode: America/Sao_Paulo
-        name: America/Sao_Paulo
-        utc: "-03:00"
-    partner:
-      var: parnaiguacu
-    profile: {}
-    report_title:
-      var: Informe de patrullajes y eventos
-    report_subtitle:
-      var: ""
-    report_area:
-      var: ""
-    detail_intro:
-      var: ""
-    base_maps: {}
-    area_scope:
-      level: site
-    patrol_params:
-      patrol_types: []
-
-
+      var: ''
 mep:
   name: mep
-  description: mep profile, Aug-Oct 2026.
+  description: mep test site (new patrol model with teams), Aug-Oct 2026, English.
   params:
     workflow_details:
-      name: Standard Patrol & Events Report
-      description: ""
+      name: Patrol & Events Report
+      description: mep test site
     er_client:
       data_source:
         name: mep
     time_range:
-      since: "2026-08-01T00:00:00Z"
-      until: "2026-11-01T00:00:00Z"
+      since: '2026-08-01T00:00:00'
+      until: '2026-11-01T00:00:00'
       timezone:
         label: UTC
         tzCode: UTC
-        name: UTC
-        utc: "+00:00"
-    partner:
-      var: mep
-    profile: {}
-    report_title:
-      var: Informe de patrullajes y eventos
-    report_subtitle:
-      var: ""
-    report_area:
-      var: ""
-    detail_intro:
-      var: ""
+        name: (UTC+00:00) UTC
+        utc: +00:00
     base_maps: {}
     area_scope:
       level: site
+      unit: null
     patrol_params:
       patrol_types: []
-
+    team_groups:
+      vars: []
+    effort_grouper:
+      var: team
+    labels:
+      language: en
+    period_events:
+      event_types: []
+    retrieved_events:
+      retrieval: all_in_period
+    state_events:
+      state: all
+    event_grouping:
+      var: event_type_display
+    detail_mode:
+      var: general
+    event_detail_tables:
+      detail_fields: {}
+    images_options:
+      mode: attachments
+      max_images: 12
+    report_blocks:
+      personnel: true
+    template_path:
+      template: standard
+    report_title:
+      var: Patrol & Events Report
+    report_subtitle:
+      var: mep test site
+    report_area:
+      var: Whole site
+    detail_intro:
+      var: ''
+empty_period:
+  name: empty_period
+  description: 'Costa Ecuador, a period with no data: every block must render ''no data''.'
+  params:
+    workflow_details:
+      name: Reporte de patrullajes y eventos
+      description: Costa Ecuador
+    er_client:
+      data_source:
+        name: costaecuador
+    time_range:
+      since: '2020-01-01T00:00:00'
+      until: '2020-01-02T00:00:00'
+      timezone:
+        label: America/Guayaquil
+        tzCode: America/Guayaquil
+        name: (UTC-05:00) America/Guayaquil
+        utc: -05:00
+    base_maps: {}
+    area_scope:
+      level: site
+      unit: null
+    patrol_params:
+      patrol_types: []
+    team_groups:
+      vars: []
+    effort_grouper:
+      var: patrol_type
+    labels:
+      language: es
+    period_events:
+      event_types: []
+    retrieved_events:
+      retrieval: all_in_period
+    state_events:
+      state: all
+    event_grouping:
+      var: event_type_display
+    detail_mode:
+      var: general
+    event_detail_tables:
+      detail_fields: {}
+    images_options:
+      mode: attachments
+      max_images: 12
+    report_blocks: {}
+    template_path:
+      template: standard
+    report_title:
+      var: Reporte de patrullajes y eventos
+    report_subtitle:
+      var: Costa Ecuador
+    report_area:
+      var: Golfo de Guayaquil
+    detail_intro:
+      var: ''
