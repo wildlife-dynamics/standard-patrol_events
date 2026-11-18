@@ -142,9 +142,6 @@ from ecoscope.platform.tasks.results import draw_map as draw_map
 from ecoscope.platform.tasks.results import (
     draw_time_series_bar_chart as draw_time_series_bar_chart,
 )
-from ecoscope.platform.tasks.results import (
-    view_state_from_layers as view_state_from_layers,
-)
 from ecoscope.platform.tasks.skip import all_geometry_are_none as all_geometry_are_none
 from ecoscope.platform.tasks.transformation import (
     apply_classification as apply_classification,
@@ -166,6 +163,9 @@ from ecoscope.platform.tasks.transformation import ensure_wgs84 as ensure_wgs84
 from ecoscope.platform.tasks.transformation import sort_values as sort_values
 from ecoscope_workflows_ext_custom.tasks.analysis import (
     grid_cell_size_for_extent as grid_cell_size_for_extent,
+)
+from ecoscope_workflows_ext_custom.tasks.results import (
+    compute_fitted_view_state as compute_fitted_view_state,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
     add_event_display_columns as add_event_display_columns,
@@ -1158,7 +1158,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     tracks_view = (
-        task(view_state_from_layers)
+        task(compute_fitted_view_state)
         .validate()
         .set_task_instance_id("tracks_view")
         .handle_errors()
@@ -1172,7 +1172,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         )
         .partial(
             max_zoom=20,
-            layers=[tracks_layer, events_layer],
+            geo_layers=[tracks_layer, events_layer],
             **(params.get("tracks_view") or {}),
         )
         .call()
@@ -1451,7 +1451,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     td_view = (
-        task(view_state_from_layers)
+        task(compute_fitted_view_state)
         .validate()
         .set_task_instance_id("td_view")
         .handle_errors()
@@ -1463,7 +1463,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(max_zoom=20, layers=[td_layer], **(params.get("td_view") or {}))
+        .partial(max_zoom=20, geo_layers=[td_layer], **(params.get("td_view") or {}))
         .call()
     )
 
@@ -1766,7 +1766,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     ed_view = (
-        task(view_state_from_layers)
+        task(compute_fitted_view_state)
         .validate()
         .set_task_instance_id("ed_view")
         .handle_errors()
@@ -1778,7 +1778,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(max_zoom=20, layers=[ed_layer], **(params.get("ed_view") or {}))
+        .partial(max_zoom=20, geo_layers=[ed_layer], **(params.get("ed_view") or {}))
         .call()
     )
 
