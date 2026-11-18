@@ -13,10 +13,10 @@ installed_requirements:
   version: {version: ==2.28.0}
 - channel: file:///tmp/ecoscope-workflows-custom/release/artifacts/
   name: ecoscope-workflows-ext-custom
-  version: {version: ==0.1.6.dev25+gb938a84b5.d20261118}
+  version: {version: ==0.1.6.dev27+g6ee88a0f}
 - channel: file:///tmp/ecoscope-workflows-custom/release/artifacts/
   name: ecoscope-workflows-ext-standard-patrol-events
-  version: {version: ==10000.dev12+g3e9800251.d20261118}
+  version: {version: ==10000.dev13+gf491cdd75}
 - channel: conda-forge
   name: pydeck
   version: {version: ==0.9.2}
