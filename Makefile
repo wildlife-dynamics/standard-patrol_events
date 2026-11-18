@@ -58,9 +58,15 @@ clear-cache:
 	rm -rf /tmp/$(WORKFLOW)/wt-cache
 
 # top_level.txt maps each editable package to its distribution, so the cache can version it.
+LINKED := ecoscope_workflows_ext_custom ecoscope_workflows_ext_standard_patrol_events
 link:
+	# pip's reinstall at a new version leaves the old dist-info holding only our
+	# top_level.txt; that stub shadows the real metadata and blocks pip, so clear it first.
+	for pkg in $(LINKED); do for d in $(DEV_ENV)/lib/python3*/site-packages/$${pkg}-*.dist-info; do \
+		if [ -d $$d ] && [ ! -f $$d/METADATA ]; then rm -f $$d/top_level.txt && rmdir $$d; fi; \
+	done; done
 	$(DEV_ENV)/bin/python -m pip install -q --no-deps \
 		-e $(EXT_CUSTOM) -e $(CURDIR)/src/ecoscope-workflows-ext-standard-patrol-events
-	for pkg in ecoscope_workflows_ext_custom ecoscope_workflows_ext_standard_patrol_events; do \
-		echo $$pkg > $$(ls -d $(DEV_ENV)/lib/python3*/site-packages/$${pkg}-*.dist-info | head -1)/top_level.txt; \
-	done
+	for pkg in $(LINKED); do for d in $(DEV_ENV)/lib/python3*/site-packages/$${pkg}-*.dist-info; do \
+		if [ -f $$d/METADATA ]; then echo $$pkg > $$d/top_level.txt; fi; \
+	done; done

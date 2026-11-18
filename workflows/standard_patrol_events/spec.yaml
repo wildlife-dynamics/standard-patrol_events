@@ -368,10 +368,18 @@ workflow:
     task: set_string_var
 
   # ── Maps (each drawn twice: interactive for the dashboard, static for the report) ─
+  # Legs without a patrol type: "-" in the legend (as in the legs table), not "NaN".
+  - id: tracks_typed
+    task: fill_na
+    partial:
+      df: ${{ workflow.trajectory.return }}
+      value: "-"
+      columns: [extra__patrol_type__display]
+
   - id: tracks_colored
     task: apply_color_map
     partial:
-      df: ${{ workflow.trajectory.return }}
+      df: ${{ workflow.tracks_typed.return }}
       input_column_name: extra__patrol_type__display
       colormap: tab10
       output_column_name: patrol_color
@@ -422,10 +430,19 @@ workflow:
       legend: {label_column: "${{ workflow.event_grouping.return }}", color_column: event_color}
       tooltip_columns: [serial_number, event_type_display]
 
+  # A period with no events skips the events layer; keep the tracks map anyway.
+  - id: tracks_layers
+    task: collect_map_layers
+    skipif:
+      conditions:
+        - never
+    partial:
+      layers: ["${{ workflow.tracks_layer.return }}", "${{ workflow.events_layer.return }}"]
+
   - id: tracks_view  # dashboard widget (~650x400 px)
     task: fit_view_state
     partial:
-      geo_layers: ["${{ workflow.tracks_layer.return }}", "${{ workflow.events_layer.return }}"]
+      geo_layers: ${{ workflow.tracks_layers.return }}
       width_px: 650
       height_px: 400
       padding: 0.15
@@ -434,7 +451,7 @@ workflow:
   - id: tracks_view_static  # report map (1280x720 px)
     task: fit_view_state
     partial:
-      geo_layers: ["${{ workflow.tracks_layer.return }}", "${{ workflow.events_layer.return }}"]
+      geo_layers: ${{ workflow.tracks_layers.return }}
       width_px: 1280
       height_px: 720
       padding: 0.15
@@ -445,7 +462,7 @@ workflow:
     partial:
       output_type: "html"
       max_zoom: 20
-      geo_layers: ["${{ workflow.tracks_layer.return }}", "${{ workflow.events_layer.return }}"]
+      geo_layers: ${{ workflow.tracks_layers.return }}
       tile_layers: ${{ workflow.base_maps.return }}
       view_state: ${{ workflow.tracks_view.return }}
       static: false
@@ -464,7 +481,7 @@ workflow:
     partial:
       output_type: "html"
       max_zoom: 20
-      geo_layers: ["${{ workflow.tracks_layer.return }}", "${{ workflow.events_layer.return }}"]
+      geo_layers: ${{ workflow.tracks_layers.return }}
       tile_layers: ${{ workflow.base_maps.return }}
       view_state: ${{ workflow.tracks_view_static.return }}
       static: true
