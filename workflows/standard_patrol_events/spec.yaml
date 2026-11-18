@@ -664,10 +664,15 @@ workflow:
       title: null
       legend_style: {placement: bottom-right}
 
+  - id: tracks_map_static_clean  # report image: no camera button
+    task: hide_save_image_button
+    partial:
+      html: ${{ workflow.tracks_map_static_html.return }}
+
   - id: tracks_map_static
     task: persist_text
     partial:
-      text: ${{ workflow.tracks_map_static_html.return }}
+      text: ${{ workflow.tracks_map_static_clean.return }}
       root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       filename_suffix: tracks_map_static
 
@@ -778,10 +783,15 @@ workflow:
       title: null
       legend_style: {placement: bottom-right}
 
+  - id: td_map_static_clean  # report image: no camera button
+    task: hide_save_image_button
+    partial:
+      html: ${{ workflow.td_map_static_html.return }}
+
   - id: time_density_map_static
     task: persist_text
     partial:
-      text: ${{ workflow.td_map_static_html.return }}
+      text: ${{ workflow.td_map_static_clean.return }}
       root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       filename_suffix: time_density_map_static
 
@@ -915,10 +925,15 @@ workflow:
       title: null
       legend_style: {placement: bottom-right}
 
+  - id: ed_map_static_clean  # report image: no camera button
+    task: hide_save_image_button
+    partial:
+      html: ${{ workflow.ed_map_static_html.return }}
+
   - id: event_density_map_static
     task: persist_text
     partial:
-      text: ${{ workflow.ed_map_static_html.return }}
+      text: ${{ workflow.ed_map_static_clean.return }}
       root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       filename_suffix: event_density_map_static
 
