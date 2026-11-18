@@ -107,6 +107,9 @@ from ecoscope.platform.tasks.transformation import ensure_wgs84 as ensure_wgs84
 from ecoscope.platform.tasks.transformation import sort_values as sort_values
 from ecoscope.platform.tasks.transformation import with_unit as with_unit
 from ecoscope_workflows_ext_custom.tasks.analysis import (
+    grid_cell_size_for_extent as grid_cell_size_for_extent,
+)
+from ecoscope_workflows_ext_custom.tasks.analysis import (
     headline_stats as headline_stats,
 )
 from ecoscope_workflows_ext_custom.tasks.analysis import (
@@ -1521,6 +1524,29 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    ed_cell_size = (
+        task(grid_cell_size_for_extent)
+        .validate()
+        .set_task_instance_id("ed_cell_size")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+                all_geometry_are_none,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            aoi=events_located,
+            cells_across=30,
+            min_size_m=250.0,
+            **(params.get("ed_cell_size") or {}),
+        )
+        .call()
+    )
+
     ed_meshgrid = (
         task(create_meshgrid)
         .validate()
@@ -1539,7 +1565,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             crs="EPSG:3857",
             aoi=events_located,
             intersecting_only=False,
-            auto_scale_or_custom_cell_size={"auto_scale_or_custom": "Auto-scale"},
+            auto_scale_or_custom_cell_size=ed_cell_size,
             **(params.get("ed_meshgrid") or {}),
         )
         .call()

@@ -19,7 +19,8 @@ SPEC = Path(__file__).parents[3] / "workflows/standard_patrol_events/spec.yaml"
 
 def test_spec_meshgrids_auto_scale():
     sizes = re.findall(r"auto_scale_or_custom_cell_size: (.*)", SPEC.read_text())
-    assert len(sizes) == 2 and all("Auto-scale" in s for s in sizes), sizes
+    # time density: core auto-scale; event density: sized from the data extent. Never a fixed size.
+    assert len(sizes) == 2 and not any("grid_cell_size" in s for s in sizes), sizes
 
 
 @pytest.mark.parametrize("points", [
