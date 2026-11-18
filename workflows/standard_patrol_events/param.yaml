@@ -38,6 +38,8 @@ tracks_color_by:
   var: patrol_type
 teams:
   vars: []
+leader_group:
+  group: ""
 retrieved_events:
   retrieval: all_in_period
 state_events:

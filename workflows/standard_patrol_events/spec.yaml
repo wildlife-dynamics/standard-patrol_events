@@ -50,12 +50,29 @@ rjsf-overrides:
       - {metric: patrol_count}
       - {metric: total_distance, unit: km}
       - {metric: total_duration, unit: h}
+    leader_group.properties.group.title: Leader's subject group
+    leader_group.properties.group.description: Keeps patrols led by a person in this group (pick one of your patrol member groups). Leave empty for all leaders.
+    leader_group.properties.group.ecoscope:transform:
+      - transformer: EarthRangerEnumResolver
+        transformer_kws:
+          type: subject_group_name
+          depends_on: properties.er_client.properties.data_source.properties.name
+    patrol_params.properties.patrol_types.ecoscope:transform:
+      - transformer: EarthRangerEnumResolver
+        transformer_kws:
+          type: patrol_type
+          depends_on: properties.er_client.properties.data_source.properties.name
     teams.properties.vars.title: Teams
     teams.properties.vars.description: ER patrol team names (not leaders). Keeps patrols with at least one leg in these teams. Leave empty for all teams.
     teams.properties.vars.default: []
     event_types.properties.vars.title: Event types
     event_types.properties.vars.description: Event type values to include. Leave empty for all types (then events of retired types linked to patrols are included too).
     event_types.properties.vars.default: []
+    event_types.properties.vars.ecoscope:transform:
+      - transformer: EarthRangerEnumResolver
+        transformer_kws:
+          type: event_type
+          depends_on: properties.er_client.properties.data_source.properties.name
     event_grouping.properties.var.title: Group events by
     event_grouping.properties.var.default: event_type_display
     event_grouping.properties.var.oneOf:
@@ -201,7 +218,7 @@ workflow:
     id: teams
     task: set_list_of_string_vars
 
-  - id: patrols
+  - id: patrols_team
     task: filter_by_teams
     partial:
       df: ${{ workflow.patrols_serial.return }}
@@ -216,10 +233,33 @@ workflow:
       legs: ${{ workflow.legs_team_names.return }}
       teams: ${{ workflow.teams.return }}
 
+  # Leader filter: patrols with a leg led by a person in the chosen subject group (one of
+  # the patrol configuration's member groups, where ER takes leaders from), by subject id
+  - name: Leader's Subject Group
+    id: leader_group
+    task: get_leader_group_ids
+    partial:
+      client: ${{ workflow.er_client.return }}
+
+  - id: patrols
+    task: filter_by_leaders
+    partial:
+      df: ${{ workflow.patrols_team.return }}
+      patrols_df: ${{ workflow.patrols_team.return }}
+      leader_ids: ${{ workflow.leader_group.return }}
+      id_column: id
+
+  - id: legs_led
+    task: filter_by_leaders
+    partial:
+      df: ${{ workflow.legs_teamed.return }}
+      patrols_df: ${{ workflow.patrols_team.return }}
+      leader_ids: ${{ workflow.leader_group.return }}
+
   - id: legs_roster_names
     task: add_patrol_roster_names
     partial:
-      df: ${{ workflow.legs_teamed.return }}
+      df: ${{ workflow.legs_led.return }}
       client: ${{ workflow.er_client.return }}
 
   - id: legs_named
