@@ -49,6 +49,6 @@ def set_images_options(
         Field(title="Images", description="Fill from event attachments, or leave the photo cells blank to add by hand."),
     ] = "attachments",
     max_images: Annotated[int, Field(title="Maximum number of images", ge=0)] = 50,
-) -> Annotated[dict, Field(description="list_only (no download) and max_images for the image tasks.")]:
+) -> Annotated[dict[str, bool | int], Field(description="list_only (no download) and max_images for the image tasks.")]:
     """Images block options; 'blank' lists the photos (captions) without downloading them."""
     return {"list_only": mode == "blank", "max_images": max_images}

@@ -34,8 +34,8 @@ costaecuador:
       var: team
     labels:
       language: es
-    period_events:
-      event_types: []
+    event_types:
+      vars: []
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -95,8 +95,8 @@ apn:
       var: individual_patrol
     labels:
       language: es
-    period_events:
-      event_types: []
+    event_types:
+      vars: []
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -152,8 +152,8 @@ mep:
       var: team
     labels:
       language: en
-    period_events:
-      event_types: []
+    event_types:
+      vars: []
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -209,8 +209,8 @@ empty_period:
       var: patrol_type
     labels:
       language: es
-    period_events:
-      event_types: []
+    event_types:
+      vars: []
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -266,8 +266,8 @@ belize:
       var: team
     labels:
       language: en
-    period_events:
-      event_types: []
+    event_types:
+      vars: []
     retrieved_events:
       retrieval: all_in_period
     state_events:
