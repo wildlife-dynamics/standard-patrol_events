@@ -182,10 +182,14 @@ def section(flag, title_var, body):
 
 
 # ── cover ─────────────────────────────────────────────────────────────────────
+# No logos would leave a table with no columns and a row with no cells, which Word
+# refuses to open (schema validators accept it), so the table only exists with logos.
+tag("{%p if logos %}")
 logos = doc.add_table(rows=1, cols=3)
 logos.alignment = WD_TABLE_ALIGNMENT.CENTER
 c = logos.rows[0].cells
 c[0].text, c[1].text, c[2].text = "{%tc for l in logos %}", "{{ l.image }}", "{%tc endfor %}"
+tag("{%p endif %}")
 doc.add_paragraph("{{ title }}", style="Title")
 p("{{ subtitle }}", size=12, color=MUTED, space_after=10)
 

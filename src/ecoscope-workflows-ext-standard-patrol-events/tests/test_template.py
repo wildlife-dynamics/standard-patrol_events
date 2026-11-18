@@ -30,7 +30,7 @@ def _text(doc):
     return "\n".join(parts)
 
 
-def _render(tmp_path, *, blocks=None, effort=None, detail_mode="general", photo=None, personnel=None):
+def _render(tmp_path, *, blocks=None, effort=None, detail_mode="general", photo=None, personnel=None, logos=True):
     png = tmp_path / "t.png"
     Image.new("RGB", (40, 30), "red").save(png)
     df = pd.DataFrame({"a": ["x1", "x2"], "b": ["y1", "y2"]})
@@ -47,7 +47,7 @@ def _render(tmp_path, *, blocks=None, effort=None, detail_mode="general", photo=
         TableListContextItem(key="event_detail_tables", value=[{"heading": "CAT", "title": "TYPE (2)", "table": df}]),
         ImageListContextItem(key="images", value=pd.DataFrame({"caption": ["CAP1", "CAP2"], "image_path": [str(photo or png)] * 2}),
                              width_inches=1),
-        ImageListContextItem(key="logos", value=pd.DataFrame({"caption": [""], "image_path": [str(png)]}), width_inches=1),
+        ImageListContextItem(key="logos", value=pd.DataFrame({"caption": [""] if logos else [], "image_path": [str(png)] if logos else []}), width_inches=1),
     ]
     out = create_docx(template_path=str(TEMPLATE), context=TemplateContext(items=items), output_dir=str(tmp_path),
                       extra_text=[L, set_report_blocks(personnel=True, monthly_chart=True, category_priority=True,
@@ -110,3 +110,10 @@ def test_rendered_report_keeps_word_schema_order(tmp_path):
             assert tags.index("tblBorders") < tags.index("tblLook"), tags
     zoom = doc.settings.element.find(qn("w:zoom"))
     assert zoom is None or zoom.get(qn("w:percent"))
+
+
+def test_no_logos_leaves_no_empty_table(tmp_path):
+    # an empty logo loop left <w:tbl><w:tblGrid/><w:tr/></w:tbl>, which Word refuses to open
+    for logos in (False, True):
+        xml = _render(tmp_path, logos=logos).element.body.xml
+        assert "<w:tr/>" not in xml and "<w:tblGrid/>" not in xml, logos
