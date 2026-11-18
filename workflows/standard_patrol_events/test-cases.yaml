@@ -411,7 +411,7 @@ apncentral:
 
 apncentral_patrol70:
   name: apncentral_patrol70
-  description: 'Single-patrol report for APN Central #70 (two legs); new patrol schema with multi-leg test patrols #66-70 (Nov
+  description: 'Single-patrol report for APN Central #70 (two legs, 11 Nov), form dates deliberately in January; new patrol schema with multi-leg test patrols #66-70 (Nov
     5-12 2026), Spanish.'
   params:
     workflow_details:
@@ -421,8 +421,8 @@ apncentral_patrol70:
       data_source:
         name: apncentral
     time_range:
-      since: '2026-11-05T00:00:00'
-      until: '2026-11-12T00:00:00'
+      since: '2026-01-01T00:00:00'
+      until: '2026-01-08T00:00:00'
       timezone:
         label: America/Argentina/Buenos_Aires
         tzCode: America/Argentina/Buenos_Aires
