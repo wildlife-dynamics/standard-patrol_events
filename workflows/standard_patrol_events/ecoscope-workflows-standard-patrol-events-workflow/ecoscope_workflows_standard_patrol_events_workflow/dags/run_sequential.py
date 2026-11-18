@@ -120,6 +120,9 @@ from ecoscope_workflows_ext_custom.tasks.io import (
     get_event_type_lookup as get_event_type_lookup,
 )
 from ecoscope_workflows_ext_custom.tasks.io import (
+    get_patrol_leg_schemas as get_patrol_leg_schemas,
+)
+from ecoscope_workflows_ext_custom.tasks.io import (
     get_patrol_team_sources as get_patrol_team_sources,
 )
 from ecoscope_workflows_ext_custom.tasks.io import (
@@ -168,10 +171,10 @@ from ecoscope_workflows_ext_custom.tasks.transformation import (
     get_collection_item as get_collection_item,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
-    resolve_patrol_team as resolve_patrol_team,
+    patrol_legs_table as patrol_legs_table,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
-    select_columns as select_columns,
+    resolve_patrol_team as resolve_patrol_team,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     get_report_date as get_report_date,
@@ -720,28 +723,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    personnel = (
-        task(select_columns)
-        .validate()
-        .set_task_instance_id("personnel")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            raise_on_missing=False,
-            df=patrol_teams,
-            columns=["patrol_serial_number", "team", "personnel"],
-            **(params.get("personnel") or {}),
-        )
-        .call()
-    )
-
     period_events = (
         task(get_events)
         .validate()
@@ -945,6 +926,51 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             timezone=timezone,
             columns=["time"],
             **(params.get("events") or {}),
+        )
+        .call()
+    )
+
+    leg_schemas = (
+        task(get_patrol_leg_schemas)
+        .validate()
+        .set_task_instance_id("leg_schemas")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            client=er_client, patrols_df=patrols, **(params.get("leg_schemas") or {})
+        )
+        .call()
+    )
+
+    personnel = (
+        task(patrol_legs_table)
+        .validate()
+        .set_task_instance_id("personnel")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            patrols_df=patrols,
+            sources=team_sources,
+            schemas=leg_schemas,
+            patrol_type_display=patrol_type_display,
+            labels=labels,
+            timezone=timezone,
+            events=events,
+            closing_event_types=["cierre_de_patrulla"],
+            max_fields=10,
+            **(params.get("personnel") or {}),
         )
         .call()
     )
@@ -2763,6 +2789,68 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    legs_table_html = (
+        task(draw_table)
+        .validate()
+        .set_task_instance_id("legs_table_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            columns=None,
+            table_config=None,
+            dataframe=personnel,
+            **(params.get("legs_table_html") or {}),
+        )
+        .call()
+    )
+
+    legs_table = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("legs_table")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=legs_table_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="legs_table",
+            **(params.get("legs_table") or {}),
+        )
+        .call()
+    )
+
+    legs_widget = (
+        task(create_table_widget_single_view)
+        .validate()
+        .set_task_instance_id("legs_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Patrol legs", data=legs_table, **(params.get("legs_widget") or {})
+        )
+        .call()
+    )
+
     td_widget = (
         task(create_map_widget_single_view)
         .validate()
@@ -2997,6 +3085,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                 monthly_widget,
                 event_summary_widget,
                 event_records_widget,
+                legs_widget,
             ],
             **(params.get("dashboard") or {}),
         )
