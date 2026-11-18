@@ -25,7 +25,7 @@ requirements:
   run:
     - python
     - pip
-    - wt-registry >=0.2.0,<0.3.0
+    - wt-registry >=0.2.0,<0.4.0
     - wt-task >=0.1.0,<0.2.0
     - ecoscope-platform >=2.18.4,<3.0.0
     - ecoscope-workflows-ext-custom
