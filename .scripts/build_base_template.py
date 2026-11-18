@@ -11,7 +11,7 @@ docxtpl rules: {%p %} alone in its paragraph, {%tr %} alone in its row, {%tc %} 
 from pathlib import Path
 
 from docx import Document
-from docx.enum.section import WD_ORIENT  # noqa: F401  (portrait kept; import documents the option)
+from docx.enum.section import WD_ORIENT, WD_SECTION
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
@@ -243,6 +243,14 @@ section(None, "L_event_summary", lambda: (
 ))
 
 
+def page(orientation):
+    """Start a new page in this orientation; margins and the footer carry over."""
+    s = doc.add_section(WD_SECTION.NEW_PAGE)
+    s.orientation = orientation
+    landscape = orientation == WD_ORIENT.LANDSCAPE
+    s.page_width, s.page_height = (Cm(29.7), Cm(21.0)) if landscape else (Cm(21.0), Cm(29.7))
+
+
 def details():
     p("{{ detail_intro }}", color=MUTED)
     tag("{%p if detail_mode == 'per_type' %}")
@@ -251,11 +259,15 @@ def details():
     dynamic_table("t")
     tag("{%p endfor %}")
     tag("{%p else %}")
-    table_block("event_details", widths_cm=[1.4, 3.2, 3.4, 9.0])  # ID, type, when/where, details
+    # landscape: 25.7 cm of text width, most of it for the details (every field, ' | ' between)
+    table_block("event_details", widths_cm=[1.6, 4.0, 4.2, 15.9])  # ID, type, when/where, details
     tag("{%p endif %}")
 
 
+# Event details on their own landscape pages, then back to portrait.
+page(WD_ORIENT.LANDSCAPE)
 section(None, "L_event_details", details)
+page(WD_ORIENT.PORTRAIT)
 
 
 def images():

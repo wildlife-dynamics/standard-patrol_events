@@ -117,3 +117,12 @@ def test_no_logos_leaves_no_empty_table(tmp_path):
     for logos in (False, True):
         xml = _render(tmp_path, logos=logos).element.body.xml
         assert "<w:tr/>" not in xml and "<w:tblGrid/>" not in xml, logos
+
+
+def test_event_details_on_landscape_pages(tmp_path):
+    from docx.enum.section import WD_ORIENT
+
+    doc = _render(tmp_path)
+    assert [s.orientation for s in doc.sections] == [WD_ORIENT.PORTRAIT, WD_ORIENT.LANDSCAPE, WD_ORIENT.PORTRAIT]
+    assert doc.sections[1].page_width > doc.sections[1].page_height
+    assert all(s.footer.is_linked_to_previous for s in doc.sections[1:])  # same footer throughout
