@@ -429,6 +429,39 @@
       "type": "object",
       "title": "Event Grouping"
     },
+    "event_details": {
+      "additionalProperties": false,
+      "properties": {
+        "detail_fields": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Detail keys to show per event type (type value, display name or '*').",
+          "title": "Detail Fields"
+        },
+        "max_fields": {
+          "default": 6,
+          "description": "Most details shown per event; the rest become '+N more'.",
+          "title": "Max Fields",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": ""
+    },
     "detail_mode": {
       "additionalProperties": false,
       "properties": {
@@ -677,6 +710,12 @@
         "unit"
       ]
     },
+    "event_details": {
+      "ui:order": [
+        "detail_fields",
+        "max_fields"
+      ]
+    },
     "images_options": {
       "ui:order": [
         "mode",
@@ -710,6 +749,7 @@
       "retrieved_events",
       "state_events",
       "event_grouping",
+      "event_details",
       "detail_mode",
       "event_detail_tables",
       "images_options",

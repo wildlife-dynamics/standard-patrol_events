@@ -116,9 +116,36 @@ def dynamic_table(var):
     t.rows[3].cells[0].text = "{%tr endfor %}"
 
 
-def table_block(var):
+def header_row(cells, texts):
+    for c, text in zip(cells, texts):
+        c.text = text
+        shade(c, "1F4E46")
+        for r in c.paragraphs[0].runs:
+            r.font.color.rgb, r.font.bold, r.font.size = RGBColor(0xFF, 0xFF, 0xFF), True, Pt(9)
+
+
+def fixed_table(var, widths_cm):
+    """Known columns with set widths (narrow ID, wide details), ICMBio-style; dynamic_table
+    can only make equal columns."""
+    t = doc.add_table(rows=4, cols=len(widths_cm))
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    t.autofit = False
+    borders(t)
+    header_row(t.rows[0].cells, [f"{{{{ {var}.col_labels[{i}] }}}}" for i in range(len(widths_cm))])
+    t.rows[1].cells[0].text = f"{{%tr for item in {var}.tbl_contents %}}"
+    for i, c in enumerate(t.rows[2].cells):
+        c.text = f"{{{{ item.cols[{i}] }}}}"
+        for r in c.paragraphs[0].runs:
+            r.font.size = Pt(8.5)
+    t.rows[3].cells[0].text = "{%tr endfor %}"
+    for row in t.rows:
+        for c, w in zip(row.cells, widths_cm):
+            c.width = Cm(w)
+
+
+def table_block(var, widths_cm=None):
     tag(f"{{%p if {var}.tbl_contents %}}")
-    dynamic_table(var)
+    fixed_table(var, widths_cm) if widths_cm else dynamic_table(var)
     tag("{%p else %}")
     p("{{ no_data }}", color=MUTED)
     tag("{%p endif %}")
@@ -204,7 +231,7 @@ def details():
     dynamic_table("t")
     tag("{%p endfor %}")
     tag("{%p else %}")
-    table_block("event_details")
+    table_block("event_details", widths_cm=[1.4, 3.2, 3.4, 9.0])  # ID, type, when/where, details
     tag("{%p endif %}")
 
 
@@ -213,14 +240,16 @@ section(None, "L_event_details", details)
 
 def images():
     tag("{%p if images %}")
-    t = doc.add_table(rows=3, cols=2)
+    t = doc.add_table(rows=4, cols=2)
     borders(t, "E5E7EB")
     full_width(t)
-    t.rows[0].cells[0].text = "{%tr for r in images %}"
-    t.rows[1].cells[0].text = "{{ r.image }}"
-    t.rows[1].cells[1].text = "{{ r.caption }}"
-    t.rows[1].cells[0].width, t.rows[1].cells[1].width = Cm(9), Cm(8)
-    t.rows[2].cells[0].text = "{%tr endfor %}"
+    header_row(t.rows[0].cells, ["{{ photo }}", "{{ details }}"])
+    t.rows[1].cells[0].text = "{%tr for r in images %}"
+    t.rows[2].cells[0].text = "{{ r.image }}"
+    t.rows[2].cells[1].text = "{{ r.caption }}"
+    for row in t.rows:
+        row.cells[0].width, row.cells[1].width = Cm(9), Cm(8)
+    t.rows[3].cells[0].text = "{%tr endfor %}"
     tag("{%p else %}")
     p("{{ no_data }}", color=MUTED)
     tag("{%p endif %}")
