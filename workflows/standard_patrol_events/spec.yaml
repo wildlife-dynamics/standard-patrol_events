@@ -24,7 +24,6 @@ rjsf-overrides:
     report_title.properties.var.title: Title
     report_title.properties.var.default: Patrol & Events Report
     report_subtitle.properties.var.title: Subtitle
-    report_area.properties.var.title: Area name
     detail_intro.properties.var.title: Event details introduction
     effort_grouper.properties.var.title: Group patrol effort by
     effort_grouper.properties.var.default: patrol_type
@@ -110,11 +109,6 @@ workflow:
         - ${{ workflow.user_first_name.return }}
         - " "
         - ${{ workflow.user_last_name.return }}
-
-  - id: date_generated
-    task: get_report_date
-    partial:
-      timezone_info: ${{ workflow.timezone.return }}
 
   - name: Base Maps
     id: base_maps
@@ -262,6 +256,18 @@ workflow:
   - name: Report Language
     id: labels
     task: get_report_labels
+
+  - id: date_generated
+    task: get_report_date
+    partial:
+      timezone_info: ${{ workflow.timezone.return }}
+      labels: ${{ workflow.labels.return }}
+
+  - id: report_period
+    task: get_report_period
+    partial:
+      time_range: ${{ workflow.time_range.return }}
+      labels: ${{ workflow.labels.return }}
 
   - id: effort
     task: patrol_effort_table
@@ -904,10 +910,6 @@ workflow:
     id: report_subtitle
     task: set_string_var
 
-  - name: Area Name
-    id: report_area
-    task: set_string_var
-
   - name: Event Details Introduction
     id: detail_intro
     task: set_string_var
@@ -933,8 +935,7 @@ workflow:
         items:
           - {item_type: text, key: title, value: "${{ workflow.report_title.return }}"}
           - {item_type: text, key: subtitle, value: "${{ workflow.report_subtitle.return }}"}
-          - {item_type: text, key: area, value: "${{ workflow.report_area.return }}"}
-          - {item_type: timerange, key: period, value: "${{ workflow.time_range.return }}"}
+          - {item_type: text, key: period, value: "${{ workflow.report_period.return }}"}
           - {item_type: text, key: generated_by, value: "${{ workflow.generated_by.return }}"}
           - {item_type: text, key: date_generated, value: "${{ workflow.date_generated.return }}"}
           - {item_type: text, key: detail_intro, value: "${{ workflow.detail_intro.return }}"}

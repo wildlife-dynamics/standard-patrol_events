@@ -45,7 +45,5 @@ report_title:
   var: Reporte de patrullajes y eventos
 report_subtitle:
   var: Costa Ecuador
-report_area:
-  var: Golfo de Guayaquil
 detail_intro:
   var: ''
