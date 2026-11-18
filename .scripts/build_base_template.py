@@ -198,7 +198,8 @@ borders(meta)
 full_width(meta)
 for row, (lbl, val) in zip(meta.rows, [("L_area", "area"), ("L_period", "period"),
                                         ("L_generated_by", "generated_by"), ("L_date_generated", "date_generated")]):
-    row.cells[0].text, row.cells[1].text = f"{{{{ {lbl} }}}}", f"{{{{ {val} }}}}"
+    # Site is left blank for the user to fill in (the report covers the area they choose)
+    row.cells[0].text, row.cells[1].text = f"{{{{ {lbl} }}}}", "" if val == "area" else f"{{{{ {val} }}}}"
     shade(row.cells[0], "F3F4F6")
     row.cells[0].paragraphs[0].runs[0].bold = True
     row.cells[0].width, row.cells[1].width = Cm(5), Cm(12)
@@ -225,9 +226,9 @@ tag("{%p endif %}")
 # ── body ──────────────────────────────────────────────────────────────────────
 # Who went on patrol: number and date merged over a patrol's legs; patrol type, time,
 # leader, members per leg.
+section(None, "L_patrol_effort", lambda: (p("{{ L_effort_intro }}", color=MUTED), table_block("effort")))
 section("show_personnel", "L_personnel", lambda: table_block(
     "personnel", widths_cm=[1.6, 2.2, 3.0, 2.6, 2.6, 5.0], merge_cols=2))
-section(None, "L_patrol_effort", lambda: (p("{{ L_effort_intro }}", color=MUTED), table_block("effort")))
 section(None, "L_maps", lambda: (
     figure("tracks_map", "L_fig_tracks"),
     tag(on("show_time_density")), figure("time_density_map", "L_fig_time_density"), tag("{%p endif %}"),
@@ -262,12 +263,13 @@ def images():
     t = doc.add_table(rows=4, cols=2)
     borders(t, "E5E7EB")
     full_width(t)
-    header_row(t.rows[0].cells, ["{{ photo }}", "{{ details }}"])
+    # ICMBio's layout: information on the left, the photo on the right
+    header_row(t.rows[0].cells, ["{{ info }}", "{{ image }}"])
     t.rows[1].cells[0].text = "{%tr for r in images %}"
-    t.rows[2].cells[0].text = "{{ r.image }}"
-    t.rows[2].cells[1].text = "{{ r.caption }}"
+    t.rows[2].cells[0].text = "{{ r.caption }}"
+    t.rows[2].cells[1].text = "{{ r.image }}"
     for row in t.rows:
-        row.cells[0].width, row.cells[1].width = Cm(9), Cm(8)
+        row.cells[0].width, row.cells[1].width = Cm(7), Cm(10)
     t.rows[3].cells[0].text = "{%tr endfor %}"
     tag("{%p else %}")
     p("{{ no_data }}", color=MUTED)

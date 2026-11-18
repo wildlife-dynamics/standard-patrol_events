@@ -49,8 +49,6 @@ costaecuador:
       var: Reporte de patrullajes y eventos
     report_subtitle:
       var: Costa Ecuador
-    report_area:
-      var: Golfo de Guayaquil
     detail_intro:
       var: ''
 apn:
@@ -104,8 +102,6 @@ apn:
       var: Reporte de patrullajes y eventos
     report_subtitle:
       var: Parque Nacional Los Alerces
-    report_area:
-      var: Los Alerces
     detail_intro:
       var: ''
 mep:
@@ -159,8 +155,6 @@ mep:
       var: Patrol & Events Report
     report_subtitle:
       var: mep test site
-    report_area:
-      var: Whole site
     detail_intro:
       var: ''
 empty_period:
@@ -213,8 +207,6 @@ empty_period:
       var: Reporte de patrullajes y eventos
     report_subtitle:
       var: Costa Ecuador
-    report_area:
-      var: Golfo de Guayaquil
     detail_intro:
       var: ''
 
@@ -269,8 +261,6 @@ belize:
       var: Patrol & Events Report
     report_subtitle:
       var: SACD Belize
-    report_area:
-      var: Whole site
     detail_intro:
       var: ''
 
@@ -325,8 +315,6 @@ apncentral:
     report_title:
       var: Reporte de patrullajes y eventos
     report_subtitle:
-      var: APN Central
-    report_area:
       var: APN Central
     detail_intro:
       var: ''
