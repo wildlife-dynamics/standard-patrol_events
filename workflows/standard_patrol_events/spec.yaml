@@ -25,6 +25,9 @@ rjsf-overrides:
     report_title.properties.var.default: Patrol & Events Report
     report_subtitle.properties.var.title: Subtitle
     detail_intro.properties.var.title: Event details introduction
+    patrol_serial.properties.var.title: Patrol ID
+    patrol_serial.properties.var.default: ""
+    patrol_serial.properties.var.description: ER patrol serial number for a single-patrol report (its legs, tracks and linked events). Leave empty for all patrols in the period.
     effort_grouper.properties.var.title: Group patrol effort by
     effort_grouper.properties.var.default: patrol_type
     effort_grouper.properties.var.oneOf:  # the column core's summary groups by
@@ -151,10 +154,20 @@ workflow:
       include_null_geometry: false
       sub_page_size: 100
 
-  - id: patrols  # empty type list = no filter (core reads it as active types only)
+  - id: patrols_fetched  # empty type list = no filter (core reads it as active types only)
     task: get_patrols_any_type
     partial:
       combined_params: ${{ workflow.patrol_params.return }}
+
+  - name: Single Patrol
+    id: patrol_serial
+    task: set_string_var
+
+  - id: patrols  # one patrol when a Patrol ID is set; everything downstream follows
+    task: filter_patrols_by_serial
+    partial:
+      patrols_df: ${{ workflow.patrols_fetched.return }}
+      patrol_serial: ${{ workflow.patrol_serial.return }}
 
   # Patrol legs from core (as the Patrol Effort catalogue workflow does): one row per leg,
   # pauses skipped, clipped to the period; then ER team, member/asset and patrol-type names.
@@ -317,6 +330,7 @@ workflow:
     partial:
       events: ${{ workflow.period_events.return }}
       patrol_events: ${{ workflow.linked_events.return }}
+      patrol_serial: ${{ workflow.patrol_serial.return }}
 
   - id: events_in_area
     task: select_in_area
