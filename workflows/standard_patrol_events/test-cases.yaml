@@ -235,7 +235,7 @@ belize:
     patrol_params:
       patrol_types: []
     effort_grouper:
-      var: team
+      var: individual_patrol
     labels:
       language: en
     event_types:
