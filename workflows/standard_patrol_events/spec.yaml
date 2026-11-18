@@ -27,15 +27,19 @@ rjsf-overrides:
     detail_intro.properties.var.title: Event details introduction
     effort_grouper.properties.var.title: Group patrol effort by
     effort_grouper.properties.var.default: patrol_type
-    effort_grouper.properties.var.oneOf:
+    effort_grouper.properties.var.oneOf:  # the column core's summary groups by
       - const: patrol_type
-        title: Patrol type
-      - const: team
-        title: Team
-      - const: individual_patrol
-        title: Individual patrol
-      - const: transport
         title: Patrol type (per leg)
+      - const: patrol_team_name
+        title: Team
+      - const: patrol_serial_number
+        title: Individual patrol
+    effort_metrics.properties.metrics.title: Effort columns
+    effort_metrics.properties.metrics.description: Columns of the patrol effort table (the Patrol Effort module's metrics). Add legs, person-days or area covered as needed.
+    effort_metrics.properties.metrics.default:
+      - {metric: patrol_count}
+      - {metric: total_distance, unit: km}
+      - {metric: total_duration, unit: h}
     event_types.properties.vars.title: Event types
     event_types.properties.vars.description: Event type values to include. Leave empty for all types (then events of retired types linked to patrols are included too).
     event_types.properties.vars.default: []
@@ -206,8 +210,6 @@ workflow:
         - {x: 1.0, y: 1.0}
 
   # A trajectory needs 2 fixes; a period where every patrol has 1 fix crashed the run.
-  # One track per leg (core stamps each fix with its leg): each track then has a single
-  # transport, and per-leg km/hours are exact.
   - id: patrol_tracks
     task: drop_short_tracks
     partial:
@@ -267,14 +269,6 @@ workflow:
     task: get_report_period
     partial:
       time_range: ${{ workflow.time_range.return }}
-      labels: ${{ workflow.labels.return }}
-
-  - id: effort
-    task: patrol_effort_table
-    partial:
-      trajectory: ${{ workflow.trajectory.return }}
-      patrols: ${{ workflow.patrol_teams.return }}
-      grouper: ${{ workflow.effort_grouper.return }}
       labels: ${{ workflow.labels.return }}
 
   # ── 7 · Events ──────────────────────────────────────────────────────────────────
@@ -394,6 +388,129 @@ workflow:
       df: ${{ workflow.trajectory.return }}
       value: ${{ workflow.no_type_label.return }}
       columns: [extra__patrol_type__display]
+
+  # ── Patrol effort on core's summary pipeline (as the Patrol Effort module) ──────────
+  # Tracks get the legs' column names, local time, leg names and a date (patrol days);
+  # core summarises tracks and legs per group and overall; format_effort_table adds the
+  # report's headers, Total row and the MRD's per-grouping columns.
+  - id: effort_tracks_renamed
+    task: map_columns
+    partial:
+      df: ${{ workflow.tracks_typed.return }}
+      drop_columns: []
+      retain_columns: []
+      rename_columns:
+        extra__patrol_id: patrol_id
+        extra__patrol_serial_number: patrol_serial_number
+        extra__patrol_type__display: patrol_type
+        extra__patrol_segment_id: patrol_segment_id
+        extra__patrol_subject: patrol_subject
+      raise_if_not_found: false
+      duplicate_strategy: suffix
+
+  - id: effort_tracks_local
+    task: convert_values_to_timezone
+    partial:
+      df: ${{ workflow.effort_tracks_renamed.return }}
+      timezone: ${{ workflow.timezone.return }}
+      columns: [segment_start, segment_end]
+
+  - id: effort_tracks_named
+    task: add_leg_names_to_tracks
+    partial:
+      df: ${{ workflow.effort_tracks_local.return }}
+      legs: ${{ workflow.legs_named.return }}
+
+  - id: effort_tracks
+    task: decompose_datetime
+    partial:
+      df: ${{ workflow.effort_tracks_named.return }}
+      datetime_column: segment_start
+      components: [date]
+      remove_source: false
+      column_prefix: null
+
+  - id: effort_legs
+    task: fill_na
+    partial:
+      df: ${{ workflow.legs_local.return }}
+      value: ${{ workflow.no_type_label.return }}
+      columns: [patrol_type]
+
+  - name: Patrol Effort Columns
+    id: effort_metrics
+    task: set_patrol_summary_metrics
+
+  - id: effort_track_metrics
+    task: select_track_metrics
+    partial:
+      summary_params: ${{ workflow.effort_metrics.return }}
+
+  - id: effort_leg_metrics
+    task: select_leg_metrics
+    partial:
+      summary_params: ${{ workflow.effort_metrics.return }}
+
+  - id: effort_by_tracks
+    task: summarize_df
+    partial:
+      df: ${{ workflow.effort_tracks.return }}
+      summary_params: ${{ workflow.effort_track_metrics.return }}
+      groupby_cols: ["${{ workflow.effort_grouper.return }}"]
+      reset_index: true
+
+  - id: effort_by_legs
+    task: summarize_df
+    partial:
+      df: ${{ workflow.effort_legs.return }}
+      summary_params: ${{ workflow.effort_leg_metrics.return }}
+      groupby_cols: ["${{ workflow.effort_grouper.return }}"]
+      reset_index: true
+
+  - id: effort_summary
+    task: join_summary_tables
+    skipif:  # an empty side (e.g. no leg metrics chosen) is fine: core ignores it
+      conditions:
+        - any_dependency_skipped
+    partial:
+      tables: ["${{ workflow.effort_by_tracks.return }}", "${{ workflow.effort_by_legs.return }}"]
+
+  - id: effort_tracks_total
+    task: summarize_df
+    partial:
+      df: ${{ workflow.effort_tracks.return }}
+      summary_params: ${{ workflow.effort_track_metrics.return }}
+      groupby_cols: null
+      reset_index: false
+
+  - id: effort_legs_total
+    task: summarize_df
+    partial:
+      df: ${{ workflow.effort_legs.return }}
+      summary_params: ${{ workflow.effort_leg_metrics.return }}
+      groupby_cols: null
+      reset_index: false
+
+  - id: effort_totals
+    task: join_summary_tables
+    skipif:  # an empty side (e.g. no leg metrics chosen) is fine: core ignores it
+      conditions:
+        - any_dependency_skipped
+    partial:
+      tables: ["${{ workflow.effort_tracks_total.return }}", "${{ workflow.effort_legs_total.return }}"]
+
+  - id: effort
+    task: format_effort_table
+    skipif:  # shows "no data" when there is nothing to summarise
+      conditions:
+        - never
+    partial:
+      summary: ${{ workflow.effort_summary.return }}
+      totals: ${{ workflow.effort_totals.return }}
+      patrols: ${{ workflow.patrol_teams.return }}
+      legs: ${{ workflow.legs_local.return }}
+      grouper: ${{ workflow.effort_grouper.return }}
+      labels: ${{ workflow.labels.return }}
 
   - id: tracks_colored
     task: apply_color_map

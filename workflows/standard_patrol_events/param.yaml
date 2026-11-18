@@ -20,7 +20,14 @@ area_scope:
 patrol_params:
   patrol_types: []
 effort_grouper:
-  var: team
+  var: patrol_team_name
+effort_metrics:
+  metrics:
+    - metric: patrol_count
+    - metric: total_distance
+      unit: km
+    - metric: total_duration
+      unit: h
 labels:
   language: es
 event_types:
