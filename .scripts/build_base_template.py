@@ -124,9 +124,10 @@ def header_row(cells, texts):
             r.font.color.rgb, r.font.bold, r.font.size = RGBColor(0xFF, 0xFF, 0xFF), True, Pt(9)
 
 
-def fixed_table(var, widths_cm):
+def fixed_table(var, widths_cm, merge_first=False):
     """Known columns with set widths (narrow ID, wide details), ICMBio-style; dynamic_table
-    can only make equal columns."""
+    can only make equal columns. merge_first: equal consecutive first-column cells merge
+    down (a patrol cell over its legs), via a vMerge whose value Jinja decides per row."""
     t = doc.add_table(rows=4, cols=len(widths_cm))
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
     t.autofit = False
@@ -135,6 +136,12 @@ def fixed_table(var, widths_cm):
     t.rows[1].cells[0].text = f"{{%tr for item in {var}.tbl_contents %}}"
     for i, c in enumerate(t.rows[2].cells):
         c.text = f"{{{{ item.cols[{i}] }}}}"
+        if merge_first and i == 0:  # docxtpl's {% vm %} merges the whole column, not per group
+            same = "loop.previtem and loop.previtem.cols[0] == item.cols[0]"
+            c.text = f"{{% if not ({same}) %}}{{{{ item.cols[0] }}}}{{% endif %}}"
+            vm = OxmlElement("w:vMerge")
+            vm.set(qn("w:val"), f"{{% if {same} %}}continue{{% else %}}restart{{% endif %}}")
+            c._tc.get_or_add_tcPr().append(vm)
         for r in c.paragraphs[0].runs:
             r.font.size = Pt(8.5)
     t.rows[3].cells[0].text = "{%tr endfor %}"
@@ -143,9 +150,9 @@ def fixed_table(var, widths_cm):
             c.width = Cm(w)
 
 
-def table_block(var, widths_cm=None):
+def table_block(var, widths_cm=None, merge_first=False):
     tag(f"{{%p if {var}.tbl_contents %}}")
-    fixed_table(var, widths_cm) if widths_cm else dynamic_table(var)
+    fixed_table(var, widths_cm, merge_first) if widths_cm else dynamic_table(var)
     tag("{%p else %}")
     p("{{ no_data }}", color=MUTED)
     tag("{%p endif %}")
@@ -207,7 +214,10 @@ p()
 tag("{%p endif %}")
 
 # ── body ──────────────────────────────────────────────────────────────────────
-section("show_personnel", "L_personnel", lambda: table_block("personnel"))
+# Patrol legs: patrol cell merged over its legs; Tramo, Medio, Inicio – Fin, km, Horas,
+# Líder, Integrantes, Detalles.
+section("show_personnel", "L_personnel", lambda: table_block(
+    "personnel", widths_cm=[2.2, 1.0, 1.9, 2.3, 1.0, 1.0, 1.8, 2.4, 3.4], merge_first=True))
 section(None, "L_patrol_effort", lambda: (p("{{ L_effort_intro }}", color=MUTED), table_block("effort")))
 section(None, "L_maps", lambda: (
     figure("tracks_map", "L_fig_tracks"),
