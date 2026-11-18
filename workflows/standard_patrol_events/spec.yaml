@@ -65,6 +65,7 @@ rjsf-overrides:
     teams.properties.vars.title: Teams
     teams.properties.vars.description: ER patrol team names (not leaders). Keeps patrols with at least one leg in these teams. Leave empty for all teams.
     teams.properties.vars.default: []
+    patrol_params.properties.patrol_types.default: []
     event_types.properties.vars.title: Event types
     event_types.properties.vars.description: Event type values to include. Leave empty for all types (then events of retired types linked to patrols are included too).
     event_types.properties.vars.default: []
@@ -112,7 +113,7 @@ workflow:
 
   - name: Single Patrol
     id: patrol_serial
-    task: set_string_var
+    task: set_optional_string_var
 
   # Report period: the form's dates, or the patrol's own span when a Patrol ID is set
   - id: report_range
@@ -224,7 +225,7 @@ workflow:
   # all their legs; everything downstream follows
   - name: Teams
     id: teams
-    task: set_list_of_string_vars
+    task: set_optional_string_list
 
   - id: patrols_team
     task: filter_by_teams
@@ -240,6 +241,7 @@ workflow:
       df: ${{ workflow.legs_team_names.return }}
       legs: ${{ workflow.legs_team_names.return }}
       teams: ${{ workflow.teams.return }}
+      id_column: patrol_id
 
   # Leader filter: patrols with a leg led by a person in the chosen subject group (one of
   # the patrol configuration's member groups, where ER takes leaders from), by subject id
@@ -263,6 +265,7 @@ workflow:
       df: ${{ workflow.legs_teamed.return }}
       patrols_df: ${{ workflow.patrols_team.return }}
       leader_ids: ${{ workflow.leader_group.return }}
+      id_column: patrol_id
 
   - id: legs_roster_names
     task: add_patrol_roster_names
@@ -321,6 +324,7 @@ workflow:
         max_time_secs: 3600
         min_speed_kmhr: 0.0011
         max_speed_kmhr: 500
+      trajectory_segment_filter_overrides: null  # no per-type filters (keeps it off the form)
 
   - id: trajectory
     task: select_in_area
@@ -366,7 +370,7 @@ workflow:
   # ── 7 · Events ──────────────────────────────────────────────────────────────────
   - name: Event Types
     id: event_types
-    task: set_list_of_string_vars
+    task: set_optional_string_list
 
   - id: period_events_fetched
     task: get_events
@@ -1072,6 +1076,8 @@ workflow:
     partial:
       events: ${{ workflow.events.return }}
       labels: ${{ workflow.labels.return }}
+      detail_fields: null  # general table: every field, " | " separated
+      max_fields: null
 
   # ── 8 · Event details ───────────────────────────────────────────────────────────
   - name: Event Details
@@ -1161,11 +1167,11 @@ workflow:
 
   - name: Report Subtitle
     id: report_subtitle
-    task: set_string_var
+    task: set_optional_string_var
 
   - name: Event Details Introduction
     id: detail_intro
-    task: set_string_var
+    task: set_optional_string_var
 
   - id: report
     task: create_docx
