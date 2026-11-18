@@ -624,10 +624,18 @@ workflow:
       df: ${{ workflow.effort_tracks_named.return }}
       no_team: ${{ workflow.no_team_label.return }}
 
+  # one simplified line per leg: a year of raw track segments made 200 MB map files
+  - id: tracks_lines
+    task: simplify_tracks
+    partial:
+      df: ${{ workflow.tracks_teamed.return }}
+      by: [patrol_segment_id, patrol_serial_number, patrol_type, patrol_team_name, patrol_subject]
+      tolerance_m: 10
+
   - id: tracks_colored
     task: apply_color_map
     partial:
-      df: ${{ workflow.tracks_teamed.return }}
+      df: ${{ workflow.tracks_lines.return }}
       input_column_name: ${{ workflow.tracks_color_by.return }}
       colormap: tab10
       output_column_name: patrol_color
@@ -1046,25 +1054,6 @@ workflow:
       root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       filename_suffix: monthly_chart
 
-  # Incident storyboard (core): incidents dated in the period, one row each, with their events
-  - id: incidents
-    task: get_incident_events
-    partial:
-      client: ${{ workflow.er_client.return }}
-      time_range: ${{ workflow.report_range.return }}
-
-  - id: storyboard_html
-    task: draw_incident_storyboard
-    partial:
-      dataframe: ${{ workflow.incidents.return }}
-
-  - id: incident_storyboard
-    task: persist_text
-    partial:
-      text: ${{ workflow.storyboard_html.return }}
-      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
-      filename_suffix: incident_storyboard
-
   # ── Tables ──────────────────────────────────────────────────────────────────────
   - id: events_by_type
     task: events_by_type_table
@@ -1215,7 +1204,6 @@ workflow:
           - {item_type: image, key: event_density_map, value: "${{ workflow.event_density_map_static.return }}", width_inches: 6.6, screenshot_config: {full_page: false}}
           - {item_type: image, key: events_bar, value: "${{ workflow.events_bar.return }}", width_inches: 6.6}
           - {item_type: image, key: monthly_chart, value: "${{ workflow.monthly_chart.return }}", width_inches: 6.6}
-          - {item_type: image, key: incident_storyboard, value: "${{ workflow.incident_storyboard.return }}", width_inches: 6.6}
           - {item_type: image_list, key: images, value: "${{ workflow.images.return }}", width_inches: 3.4}
 
   # ── Dashboard ───────────────────────────────────────────────────────────────────
@@ -1387,15 +1375,6 @@ workflow:
       title: Events by month
       data: ${{ workflow.monthly_chart.return }}
 
-  - id: storyboard_widget
-    task: create_plot_widget_single_view
-    skipif:
-      conditions:
-        - never
-    partial:
-      title: Incidents
-      data: ${{ workflow.incident_storyboard.return }}
-
   - id: event_summary_html
     task: draw_table
     partial:
@@ -1464,4 +1443,3 @@ workflow:
         - ${{ workflow.event_summary_widget.return }}
         - ${{ workflow.event_records_widget.return }}
         - ${{ workflow.legs_widget.return }}
-        - ${{ workflow.storyboard_widget.return }}
