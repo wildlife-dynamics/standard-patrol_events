@@ -40,6 +40,8 @@ costaecuador:
       var: ""
     tracks_color_by:
       var: patrol_type
+    teams:
+      vars: []
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -103,6 +105,8 @@ apn:
       var: ""
     tracks_color_by:
       var: patrol_type
+    teams:
+      vars: []
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -167,6 +171,8 @@ mep:
       var: ""
     tracks_color_by:
       var: patrol_type
+    teams:
+      vars: []
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -231,6 +237,8 @@ empty_period:
       var: ""
     tracks_color_by:
       var: patrol_type
+    teams:
+      vars: []
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -295,6 +303,8 @@ belize:
       var: ""
     tracks_color_by:
       var: patrol_type
+    teams:
+      vars: []
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -361,6 +371,8 @@ apncentral:
       var: ""
     tracks_color_by:
       var: patrol_type
+    teams:
+      vars: []
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -427,6 +439,8 @@ apncentral_patrol70:
       var: "70"
     tracks_color_by:
       var: patrol_type
+    teams:
+      vars: []
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -448,5 +462,73 @@ apncentral_patrol70:
       var: Reporte de patrullajes y eventos
     report_subtitle:
       var: APN Central
+    detail_intro:
+      var: ''
+
+mep_team:
+  name: mep_team
+  description: Team filter (Hurricane Ridge District). mep test site (new patrol model with teams), Aug-Oct 2026, English.
+  params:
+    workflow_details:
+      name: Patrol & Events Report
+      description: mep test site
+    er_client:
+      data_source:
+        name: mep
+    time_range:
+      since: '2026-08-01T00:00:00'
+      until: '2026-11-01T00:00:00'
+      timezone:
+        label: UTC
+        tzCode: UTC
+        name: (UTC+00:00) UTC
+        utc: +00:00
+    base_maps: {}
+    area_scope:
+      level: site
+      unit: null
+    patrol_params:
+      patrol_types: []
+    effort_grouper:
+      var: patrol_team_name
+    effort_metrics:
+      metrics:
+        - metric: patrol_count
+        - metric: total_distance
+          unit: km
+        - metric: total_duration
+          unit: h
+    labels:
+      language: en
+    event_types:
+      vars: []
+    patrol_serial:
+      var: ""
+    tracks_color_by:
+      var: patrol_type
+    teams:
+      vars:
+        - Hurricane Ridge District
+    retrieved_events:
+      retrieval: all_in_period
+    state_events:
+      state: all
+    event_grouping:
+      var: event_type_display
+    detail_mode:
+      var: general
+    event_detail_tables:
+      detail_fields: {}
+    images_options:
+      mode: attachments
+      max_images: 12
+    report_blocks:
+      personnel: true
+    template_path:
+      template: standard
+    report_title:
+      var: Patrol & Events Report
+    report_subtitle:
+      var: mep test site
     detail_intro:
       var: ''
