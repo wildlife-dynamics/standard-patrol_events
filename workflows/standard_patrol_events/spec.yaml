@@ -239,13 +239,6 @@ workflow:
       labels: ${{ workflow.labels.return }}
       patrol_type_display: ${{ workflow.patrol_type_display.return }}
 
-  - id: personnel
-    task: select_columns
-    partial:
-      raise_on_missing: false
-      df: ${{ workflow.patrol_teams.return }}
-      columns: [patrol_serial_number, team, personnel]
-
   # ── 7 · Events ──────────────────────────────────────────────────────────────────
   - name: Event Types
     id: period_events
@@ -317,6 +310,33 @@ workflow:
       df: ${{ workflow.events_display.return }}
       timezone: ${{ workflow.timezone.return }}
       columns: [time]
+
+  # Patrol legs (ER patrol model): one row per leg with leader, members, the leg forms
+  # (segment_details, type_details) and any linked closing event's end-of-trip values.
+  - id: leg_schemas
+    task: get_patrol_leg_schemas
+    skipif:  # legs are reported even with no events (or no tracks)
+      conditions:
+        - never
+    partial:
+      client: ${{ workflow.er_client.return }}
+      patrols_df: ${{ workflow.patrols.return }}
+
+  - id: personnel
+    task: patrol_legs_table
+    skipif:  # legs are reported even with no events (or no tracks)
+      conditions:
+        - never
+    partial:
+      patrols_df: ${{ workflow.patrols.return }}
+      sources: ${{ workflow.team_sources.return }}
+      schemas: ${{ workflow.leg_schemas.return }}
+      patrol_type_display: ${{ workflow.patrol_type_display.return }}
+      labels: ${{ workflow.labels.return }}
+      timezone: ${{ workflow.timezone.return }}
+      events: ${{ workflow.events.return }}
+      closing_event_types: [cierre_de_patrulla]
+      max_fields: 10
 
   - name: Event Grouping
     id: event_grouping
@@ -987,6 +1007,29 @@ workflow:
       title: Patrol effort
       data: ${{ workflow.effort_table.return }}
 
+  - id: legs_table_html
+    task: draw_table
+    partial:
+      columns: null
+      table_config: null
+      dataframe: ${{ workflow.personnel.return }}
+
+  - id: legs_table
+    task: persist_text
+    partial:
+      text: ${{ workflow.legs_table_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: legs_table
+
+  - id: legs_widget
+    task: create_table_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Patrol legs
+      data: ${{ workflow.legs_table.return }}
+
   - id: td_widget
     task: create_map_widget_single_view
     skipif:
@@ -1090,3 +1133,4 @@ workflow:
         - ${{ workflow.monthly_widget.return }}
         - ${{ workflow.event_summary_widget.return }}
         - ${{ workflow.event_records_widget.return }}
+        - ${{ workflow.legs_widget.return }}
