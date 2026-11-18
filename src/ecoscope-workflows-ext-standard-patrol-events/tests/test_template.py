@@ -85,14 +85,15 @@ def test_per_type_detail_mode(tmp_path):
     assert "CAT · TYPE (2)" in text
 
 
-def test_personnel_patrol_cell_merges(tmp_path):
-    cols = [L[k] for k in ("patrol", "leg", "transport", "start_end", "distance_km", "hours", "leader", "members", "details")]
-    rows = [["#70\n2026-11-11 · 2 tramos", 1, "Pedestre", "a", 0.1, 0.0, "X", "Y", "D1"],
-            ["#70\n2026-11-11 · 2 tramos", 2, "Camioneta", "b", "—", "—", "X", "Y", "D2"],
-            ["#72\n2026-11-12 · 1 tramo", 1, "Pedestre", "c", 9.4, 4.5, "Z", "W", "D3"]]
+def test_personnel_number_and_date_merge_per_patrol(tmp_path):
+    cols = [L[k] for k in ("patrol", "date", "patrol_type", "schedule", "leader", "members")]
+    rows = [["70", "11/11/2026", "Pedestre", "09:08 – 09:10", "X", "Y"],
+            ["70", "11/11/2026", "Camioneta", "09:10 – 09:11", "X", "Y"],
+            ["72", "11/11/2026", "Pedestre", "10:00 – 11:00", "Z", "W"]]  # same date, other patrol
     doc = _render(tmp_path, personnel=pd.DataFrame(rows, columns=cols))
     table = next(t for t in doc.tables if t.rows[0].cells[0].text == L["patrol"])
     xml = table._tbl.xml
-    assert xml.count("w:vMerge") >= 2  # #70 spans its two leg rows
-    assert xml.count("#70") == 1 and xml.count("#72") == 1  # stored once; python-docx repeats merged text per row
-    assert [c.text for c in table.rows[0].cells][:3] == [L["patrol"], L["leg"], L["transport"]]
+    assert xml.count('w:val="continue"') == 2  # number and date of #70's second leg
+    assert xml.count('w:val="restart"') == 4  # number and date of #70 and of #72
+    assert xml.count(">70<") == 1 and xml.count(">72<") == 1 and xml.count("11/11/2026") == 2
+    assert [c.text for c in table.rows[0].cells] == cols

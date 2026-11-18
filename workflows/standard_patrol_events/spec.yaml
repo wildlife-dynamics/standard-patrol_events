@@ -36,7 +36,7 @@ rjsf-overrides:
       - const: individual_patrol
         title: Individual patrol
       - const: transport
-        title: Transport (per leg)
+        title: Patrol type (per leg)
     team_groups.properties.vars.title: Team subject groups
     team_groups.properties.vars.description: Subject groups that count as teams. Leave empty to use the patrol leader.
     team_groups.properties.vars.default: []
@@ -348,17 +348,8 @@ workflow:
       timezone: ${{ workflow.timezone.return }}
       columns: [time]
 
-  # Patrol legs (ER patrol model): one row per leg with leader, members, the leg forms
-  # (segment_details, type_details) and any linked closing event's end-of-trip values.
-  - id: leg_schemas
-    task: get_patrol_leg_schemas
-    skipif:  # legs are reported even with no events (or no tracks)
-      conditions:
-        - never
-    partial:
-      client: ${{ workflow.er_client.return }}
-      patrols_df: ${{ workflow.patrols.return }}
-
+  # Who went on patrol (MRD personnel block): one row per leg — patrol number and date,
+  # patrol type, time, leader, members.
   - id: personnel
     task: patrol_legs_table
     skipif:  # legs are reported even with no events (or no tracks)
@@ -367,14 +358,9 @@ workflow:
     partial:
       patrols_df: ${{ workflow.patrols.return }}
       sources: ${{ workflow.team_sources.return }}
-      schemas: ${{ workflow.leg_schemas.return }}
       patrol_type_display: ${{ workflow.patrol_type_display.return }}
       labels: ${{ workflow.labels.return }}
       timezone: ${{ workflow.timezone.return }}
-      events: ${{ workflow.events.return }}
-      closing_event_types: [cierre_de_patrulla]
-      max_fields: 10
-      trajectory: ${{ workflow.trajectory.return }}
 
   - name: Event Grouping
     id: event_grouping

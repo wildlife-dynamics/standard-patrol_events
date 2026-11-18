@@ -67,6 +67,8 @@ link:
 	done; done
 	$(DEV_ENV)/bin/python -m pip install -q --no-deps \
 		-e $(EXT_CUSTOM) -e $(CURDIR)/src/ecoscope-workflows-ext-standard-patrol-events
+	# Listed in RECORD, so pip removes it with the package on the next reinstall (no stub).
 	for pkg in $(LINKED); do for d in $(DEV_ENV)/lib/python3*/site-packages/$${pkg}-*.dist-info; do \
-		if [ -f $$d/METADATA ]; then echo $$pkg > $$d/top_level.txt; fi; \
+		if [ -f $$d/METADATA ]; then echo $$pkg > $$d/top_level.txt; \
+			grep -q "/top_level.txt," $$d/RECORD || echo "$$(basename $$d)/top_level.txt,," >> $$d/RECORD; fi; \
 	done; done
