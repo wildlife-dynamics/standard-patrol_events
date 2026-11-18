@@ -124,10 +124,11 @@ def header_row(cells, texts):
             r.font.color.rgb, r.font.bold, r.font.size = RGBColor(0xFF, 0xFF, 0xFF), True, Pt(9)
 
 
-def fixed_table(var, widths_cm, merge_first=False):
+def fixed_table(var, widths_cm, merge_cols=0):
     """Known columns with set widths (narrow ID, wide details), ICMBio-style; dynamic_table
-    can only make equal columns. merge_first: equal consecutive first-column cells merge
-    down (a patrol cell over its legs), via a vMerge whose value Jinja decides per row."""
+    can only make equal columns. merge_cols: the first N columns merge down over rows
+    that share the first column's value (a patrol's number and date over its legs), via
+    a vMerge whose value Jinja decides per row."""
     t = doc.add_table(rows=4, cols=len(widths_cm))
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
     t.autofit = False
@@ -136,9 +137,9 @@ def fixed_table(var, widths_cm, merge_first=False):
     t.rows[1].cells[0].text = f"{{%tr for item in {var}.tbl_contents %}}"
     for i, c in enumerate(t.rows[2].cells):
         c.text = f"{{{{ item.cols[{i}] }}}}"
-        if merge_first and i == 0:  # docxtpl's {% vm %} merges the whole column, not per group
+        if i < merge_cols:  # docxtpl's {% vm %} merges the whole column, not per group
             same = "loop.previtem and loop.previtem.cols[0] == item.cols[0]"
-            c.text = f"{{% if not ({same}) %}}{{{{ item.cols[0] }}}}{{% endif %}}"
+            c.text = f"{{% if not ({same}) %}}{{{{ item.cols[{i}] }}}}{{% endif %}}"
             vm = OxmlElement("w:vMerge")
             vm.set(qn("w:val"), f"{{% if {same} %}}continue{{% else %}}restart{{% endif %}}")
             c._tc.get_or_add_tcPr().append(vm)
@@ -150,9 +151,9 @@ def fixed_table(var, widths_cm, merge_first=False):
             c.width = Cm(w)
 
 
-def table_block(var, widths_cm=None, merge_first=False):
+def table_block(var, widths_cm=None, merge_cols=0):
     tag(f"{{%p if {var}.tbl_contents %}}")
-    fixed_table(var, widths_cm, merge_first) if widths_cm else dynamic_table(var)
+    fixed_table(var, widths_cm, merge_cols) if widths_cm else dynamic_table(var)
     tag("{%p else %}")
     p("{{ no_data }}", color=MUTED)
     tag("{%p endif %}")
@@ -214,10 +215,10 @@ p()
 tag("{%p endif %}")
 
 # ── body ──────────────────────────────────────────────────────────────────────
-# Patrol legs: patrol cell merged over its legs; Tramo, Medio, Inicio – Fin, km, Horas,
-# Líder, Integrantes, Detalles.
+# Who went on patrol: number and date merged over a patrol's legs; patrol type, time,
+# leader, members per leg.
 section("show_personnel", "L_personnel", lambda: table_block(
-    "personnel", widths_cm=[2.2, 1.0, 1.9, 2.3, 1.0, 1.0, 1.8, 2.4, 3.4], merge_first=True))
+    "personnel", widths_cm=[1.6, 2.2, 3.0, 2.6, 2.6, 5.0], merge_cols=2))
 section(None, "L_patrol_effort", lambda: (p("{{ L_effort_intro }}", color=MUTED), table_block("effort")))
 section(None, "L_maps", lambda: (
     figure("tracks_map", "L_fig_tracks"),
