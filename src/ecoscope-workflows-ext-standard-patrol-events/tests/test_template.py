@@ -97,3 +97,16 @@ def test_personnel_number_and_date_merge_per_patrol(tmp_path):
     assert xml.count('w:val="restart"') == 4  # number and date of #70 and of #72
     assert xml.count(">70<") == 1 and xml.count(">72<") == 1 and xml.count("11/11/2026") == 2
     assert [c.text for c in table.rows[0].cells] == cols
+
+
+def test_rendered_report_keeps_word_schema_order(tmp_path):
+    # Word refuses a file whose tblPr children are out of schema order (python-docx doesn't)
+    from docx.oxml.ns import qn
+
+    doc = _render(tmp_path)
+    for t in doc.tables:
+        tags = [c.tag.split("}")[1] for c in t._tbl.tblPr]
+        if "tblBorders" in tags and "tblLook" in tags:
+            assert tags.index("tblBorders") < tags.index("tblLook"), tags
+    zoom = doc.settings.element.find(qn("w:zoom"))
+    assert zoom is None or zoom.get(qn("w:percent"))
