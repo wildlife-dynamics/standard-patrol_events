@@ -38,6 +38,9 @@ rjsf-overrides:
     team_groups.properties.vars.title: Team subject groups
     team_groups.properties.vars.description: Subject groups that count as teams. Leave empty to use the patrol leader.
     team_groups.properties.vars.default: []
+    event_types.properties.vars.title: Event types
+    event_types.properties.vars.description: Event type values to include. Leave empty for all types (then events of retired types linked to patrols are included too).
+    event_types.properties.vars.default: []
     event_grouping.properties.var.title: Group events by
     event_grouping.properties.var.default: event_type_display
     event_grouping.properties.var.oneOf:
@@ -151,8 +154,8 @@ workflow:
       include_null_geometry: false
       sub_page_size: 100
 
-  - id: patrols
-    task: get_patrols_from_combined_params
+  - id: patrols  # empty type list = no filter (core reads it as active types only)
+    task: get_patrols_any_type
     partial:
       combined_params: ${{ workflow.patrol_params.return }}
 
@@ -173,11 +176,19 @@ workflow:
         - {x: 0.0, y: 0.0}
         - {x: 1.0, y: 1.0}
 
+  # A trajectory needs 2 fixes; a period where every patrol has 1 fix crashed the run.
+  - id: patrol_tracks
+    task: drop_short_tracks
+    partial:
+      relocations: ${{ workflow.patrol_relocations.return }}
+      group_column: groupby_col
+      min_fixes: 2
+
   # A gap over 1 h between fixes is a device left on / a patrol left open, not patrolling.
   - id: patrol_trajectory
     task: relocations_to_trajectory
     partial:
-      relocations: ${{ workflow.patrol_relocations.return }}
+      relocations: ${{ workflow.patrol_tracks.return }}
       trajectory_segment_filter:
         min_length_meters: 0.001  # the lowest values the filter accepts
         max_length_meters: 1000000
@@ -241,9 +252,13 @@ workflow:
 
   # ── 7 · Events ──────────────────────────────────────────────────────────────────
   - name: Event Types
-    id: period_events
+    id: event_types
+    task: set_list_of_string_vars
+
+  - id: period_events_fetched
     task: get_events
     partial:
+      event_types: ${{ workflow.event_types.return }}
       event_columns: ["id", "time", "event_type", "event_category", "title", "reported_by", "serial_number", "event_details", "geometry", "state", "priority", "priority_label", "patrol_segments"]
       event_states: null
       include_updates: false
@@ -255,6 +270,16 @@ workflow:
       include_display_values: false
       include_null_geometry: true
       raise_on_empty: false
+
+  # ER's list endpoint hides events of retired types; a patrol's own linked ones are
+  # fetched one by one (only when no event types are selected).
+  - id: period_events
+    task: add_missing_linked_events
+    partial:
+      client: ${{ workflow.er_client.return }}
+      patrols_df: ${{ workflow.patrols.return }}
+      events: ${{ workflow.period_events_fetched.return }}
+      event_types: ${{ workflow.event_types.return }}
 
   - id: linked_events
     task: unpack_events_from_patrols_df_and_combined_params
