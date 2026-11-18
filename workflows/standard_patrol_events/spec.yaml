@@ -959,6 +959,25 @@ workflow:
       root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       filename_suffix: monthly_chart
 
+  # Incident storyboard (core): incidents dated in the period, one row each, with their events
+  - id: incidents
+    task: get_incident_events
+    partial:
+      client: ${{ workflow.er_client.return }}
+      time_range: ${{ workflow.time_range.return }}
+
+  - id: storyboard_html
+    task: draw_incident_storyboard
+    partial:
+      dataframe: ${{ workflow.incidents.return }}
+
+  - id: incident_storyboard
+    task: persist_text
+    partial:
+      text: ${{ workflow.storyboard_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: incident_storyboard
+
   # ── Tables ──────────────────────────────────────────────────────────────────────
   - id: events_by_type
     task: events_by_type_table
@@ -1104,11 +1123,12 @@ workflow:
           - {item_type: table, key: category_priority, value: "${{ workflow.category_priority.return }}"}
           - {item_type: table, key: event_details, value: "${{ workflow.event_details.return }}"}
           - {item_type: table_list, key: event_detail_tables, value: "${{ workflow.event_detail_tables.return }}"}
-          - {item_type: image, key: tracks_map, value: "${{ workflow.tracks_map_static.return }}", width_inches: 6.6}
-          - {item_type: image, key: time_density_map, value: "${{ workflow.time_density_map_static.return }}", width_inches: 6.6}
-          - {item_type: image, key: event_density_map, value: "${{ workflow.event_density_map_static.return }}", width_inches: 6.6}
+          - {item_type: image, key: tracks_map, value: "${{ workflow.tracks_map_static.return }}", width_inches: 6.6, screenshot_config: {full_page: false}}
+          - {item_type: image, key: time_density_map, value: "${{ workflow.time_density_map_static.return }}", width_inches: 6.6, screenshot_config: {full_page: false}}
+          - {item_type: image, key: event_density_map, value: "${{ workflow.event_density_map_static.return }}", width_inches: 6.6, screenshot_config: {full_page: false}}
           - {item_type: image, key: events_bar, value: "${{ workflow.events_bar.return }}", width_inches: 6.6}
           - {item_type: image, key: monthly_chart, value: "${{ workflow.monthly_chart.return }}", width_inches: 6.6}
+          - {item_type: image, key: incident_storyboard, value: "${{ workflow.incident_storyboard.return }}", width_inches: 6.6}
           - {item_type: image_list, key: images, value: "${{ workflow.images.return }}", width_inches: 3.4}
 
   # ── Dashboard ───────────────────────────────────────────────────────────────────
@@ -1280,6 +1300,15 @@ workflow:
       title: Events by month
       data: ${{ workflow.monthly_chart.return }}
 
+  - id: storyboard_widget
+    task: create_plot_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Incidents
+      data: ${{ workflow.incident_storyboard.return }}
+
   - id: event_summary_html
     task: draw_table
     partial:
@@ -1348,3 +1377,4 @@ workflow:
         - ${{ workflow.event_summary_widget.return }}
         - ${{ workflow.event_records_widget.return }}
         - ${{ workflow.legs_widget.return }}
+        - ${{ workflow.storyboard_widget.return }}

@@ -35,6 +35,7 @@ def set_report_blocks(
     events_chart: Annotated[bool, Field(title="Events chart")] = True,
     monthly_chart: Annotated[bool, Field(title="Events by month chart")] = False,
     category_priority: Annotated[bool, Field(title="Events by category and priority")] = False,
+    incidents: Annotated[bool, Field(title="Incident storyboard", description="Incidents (collection events) in the period with their events.")] = False,
     images: Annotated[bool, Field(title="Images")] = True,
     conclusions: Annotated[bool, Field(title="Conclusions box")] = True,
 ) -> Annotated[dict[str, str], Field(description="show_<block> template switches as 'true'/'false'.")]:

@@ -248,6 +248,7 @@ section(None, "L_event_summary", lambda: (
     tag(on("show_monthly_chart")), figure("monthly_chart", "L_fig_monthly"), tag("{%p endif %}"),
     tag(on("show_category_priority")), doc.add_heading("{{ L_category_priority }}", 2),
     table_block("category_priority"), tag("{%p endif %}"),
+    tag(on("show_incidents")), figure("incident_storyboard", "L_fig_incidents"), tag("{%p endif %}"),
 ))
 
 
