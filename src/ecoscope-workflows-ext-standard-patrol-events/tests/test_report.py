@@ -12,7 +12,8 @@ def test_report_blocks_defaults_follow_mrd_core_optional_split():
     b = set_report_blocks()
     assert b["show_headline_stats"] == "true" and b["show_conclusions"] == "true"
     assert b["show_personnel"] == "false" and b["show_category_priority"] == "false"
-    assert all(v in ("true", "false") for v in b.values()) and len(b) == 9
+    assert all(v in ("true", "false") for v in b.values()) and len(b) == 10
+    assert b["show_incidents"] == "false"
 
 
 def test_report_blocks_override():

@@ -11,5 +11,6 @@
   {"widget_id": 9, "x": 5, "y": 22, "w": 5, "h": 9, "static": false},
   {"widget_id": 10, "x": 0, "y": 31, "w": 4, "h": 10, "static": false},
   {"widget_id": 11, "x": 4, "y": 31, "w": 6, "h": 10, "static": false},
-  {"widget_id": 12, "x": 0, "y": 41, "w": 10, "h": 9, "static": false}
+  {"widget_id": 12, "x": 0, "y": 41, "w": 10, "h": 9, "static": false},
+  {"widget_id": 13, "x": 0, "y": 50, "w": 10, "h": 10, "static": false}
 ]

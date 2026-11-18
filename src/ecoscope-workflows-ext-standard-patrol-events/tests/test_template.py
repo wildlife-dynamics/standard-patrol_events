@@ -20,7 +20,7 @@ from ecoscope_workflows_ext_standard_patrol_events.tasks import set_report_block
 
 TEMPLATE = Path(__file__).parent.parent / "ecoscope_workflows_ext_standard_patrol_events/data/standard_patrol_events.docx"
 L = get_report_labels("es")
-MAPS = ("tracks_map", "time_density_map", "event_density_map", "events_bar", "monthly_chart")
+MAPS = ("tracks_map", "time_density_map", "event_density_map", "events_bar", "monthly_chart", "incident_storyboard")
 
 
 def _text(doc):
@@ -50,7 +50,7 @@ def _render(tmp_path, *, blocks=None, effort=None, detail_mode="general", photo=
         ImageListContextItem(key="logos", value=pd.DataFrame({"caption": [""] if logos else [], "image_path": [str(png)] if logos else []}), width_inches=1),
     ]
     out = create_docx(template_path=str(TEMPLATE), context=TemplateContext(items=items), output_dir=str(tmp_path),
-                      extra_text=[L, set_report_blocks(personnel=True, monthly_chart=True, category_priority=True,
+                      extra_text=[L, set_report_blocks(personnel=True, monthly_chart=True, category_priority=True, incidents=True,
                                                        **(blocks or {}))])
     return Document(out)
 
@@ -59,7 +59,7 @@ def test_full_render_uses_language_labels_and_leaves_no_tags(tmp_path):
     doc = _render(tmp_path)
     text = _text(doc)
     for key in ("L_patrol_effort", "L_maps", "L_event_summary", "L_event_details", "L_images", "L_conclusions",
-                "L_personnel", "L_category_priority", "L_fig_tracks", "L_fig_monthly", "L_period"):
+                "L_personnel", "L_category_priority", "L_fig_tracks", "L_fig_monthly", "L_fig_incidents", "L_period"):
         assert L[key] in text, key
     assert L["L_footer"] in doc.sections[0].footer.paragraphs[0].text
     assert "{{" not in text and "{%" not in text
