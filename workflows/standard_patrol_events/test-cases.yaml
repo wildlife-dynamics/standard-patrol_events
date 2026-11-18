@@ -38,6 +38,8 @@ costaecuador:
       vars: []
     patrol_serial:
       var: ""
+    tracks_color_by:
+      var: patrol_type
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -99,6 +101,8 @@ apn:
       vars: []
     patrol_serial:
       var: ""
+    tracks_color_by:
+      var: patrol_type
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -161,6 +165,8 @@ mep:
       vars: []
     patrol_serial:
       var: ""
+    tracks_color_by:
+      var: patrol_type
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -223,6 +229,8 @@ empty_period:
       vars: []
     patrol_serial:
       var: ""
+    tracks_color_by:
+      var: patrol_type
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -285,6 +293,8 @@ belize:
       vars: []
     patrol_serial:
       var: ""
+    tracks_color_by:
+      var: patrol_type
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -349,6 +359,8 @@ apncentral:
       vars: []
     patrol_serial:
       var: ""
+    tracks_color_by:
+      var: patrol_type
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -413,6 +425,8 @@ apncentral_patrol70:
       vars: []
     patrol_serial:
       var: "70"
+    tracks_color_by:
+      var: patrol_type
     retrieved_events:
       retrieval: all_in_period
     state_events:

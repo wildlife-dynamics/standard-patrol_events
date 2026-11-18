@@ -28,6 +28,13 @@ rjsf-overrides:
     patrol_serial.properties.var.title: Patrol ID
     patrol_serial.properties.var.default: ""
     patrol_serial.properties.var.description: ER patrol serial number for a single-patrol report (its legs, tracks and linked events). Leave empty for all patrols in the period.
+    tracks_color_by.properties.var.title: Colour tracks by
+    tracks_color_by.properties.var.default: patrol_type
+    tracks_color_by.properties.var.oneOf:  # a leg's column (tracks carry their leg's type and team)
+      - const: patrol_type
+        title: Patrol type
+      - const: patrol_team_name
+        title: Team
     effort_grouper.properties.var.title: Group patrol effort by
     effort_grouper.properties.var.default: patrol_type
     effort_grouper.properties.var.oneOf:  # the column core's summary groups by
@@ -526,11 +533,42 @@ workflow:
       grouper: ${{ workflow.effort_grouper.return }}
       labels: ${{ workflow.labels.return }}
 
+  - name: Tracks Map
+    id: tracks_color_by
+    task: set_string_var
+
+  - id: no_team_label
+    task: get_collection_item
+    partial:
+      raise_on_missing: true
+      collection: ${{ workflow.labels.return }}
+      key: no_team
+      default: ""
+
+  # a copy for the map (drop returns a new frame; map_values below edits in place, and the
+  # effort summary reads effort_tracks_named); member lists aren't shown on the map
+  - id: tracks_for_map
+    task: map_columns
+    partial:
+      df: ${{ workflow.effort_tracks_named.return }}
+      drop_columns: [patrol_member_names, patrol_asset_names]
+      retain_columns: []
+      rename_columns: {}
+      raise_if_not_found: false
+
+  - id: tracks_teamed  # core writes "None" for legs without a team
+    task: map_values
+    partial:
+      df: ${{ workflow.tracks_for_map.return }}
+      column_name: patrol_team_name
+      value_map: {"None": "${{ workflow.no_team_label.return }}"}
+      missing_values: preserve
+
   - id: tracks_colored
     task: apply_color_map
     partial:
-      df: ${{ workflow.tracks_typed.return }}
-      input_column_name: extra__patrol_type__display
+      df: ${{ workflow.tracks_teamed.return }}
+      input_column_name: ${{ workflow.tracks_color_by.return }}
       colormap: tab10
       output_column_name: patrol_color
 
@@ -538,10 +576,10 @@ workflow:
     task: create_path_layer
     partial:
       data_url: null
-      tooltip_columns: [extra__patrol_serial_number, extra__patrol_type__display, extra__patrol_subject]
+      tooltip_columns: [patrol_serial_number, patrol_type, patrol_team_name, patrol_subject]
       geodataframe: ${{ workflow.tracks_colored.return }}
       layer_style: {get_color: patrol_color, get_width: 2}
-      legend: {label_column: extra__patrol_type__display, color_column: patrol_color}
+      legend: {label_column: "${{ workflow.tracks_color_by.return }}", color_column: patrol_color}
 
   - id: events_with_geometry
     task: ecoscope.platform.tasks.transformation.drop_null_geometry
