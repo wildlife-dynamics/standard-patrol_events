@@ -32,6 +32,8 @@ labels:
   language: es
 event_types:
   vars: []
+patrol_serial:
+  var: ""
 retrieved_events:
   retrieval: all_in_period
 state_events:

@@ -36,6 +36,8 @@ costaecuador:
       language: es
     event_types:
       vars: []
+    patrol_serial:
+      var: ""
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -95,6 +97,8 @@ apn:
       language: es
     event_types:
       vars: []
+    patrol_serial:
+      var: ""
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -155,6 +159,8 @@ mep:
       language: en
     event_types:
       vars: []
+    patrol_serial:
+      var: ""
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -215,6 +221,8 @@ empty_period:
       language: es
     event_types:
       vars: []
+    patrol_serial:
+      var: ""
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -275,6 +283,8 @@ belize:
       language: en
     event_types:
       vars: []
+    patrol_serial:
+      var: ""
     retrieved_events:
       retrieval: all_in_period
     state_events:
@@ -337,6 +347,72 @@ apncentral:
       language: es
     event_types:
       vars: []
+    patrol_serial:
+      var: ""
+    retrieved_events:
+      retrieval: all_in_period
+    state_events:
+      state: all
+    event_grouping:
+      var: event_type_display
+    detail_mode:
+      var: general
+    event_detail_tables:
+      detail_fields: {}
+    images_options:
+      mode: attachments
+      max_images: 12
+    report_blocks:
+      personnel: true
+    template_path:
+      template: standard
+    report_title:
+      var: Reporte de patrullajes y eventos
+    report_subtitle:
+      var: APN Central
+    detail_intro:
+      var: ''
+
+apncentral_patrol70:
+  name: apncentral_patrol70
+  description: 'Single-patrol report for APN Central #70 (two legs); new patrol schema with multi-leg test patrols #66-70 (Nov
+    5-12 2026), Spanish.'
+  params:
+    workflow_details:
+      name: Reporte de patrullajes y eventos
+      description: APN Central
+    er_client:
+      data_source:
+        name: apncentral
+    time_range:
+      since: '2026-11-05T00:00:00'
+      until: '2026-11-12T00:00:00'
+      timezone:
+        label: America/Argentina/Buenos_Aires
+        tzCode: America/Argentina/Buenos_Aires
+        name: (UTC-03:00) America/Argentina/Buenos_Aires
+        utc: -03:00
+    base_maps: {}
+    area_scope:
+      level: site
+      unit: null
+    patrol_params:
+      patrol_types: []
+    effort_grouper:
+      var: patrol_serial_number
+    effort_metrics:
+      metrics:
+        - metric: patrol_count
+        - metric: total_distance
+          unit: km
+        - metric: total_duration
+          unit: h
+    labels:
+      language: es
+    event_types:
+      vars: []
+    patrol_serial:
+      var: "70"
     retrieved_events:
       retrieval: all_in_period
     state_events:
