@@ -81,7 +81,11 @@ def borders(table, color="D1D5DB"):
         e.set(qn("w:sz"), "4")
         e.set(qn("w:color"), color)
         b.append(e)
-    tblpr.append(b)
+    # Word rejects the file when tblPr children are out of schema order: tblBorders goes
+    # before shd / tblLayout / tblCellMar / tblLook / tblCaption / tblDescription.
+    after = ("shd", "tblLayout", "tblCellMar", "tblLook", "tblCaption", "tblDescription")
+    nxt = next((c for c in tblpr if c.tag.split("}")[1] in after), None)
+    tblpr.insert(list(tblpr).index(nxt), b) if nxt is not None else tblpr.append(b)
 
 
 def full_width(table):
@@ -298,5 +302,9 @@ for kind, text in (("begin", None), (None, "PAGE"), ("end", None)):
 r2.font.size = Pt(8)
 
 OUT.parent.mkdir(parents=True, exist_ok=True)
+# python-docx's default settings carry <w:zoom/> without the required percent.
+_zoom = doc.settings.element.find(qn("w:zoom"))
+if _zoom is not None and _zoom.get(qn("w:percent")) is None:
+    _zoom.set(qn("w:percent"), "100")
 doc.save(OUT)
 print(f"wrote {OUT}")
