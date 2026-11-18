@@ -30,7 +30,7 @@ def _text(doc):
     return "\n".join(parts)
 
 
-def _render(tmp_path, *, blocks=None, effort=None, detail_mode="general", photo=None):
+def _render(tmp_path, *, blocks=None, effort=None, detail_mode="general", photo=None, personnel=None):
     png = tmp_path / "t.png"
     Image.new("RGB", (40, 30), "red").save(png)
     df = pd.DataFrame({"a": ["x1", "x2"], "b": ["y1", "y2"]})
@@ -40,7 +40,8 @@ def _render(tmp_path, *, blocks=None, effort=None, detail_mode="general", photo=
             "detail_mode": detail_mode}
     items = [TextContextItem(key=k, value=v) for k, v in text.items()]
     items += [ImageContextItem(key=k, value=str(png), width_inches=2) for k in MAPS]
-    items += [TableContextItem(key=k, value=df) for k in ("events_by_type", "category_priority", "event_details", "personnel")]
+    items += [TableContextItem(key=k, value=df) for k in ("events_by_type", "category_priority", "event_details")]
+    items += [TableContextItem(key="personnel", value=df if personnel is None else personnel)]
     items += [
         TableContextItem(key="effort", value=df if effort is None else effort),
         TableListContextItem(key="event_detail_tables", value=[{"heading": "CAT", "title": "TYPE (2)", "table": df}]),
@@ -82,3 +83,16 @@ def test_images_blank_mode_keeps_captions_without_photos(tmp_path):
 def test_per_type_detail_mode(tmp_path):
     text = _text(_render(tmp_path, detail_mode="per_type"))
     assert "CAT · TYPE (2)" in text
+
+
+def test_personnel_patrol_cell_merges(tmp_path):
+    cols = [L[k] for k in ("patrol", "leg", "transport", "start_end", "distance_km", "hours", "leader", "members", "details")]
+    rows = [["#70\n2026-11-11 · 2 tramos", 1, "Pedestre", "a", 0.1, 0.0, "X", "Y", "D1"],
+            ["#70\n2026-11-11 · 2 tramos", 2, "Camioneta", "b", "—", "—", "X", "Y", "D2"],
+            ["#72\n2026-11-12 · 1 tramo", 1, "Pedestre", "c", 9.4, 4.5, "Z", "W", "D3"]]
+    doc = _render(tmp_path, personnel=pd.DataFrame(rows, columns=cols))
+    table = next(t for t in doc.tables if t.rows[0].cells[0].text == L["patrol"])
+    xml = table._tbl.xml
+    assert xml.count("w:vMerge") >= 2  # #70 spans its two leg rows
+    assert xml.count("#70") == 1 and xml.count("#72") == 1  # stored once; python-docx repeats merged text per row
+    assert [c.text for c in table.rows[0].cells][:3] == [L["patrol"], L["leg"], L["transport"]]
