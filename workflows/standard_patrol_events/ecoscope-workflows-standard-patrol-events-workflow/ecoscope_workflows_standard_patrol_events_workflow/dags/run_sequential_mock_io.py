@@ -164,9 +164,7 @@ from ecoscope.platform.tasks.transformation import sort_values as sort_values
 from ecoscope_workflows_ext_custom.tasks.analysis import (
     grid_cell_size_for_extent as grid_cell_size_for_extent,
 )
-from ecoscope_workflows_ext_custom.tasks.results import (
-    compute_fitted_view_state as compute_fitted_view_state,
-)
+from ecoscope_workflows_ext_custom.tasks.results import fit_view_state as fit_view_state
 from ecoscope_workflows_ext_custom.tasks.transformation import (
     add_event_display_columns as add_event_display_columns,
 )
@@ -1158,7 +1156,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     tracks_view = (
-        task(compute_fitted_view_state)
+        task(fit_view_state)
         .validate()
         .set_task_instance_id("tracks_view")
         .handle_errors()
@@ -1171,9 +1169,36 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            max_zoom=20,
             geo_layers=[tracks_layer, events_layer],
+            width_px=650,
+            height_px=400,
+            padding=0.15,
+            max_zoom=16,
             **(params.get("tracks_view") or {}),
+        )
+        .call()
+    )
+
+    tracks_view_static = (
+        task(fit_view_state)
+        .validate()
+        .set_task_instance_id("tracks_view_static")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            geo_layers=[tracks_layer, events_layer],
+            width_px=1280,
+            height_px=720,
+            padding=0.15,
+            max_zoom=16,
+            **(params.get("tracks_view_static") or {}),
         )
         .call()
     )
@@ -1245,7 +1270,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             max_zoom=20,
             geo_layers=[tracks_layer, events_layer],
             tile_layers=base_maps,
-            view_state=tracks_view,
+            view_state=tracks_view_static,
             static=True,
             title=None,
             legend_style={"placement": "bottom-right"},
@@ -1451,7 +1476,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     td_view = (
-        task(compute_fitted_view_state)
+        task(fit_view_state)
         .validate()
         .set_task_instance_id("td_view")
         .handle_errors()
@@ -1463,7 +1488,38 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(max_zoom=20, geo_layers=[td_layer], **(params.get("td_view") or {}))
+        .partial(
+            geo_layers=[td_layer],
+            width_px=650,
+            height_px=400,
+            padding=0.15,
+            max_zoom=16,
+            **(params.get("td_view") or {}),
+        )
+        .call()
+    )
+
+    td_view_static = (
+        task(fit_view_state)
+        .validate()
+        .set_task_instance_id("td_view_static")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            geo_layers=[td_layer],
+            width_px=1280,
+            height_px=720,
+            padding=0.15,
+            max_zoom=16,
+            **(params.get("td_view_static") or {}),
+        )
         .call()
     )
 
@@ -1534,7 +1590,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             max_zoom=20,
             geo_layers=[td_layer],
             tile_layers=base_maps,
-            view_state=td_view,
+            view_state=td_view_static,
             static=True,
             title=None,
             legend_style={"placement": "bottom-right"},
@@ -1766,7 +1822,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     ed_view = (
-        task(compute_fitted_view_state)
+        task(fit_view_state)
         .validate()
         .set_task_instance_id("ed_view")
         .handle_errors()
@@ -1778,7 +1834,38 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(max_zoom=20, geo_layers=[ed_layer], **(params.get("ed_view") or {}))
+        .partial(
+            geo_layers=[ed_layer],
+            width_px=650,
+            height_px=400,
+            padding=0.15,
+            max_zoom=16,
+            **(params.get("ed_view") or {}),
+        )
+        .call()
+    )
+
+    ed_view_static = (
+        task(fit_view_state)
+        .validate()
+        .set_task_instance_id("ed_view_static")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            geo_layers=[ed_layer],
+            width_px=1280,
+            height_px=720,
+            padding=0.15,
+            max_zoom=16,
+            **(params.get("ed_view_static") or {}),
+        )
         .call()
     )
 
@@ -1849,7 +1936,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             max_zoom=20,
             geo_layers=[ed_layer],
             tile_layers=base_maps,
-            view_state=ed_view,
+            view_state=ed_view_static,
             static=True,
             title=None,
             legend_style={"placement": "bottom-right"},

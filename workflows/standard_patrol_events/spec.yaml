@@ -377,11 +377,23 @@ workflow:
       legend: {label_column: "${{ workflow.event_grouping.return }}", color_column: event_color}
       tooltip_columns: [serial_number, event_type_display]
 
-  - id: tracks_view
-    task: compute_fitted_view_state  # core fit assumes a 256 px map and zooms out ~2 levels
+  - id: tracks_view  # dashboard widget (~650x400 px)
+    task: fit_view_state
     partial:
-      max_zoom: 20
       geo_layers: ["${{ workflow.tracks_layer.return }}", "${{ workflow.events_layer.return }}"]
+      width_px: 650
+      height_px: 400
+      padding: 0.15
+      max_zoom: 16
+
+  - id: tracks_view_static  # report map (1280x720 px)
+    task: fit_view_state
+    partial:
+      geo_layers: ["${{ workflow.tracks_layer.return }}", "${{ workflow.events_layer.return }}"]
+      width_px: 1280
+      height_px: 720
+      padding: 0.15
+      max_zoom: 16
 
   - id: tracks_map_html
     task: draw_map
@@ -409,7 +421,7 @@ workflow:
       max_zoom: 20
       geo_layers: ["${{ workflow.tracks_layer.return }}", "${{ workflow.events_layer.return }}"]
       tile_layers: ${{ workflow.base_maps.return }}
-      view_state: ${{ workflow.tracks_view.return }}
+      view_state: ${{ workflow.tracks_view_static.return }}
       static: true
       title: null
       legend_style: {placement: bottom-right}
@@ -479,11 +491,23 @@ workflow:
       layer_style: {get_fill_color: percentile_colormap, opacity: 0.6}
       legend: {label_column: percentile, label_suffix: " %", color_column: percentile_colormap}
 
-  - id: td_view
-    task: compute_fitted_view_state  # core fit assumes a 256 px map and zooms out ~2 levels
+  - id: td_view  # dashboard widget (~650x400 px)
+    task: fit_view_state
     partial:
-      max_zoom: 20
       geo_layers: ["${{ workflow.td_layer.return }}"]
+      width_px: 650
+      height_px: 400
+      padding: 0.15
+      max_zoom: 16
+
+  - id: td_view_static  # report map (1280x720 px)
+    task: fit_view_state
+    partial:
+      geo_layers: ["${{ workflow.td_layer.return }}"]
+      width_px: 1280
+      height_px: 720
+      padding: 0.15
+      max_zoom: 16
 
   - id: td_map_html
     task: draw_map
@@ -511,7 +535,7 @@ workflow:
       max_zoom: 20
       geo_layers: ["${{ workflow.td_layer.return }}"]
       tile_layers: ${{ workflow.base_maps.return }}
-      view_state: ${{ workflow.td_view.return }}
+      view_state: ${{ workflow.td_view_static.return }}
       static: true
       title: null
       legend_style: {placement: bottom-right}
@@ -604,11 +628,23 @@ workflow:
       layer_style: {get_fill_color: density_colormap, opacity: 0.6}
       legend: {label_column: density_bins, color_column: density_colormap}
 
-  - id: ed_view
-    task: compute_fitted_view_state  # core fit assumes a 256 px map and zooms out ~2 levels
+  - id: ed_view  # dashboard widget (~650x400 px)
+    task: fit_view_state
     partial:
-      max_zoom: 20
       geo_layers: ["${{ workflow.ed_layer.return }}"]
+      width_px: 650
+      height_px: 400
+      padding: 0.15
+      max_zoom: 16
+
+  - id: ed_view_static  # report map (1280x720 px)
+    task: fit_view_state
+    partial:
+      geo_layers: ["${{ workflow.ed_layer.return }}"]
+      width_px: 1280
+      height_px: 720
+      padding: 0.15
+      max_zoom: 16
 
   - id: ed_map_html
     task: draw_map
@@ -636,7 +672,7 @@ workflow:
       max_zoom: 20
       geo_layers: ["${{ workflow.ed_layer.return }}"]
       tile_layers: ${{ workflow.base_maps.return }}
-      view_state: ${{ workflow.ed_view.return }}
+      view_state: ${{ workflow.ed_view_static.return }}
       static: true
       title: null
       legend_style: {placement: bottom-right}
