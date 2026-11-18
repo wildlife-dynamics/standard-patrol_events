@@ -27,7 +27,7 @@ rjsf-overrides:
     detail_intro.properties.var.title: Event details introduction
     patrol_serial.properties.var.title: Patrol ID
     patrol_serial.properties.var.default: ""
-    patrol_serial.properties.var.description: ER patrol serial number for a single-patrol report (its legs, tracks and linked events). Leave empty for all patrols in the period.
+    patrol_serial.properties.var.description: ER patrol serial number for a single-patrol report (its legs, tracks and linked events); the report covers the patrol's own dates, whatever time range is set. Leave empty for all patrols in the period.
     tracks_color_by.properties.var.title: Colour tracks by
     tracks_color_by.properties.var.default: patrol_type
     tracks_color_by.properties.var.oneOf:  # a leg's column (tracks carry their leg's type and team)
@@ -110,10 +110,22 @@ workflow:
     partial:
       time_format: "%d %b %Y"
 
+  - name: Single Patrol
+    id: patrol_serial
+    task: set_string_var
+
+  # Report period: the form's dates, or the patrol's own span when a Patrol ID is set
+  - id: report_range
+    task: report_time_range
+    partial:
+      client: ${{ workflow.er_client.return }}
+      time_range: ${{ workflow.time_range.return }}
+      patrol_serial: ${{ workflow.patrol_serial.return }}
+
   - id: timezone
     task: get_timezone_from_time_range
     partial:
-      time_range: ${{ workflow.time_range.return }}
+      time_range: ${{ workflow.report_range.return }}
 
   - id: current_user
     task: get_current_user
@@ -172,7 +184,7 @@ workflow:
       event_states: null
       patrols_overlap_daterange: true
       client: ${{ workflow.er_client.return }}
-      time_range: ${{ workflow.time_range.return }}
+      time_range: ${{ workflow.report_range.return }}
       event_types: []
       status: [done]
       raise_on_empty: false
@@ -186,10 +198,6 @@ workflow:
     partial:
       combined_params: ${{ workflow.patrol_params.return }}
 
-  - name: Single Patrol
-    id: patrol_serial
-    task: set_string_var
-
   - id: patrols_serial  # one patrol when a Patrol ID is set
     task: filter_patrols_by_serial
     partial:
@@ -202,7 +210,7 @@ workflow:
     task: get_patrol_segments_from_patrols_df
     partial:
       patrols_df: ${{ workflow.patrols_serial.return }}
-      time_range: ${{ workflow.time_range.return }}
+      time_range: ${{ workflow.report_range.return }}
       truncate_to_time_range: true
       raise_on_empty: false
 
@@ -352,7 +360,7 @@ workflow:
   - id: report_period
     task: get_report_period
     partial:
-      time_range: ${{ workflow.time_range.return }}
+      time_range: ${{ workflow.report_range.return }}
       labels: ${{ workflow.labels.return }}
 
   # ── 7 · Events ──────────────────────────────────────────────────────────────────
@@ -370,7 +378,7 @@ workflow:
       include_related_events: false
       force_point_geometry: true
       client: ${{ workflow.er_client.return }}
-      time_range: ${{ workflow.time_range.return }}
+      time_range: ${{ workflow.report_range.return }}
       include_details: true
       include_display_values: false
       include_null_geometry: true
@@ -1043,7 +1051,7 @@ workflow:
     task: get_incident_events
     partial:
       client: ${{ workflow.er_client.return }}
-      time_range: ${{ workflow.time_range.return }}
+      time_range: ${{ workflow.report_range.return }}
 
   - id: storyboard_html
     task: draw_incident_storyboard
@@ -1441,7 +1449,7 @@ workflow:
         - never
     partial:
       details: ${{ workflow.workflow_details.return }}
-      time_range: ${{ workflow.time_range.return }}
+      time_range: ${{ workflow.report_range.return }}
       widgets:
         - ${{ workflow.kpi_patrols_widget.return }}
         - ${{ workflow.kpi_km_widget.return }}
