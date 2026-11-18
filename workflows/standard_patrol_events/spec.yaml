@@ -35,6 +35,8 @@ rjsf-overrides:
         title: Team
       - const: individual_patrol
         title: Individual patrol
+      - const: transport
+        title: Transport (per leg)
     team_groups.properties.vars.title: Team subject groups
     team_groups.properties.vars.description: Subject groups that count as teams. Leave empty to use the patrol leader.
     team_groups.properties.vars.default: []
@@ -170,17 +172,27 @@ workflow:
     partial:
       observations: ${{ workflow.patrol_observations.return }}
       relocs_columns: [patrol_id, patrol_start_time, patrol_end_time, patrol_type__display,
-                       patrol_serial_number, groupby_col, fixtime, junk_status, geometry]
+                       patrol_serial_number, patrol_segment_id, patrol_subject,
+                       groupby_col, fixtime, junk_status, geometry]
       filter_point_coords:
         - {x: 180.0, y: 90.0}
         - {x: 0.0, y: 0.0}
         - {x: 1.0, y: 1.0}
 
   # A trajectory needs 2 fixes; a period where every patrol has 1 fix crashed the run.
+  # One track per leg (core stamps each fix with its leg): each track then has a single
+  # transport, and per-leg km/hours are exact.
+  - id: patrol_leg_relocations
+    task: tracks_per_leg
+    partial:
+      relocations: ${{ workflow.patrol_relocations.return }}
+      leg_column: patrol_segment_id
+      group_column: groupby_col
+
   - id: patrol_tracks
     task: drop_short_tracks
     partial:
-      relocations: ${{ workflow.patrol_relocations.return }}
+      relocations: ${{ workflow.patrol_leg_relocations.return }}
       group_column: groupby_col
       min_fixes: 2
 
@@ -362,18 +374,27 @@ workflow:
       events: ${{ workflow.events.return }}
       closing_event_types: [cierre_de_patrulla]
       max_fields: 10
+      trajectory: ${{ workflow.trajectory.return }}
 
   - name: Event Grouping
     id: event_grouping
     task: set_string_var
 
   # ── Maps (each drawn twice: interactive for the dashboard, static for the report) ─
-  # Legs without a patrol type: "-" in the legend (as in the legs table), not "NaN".
+  # Legs without a transport: "Sin tipo" / "No type" in the legend (as in the legs table).
+  - id: no_type_label
+    task: get_collection_item
+    partial:
+      raise_on_missing: true
+      collection: ${{ workflow.labels.return }}
+      key: no_type
+      default: ""
+
   - id: tracks_typed
     task: fill_na
     partial:
       df: ${{ workflow.trajectory.return }}
-      value: "-"
+      value: ${{ workflow.no_type_label.return }}
       columns: [extra__patrol_type__display]
 
   - id: tracks_colored
@@ -388,7 +409,7 @@ workflow:
     task: create_path_layer
     partial:
       data_url: null
-      tooltip_columns: null
+      tooltip_columns: [extra__patrol_serial_number, extra__patrol_type__display, extra__patrol_subject]
       geodataframe: ${{ workflow.tracks_colored.return }}
       layer_style: {get_color: patrol_color, get_width: 2}
       legend: {label_column: extra__patrol_type__display, color_column: patrol_color}
