@@ -23,13 +23,6 @@ costaecuador:
       unit: null
     patrol_params:
       patrol_types: []
-    team_groups:
-      vars:
-      - PONGALILLO
-      - BELLAVISTA
-      - COSTA RICA
-      - EL CONCHAL
-      - PUERTO ROMA
     effort_grouper:
       var: team
     labels:
@@ -84,13 +77,6 @@ apn:
       unit: null
     patrol_params:
       patrol_types: []
-    team_groups:
-      vars:
-      - GUARDAPARQUES ZONA SUR
-      - GUARDAPARQUES ZONA NORTE
-      - GUARDAPARQUES ZONA CENTRO
-      - GUARDAPARQUES OPERACIONES
-      - SINEP
     effort_grouper:
       var: individual_patrol
     labels:
@@ -146,8 +132,6 @@ mep:
       unit: null
     patrol_params:
       patrol_types: []
-    team_groups:
-      vars: []
     effort_grouper:
       var: team
     labels:
@@ -203,8 +187,6 @@ empty_period:
       unit: null
     patrol_params:
       patrol_types: []
-    team_groups:
-      vars: []
     effort_grouper:
       var: patrol_type
     labels:
@@ -260,8 +242,6 @@ belize:
       unit: null
     patrol_params:
       patrol_types: []
-    team_groups:
-      vars: []
     effort_grouper:
       var: team
     labels:
@@ -291,5 +271,62 @@ belize:
       var: SACD Belize
     report_area:
       var: Whole site
+    detail_intro:
+      var: ''
+
+apncentral:
+  name: apncentral
+  description: 'APN Central, new patrol schema with multi-leg test patrols #66-70 (Nov
+    5-12 2026), Spanish.'
+  params:
+    workflow_details:
+      name: Reporte de patrullajes y eventos
+      description: APN Central
+    er_client:
+      data_source:
+        name: apncentral
+    time_range:
+      since: '2026-11-05T00:00:00'
+      until: '2026-11-12T00:00:00'
+      timezone:
+        label: America/Argentina/Buenos_Aires
+        tzCode: America/Argentina/Buenos_Aires
+        name: (UTC-03:00) America/Argentina/Buenos_Aires
+        utc: -03:00
+    base_maps: {}
+    area_scope:
+      level: site
+      unit: null
+    patrol_params:
+      patrol_types: []
+    effort_grouper:
+      var: individual_patrol
+    labels:
+      language: es
+    event_types:
+      vars: []
+    retrieved_events:
+      retrieval: all_in_period
+    state_events:
+      state: all
+    event_grouping:
+      var: event_type_display
+    detail_mode:
+      var: general
+    event_detail_tables:
+      detail_fields: {}
+    images_options:
+      mode: attachments
+      max_images: 12
+    report_blocks:
+      personnel: true
+    template_path:
+      template: standard
+    report_title:
+      var: Reporte de patrullajes y eventos
+    report_subtitle:
+      var: APN Central
+    report_area:
+      var: APN Central
     detail_intro:
       var: ''

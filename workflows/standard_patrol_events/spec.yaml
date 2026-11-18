@@ -37,9 +37,6 @@ rjsf-overrides:
         title: Individual patrol
       - const: transport
         title: Patrol type (per leg)
-    team_groups.properties.vars.title: Team subject groups
-    team_groups.properties.vars.description: Subject groups that count as teams. Leave empty to use the patrol leader.
-    team_groups.properties.vars.default: []
     event_types.properties.vars.title: Event types
     event_types.properties.vars.description: Event type values to include. Leave empty for all types (then events of retired types linked to patrols are included too).
     event_types.properties.vars.default: []
@@ -161,6 +158,41 @@ workflow:
     partial:
       combined_params: ${{ workflow.patrol_params.return }}
 
+  # Patrol legs from core (as the Patrol Effort catalogue workflow does): one row per leg,
+  # pauses skipped, clipped to the period; then ER team, member/asset and patrol-type names.
+  - id: patrol_legs
+    task: get_patrol_segments_from_patrols_df
+    partial:
+      patrols_df: ${{ workflow.patrols.return }}
+      time_range: ${{ workflow.time_range.return }}
+      truncate_to_time_range: true
+      raise_on_empty: false
+
+  - id: legs_team_names
+    task: add_patrol_team_names
+    partial:
+      df: ${{ workflow.patrol_legs.return }}
+      client: ${{ workflow.er_client.return }}
+
+  - id: legs_roster_names
+    task: add_patrol_roster_names
+    partial:
+      df: ${{ workflow.legs_team_names.return }}
+      client: ${{ workflow.er_client.return }}
+
+  - id: legs_named
+    task: add_patrol_type_display_names
+    partial:
+      df: ${{ workflow.legs_roster_names.return }}
+      client: ${{ workflow.er_client.return }}
+
+  - id: legs_local
+    task: convert_values_to_timezone
+    partial:
+      df: ${{ workflow.legs_named.return }}
+      timezone: ${{ workflow.timezone.return }}
+      columns: [segment_start, segment_end]
+
   - id: patrol_observations
     task: get_patrol_observations_from_patrols_df_and_combined_params
     partial:
@@ -182,17 +214,10 @@ workflow:
   # A trajectory needs 2 fixes; a period where every patrol has 1 fix crashed the run.
   # One track per leg (core stamps each fix with its leg): each track then has a single
   # transport, and per-leg km/hours are exact.
-  - id: patrol_leg_relocations
-    task: tracks_per_leg
-    partial:
-      relocations: ${{ workflow.patrol_relocations.return }}
-      leg_column: patrol_segment_id
-      group_column: groupby_col
-
   - id: patrol_tracks
     task: drop_short_tracks
     partial:
-      relocations: ${{ workflow.patrol_leg_relocations.return }}
+      relocations: ${{ workflow.patrol_relocations.return }}
       group_column: groupby_col
       min_fixes: 2
 
@@ -216,21 +241,11 @@ workflow:
       area: ${{ workflow.area.return }}
       id_column: extra__patrol_id
 
-  - id: team_sources
-    task: get_patrol_team_sources
-    partial:
-      client: ${{ workflow.er_client.return }}
-
-  - name: Team Subject Groups
-    id: team_groups
-    task: set_list_of_string_vars
-
   - id: patrol_teams_utc
-    task: resolve_patrol_team
+    task: patrols_from_legs
     partial:
+      legs: ${{ workflow.legs_named.return }}
       patrols_df: ${{ workflow.patrols.return }}
-      sources: ${{ workflow.team_sources.return }}
-      team_groups: ${{ workflow.team_groups.return }}
 
   - id: patrol_teams
     task: convert_values_to_timezone
@@ -238,11 +253,6 @@ workflow:
       df: ${{ workflow.patrol_teams_utc.return }}
       timezone: ${{ workflow.timezone.return }}
       columns: [start, end]
-
-  - id: patrol_type_display
-    task: get_patrol_type_display
-    partial:
-      client: ${{ workflow.er_client.return }}
 
   - name: Patrol Effort
     id: effort_grouper
@@ -260,7 +270,6 @@ workflow:
       patrols: ${{ workflow.patrol_teams.return }}
       grouper: ${{ workflow.effort_grouper.return }}
       labels: ${{ workflow.labels.return }}
-      patrol_type_display: ${{ workflow.patrol_type_display.return }}
 
   # ── 7 · Events ──────────────────────────────────────────────────────────────────
   - name: Event Types
@@ -356,11 +365,8 @@ workflow:
       conditions:
         - never
     partial:
-      patrols_df: ${{ workflow.patrols.return }}
-      sources: ${{ workflow.team_sources.return }}
-      patrol_type_display: ${{ workflow.patrol_type_display.return }}
+      legs: ${{ workflow.legs_local.return }}
       labels: ${{ workflow.labels.return }}
-      timezone: ${{ workflow.timezone.return }}
 
   - name: Event Grouping
     id: event_grouping
