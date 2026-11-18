@@ -378,10 +378,10 @@ workflow:
       tooltip_columns: [serial_number, event_type_display]
 
   - id: tracks_view
-    task: view_state_from_layers
+    task: compute_fitted_view_state  # core fit assumes a 256 px map and zooms out ~2 levels
     partial:
       max_zoom: 20
-      layers: ["${{ workflow.tracks_layer.return }}", "${{ workflow.events_layer.return }}"]
+      geo_layers: ["${{ workflow.tracks_layer.return }}", "${{ workflow.events_layer.return }}"]
 
   - id: tracks_map_html
     task: draw_map
@@ -480,10 +480,10 @@ workflow:
       legend: {label_column: percentile, label_suffix: " %", color_column: percentile_colormap}
 
   - id: td_view
-    task: view_state_from_layers
+    task: compute_fitted_view_state  # core fit assumes a 256 px map and zooms out ~2 levels
     partial:
       max_zoom: 20
-      layers: ["${{ workflow.td_layer.return }}"]
+      geo_layers: ["${{ workflow.td_layer.return }}"]
 
   - id: td_map_html
     task: draw_map
@@ -605,10 +605,10 @@ workflow:
       legend: {label_column: density_bins, color_column: density_colormap}
 
   - id: ed_view
-    task: view_state_from_layers
+    task: compute_fitted_view_state  # core fit assumes a 256 px map and zooms out ~2 levels
     partial:
       max_zoom: 20
-      layers: ["${{ workflow.ed_layer.return }}"]
+      geo_layers: ["${{ workflow.ed_layer.return }}"]
 
   - id: ed_map_html
     task: draw_map
