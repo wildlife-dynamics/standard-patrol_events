@@ -30,14 +30,14 @@ def _text(doc):
     return "\n".join(parts)
 
 
-def _render(tmp_path, *, blocks=None, effort=None, detail_mode="general", photo=None, personnel=None, logos=True):
+def _render(tmp_path, *, blocks=None, effort=None, detail_mode="general", photo=None, personnel=None, logos=True, text_extra=None):
     png = tmp_path / "t.png"
     Image.new("RGB", (40, 30), "red").save(png)
     df = pd.DataFrame({"a": ["x1", "x2"], "b": ["y1", "y2"]})
     text = {"title": "TITLE", "subtitle": "SUB", "area": "AREA", "period": "PERIOD", "generated_by": "GENBY",
             "date_generated": "DATE", "n_patrols": "11", "total_km": "22", "total_hours": "33",
             "patrol_days": "9", "n_events": "44", "detail_intro": "INTRO",
-            "detail_mode": detail_mode}
+            "detail_mode": detail_mode} | (text_extra or {})
     items = [TextContextItem(key=k, value=v) for k, v in text.items()]
     items += [ImageContextItem(key=k, value=str(png), width_inches=2) for k in MAPS]
     items += [TableContextItem(key=k, value=df) for k in ("events_by_type", "category_priority", "event_details")]
@@ -126,3 +126,16 @@ def test_event_details_on_landscape_pages(tmp_path):
     assert [s.orientation for s in doc.sections] == [WD_ORIENT.PORTRAIT, WD_ORIENT.LANDSCAPE, WD_ORIENT.PORTRAIT]
     assert doc.sections[1].page_width > doc.sections[1].page_height
     assert all(s.footer.is_linked_to_previous for s in doc.sections[1:])  # same footer throughout
+
+
+def _headline(doc):
+    return next(t for t in doc.tables if t.rows[0].cells[0].text == "11")
+
+
+def test_headline_area_and_person_days_only_when_given(tmp_path):
+    assert len(_headline(_render(tmp_path)).rows[0].cells) == 5
+    doc = _render(tmp_path, text_extra={"area_km2": "535.8", "person_days": "212"})
+    head = _headline(doc)
+    assert [c.text for c in head.rows[0].cells] == ["11", "22", "33", "9", "535.8", "212", "44"]
+    assert [c.text for c in head.rows[1].cells][4:6] == [L["area_covered"], L["member_days"]]
+    assert "{%" not in _text(doc)

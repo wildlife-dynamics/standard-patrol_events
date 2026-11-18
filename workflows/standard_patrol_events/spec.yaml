@@ -1028,6 +1028,7 @@ workflow:
       patrols: ${{ workflow.patrol_teams.return }}
       trajectory: ${{ workflow.trajectory.return }}
       events: ${{ workflow.events.return }}
+      totals: ${{ workflow.effort_totals.return }}
 
   - name: Report Template
     id: template_path
