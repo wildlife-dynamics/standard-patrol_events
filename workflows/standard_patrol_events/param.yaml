@@ -19,13 +19,6 @@ area_scope:
   unit: null
 patrol_params:
   patrol_types: []
-team_groups:
-  vars:
-  - PONGALILLO
-  - BELLAVISTA
-  - COSTA RICA
-  - EL CONCHAL
-  - PUERTO ROMA
 effort_grouper:
   var: team
 labels:
