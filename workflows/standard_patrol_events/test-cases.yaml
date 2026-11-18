@@ -235,3 +235,61 @@ empty_period:
       var: Golfo de Guayaquil
     detail_intro:
       var: ''
+
+belize:
+  name: belize
+  description: SACD Belize (same connection as belize-patrol_report), Aug-Oct 2026, English.
+  params:
+    workflow_details:
+      name: Patrol & Events Report
+      description: SACD Belize
+    er_client:
+      data_source:
+        name: belize
+    time_range:
+      since: '2026-08-01T00:00:00'
+      until: '2026-11-01T00:00:00'
+      timezone:
+        label: America/Belize
+        tzCode: America/Belize
+        name: (UTC-06:00) America/Belize
+        utc: '-06:00'
+    base_maps: {}
+    area_scope:
+      level: site
+      unit: null
+    patrol_params:
+      patrol_types: []
+    team_groups:
+      vars: []
+    effort_grouper:
+      var: team
+    labels:
+      language: en
+    period_events:
+      event_types: []
+    retrieved_events:
+      retrieval: all_in_period
+    state_events:
+      state: all
+    event_grouping:
+      var: event_type_display
+    detail_mode:
+      var: general
+    event_detail_tables:
+      detail_fields: {}
+    images_options:
+      mode: attachments
+      max_images: 12
+    report_blocks:
+      personnel: true
+    template_path:
+      template: standard
+    report_title:
+      var: Patrol & Events Report
+    report_subtitle:
+      var: SACD Belize
+    report_area:
+      var: Whole site
+    detail_intro:
+      var: ''
