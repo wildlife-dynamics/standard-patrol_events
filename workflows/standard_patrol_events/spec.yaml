@@ -545,24 +545,12 @@ workflow:
       key: no_team
       default: ""
 
-  # a copy for the map (drop returns a new frame; map_values below edits in place, and the
-  # effort summary reads effort_tracks_named); member lists aren't shown on the map
-  - id: tracks_for_map
-    task: map_columns
+  # team per leg for the map: ER team, else the leader (as the report's patrols), else "Sin equipo"
+  - id: tracks_teamed
+    task: team_or_leader
     partial:
       df: ${{ workflow.effort_tracks_named.return }}
-      drop_columns: [patrol_member_names, patrol_asset_names]
-      retain_columns: []
-      rename_columns: {}
-      raise_if_not_found: false
-
-  - id: tracks_teamed  # core writes "None" for legs without a team
-    task: map_values
-    partial:
-      df: ${{ workflow.tracks_for_map.return }}
-      column_name: patrol_team_name
-      value_map: {"None": "${{ workflow.no_team_label.return }}"}
-      missing_values: preserve
+      no_team: ${{ workflow.no_team_label.return }}
 
   - id: tracks_colored
     task: apply_color_map
