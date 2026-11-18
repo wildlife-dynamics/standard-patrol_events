@@ -524,6 +524,20 @@ workflow:
       filename_suffix: time_density_map_static
 
   # event density (ordered classes, as ops-dashboard)
+  # ~30 cells across the events' extent: readable on the map at any site size
+  # (core auto-scale makes ~1 km cells, invisible on a 100+ km map view).
+  - id: ed_cell_size
+    task: grid_cell_size_for_extent
+    skipif:
+      conditions:
+        - any_is_empty_df
+        - any_dependency_skipped
+        - all_geometry_are_none
+    partial:
+      aoi: ${{ workflow.events_located.return }}
+      cells_across: 30
+      min_size_m: 250.0
+
   - id: ed_meshgrid
     task: create_meshgrid
     skipif:
@@ -535,7 +549,7 @@ workflow:
       crs: "EPSG:3857"
       aoi: ${{ workflow.events_located.return }}
       intersecting_only: false
-      auto_scale_or_custom_cell_size: {"auto_scale_or_custom": "Auto-scale"}  # fixed sizes explode on wide sites (mep: 33M cells)
+      auto_scale_or_custom_cell_size: ${{ workflow.ed_cell_size.return }}  # never a fixed size: mep (US..Kenya) made 33M cells
 
   - id: ed_density
     task: calculate_feature_density
