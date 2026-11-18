@@ -36,6 +36,8 @@ patrol_serial:
   var: ""
 tracks_color_by:
   var: patrol_type
+teams:
+  vars: []
 retrieved_events:
   retrieval: all_in_period
 state_events:
