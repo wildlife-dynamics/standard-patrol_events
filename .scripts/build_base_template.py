@@ -207,12 +207,20 @@ p()
 
 # ── headline stats ─────────────────────────────────────────────────────────────
 tag(on("show_headline_stats"))
-stats = doc.add_table(rows=2, cols=5)
+# Area covered and person-days show only when chosen as effort columns: docxtpl drops the
+# {%tc %} cells, so the figure's column exists only when its value is non-empty.
+figures = [("n_patrols", "L_patrols"), ("total_km", "L_distance"), ("total_hours", "L_hours"),
+           ("patrol_days", "L_patrol_days"), ("{%tc if area_km2 %}", None), ("area_km2", "area_covered"),
+           ("{%tc endif %}", None), ("{%tc if person_days %}", None), ("person_days", "member_days"),
+           ("{%tc endif %}", None), ("n_events", "L_events")]
+stats = doc.add_table(rows=2, cols=len(figures))
 borders(stats, "E5E7EB")
 full_width(stats)
-for i, (val, lbl) in enumerate([("n_patrols", "L_patrols"), ("total_km", "L_distance"), ("total_hours", "L_hours"),
-                                 ("patrol_days", "L_patrol_days"), ("n_events", "L_events")]):
+for i, (val, lbl) in enumerate(figures):
     v, l_ = stats.rows[0].cells[i], stats.rows[1].cells[i]
+    if lbl is None:
+        v.text = l_.text = val
+        continue
     v.text, l_.text = f"{{{{ {val} }}}}", f"{{{{ {lbl} }}}}"
     for cell, size, color, bold in ((v, 18, ACCENT, True), (l_, 8.5, MUTED, False)):
         para = cell.paragraphs[0]
