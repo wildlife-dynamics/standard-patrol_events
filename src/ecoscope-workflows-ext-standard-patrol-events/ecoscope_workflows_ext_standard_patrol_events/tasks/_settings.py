@@ -1,7 +1,20 @@
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
+from wt_contracts import CodecRef
 from wt_registry import register
+
+# Plain-JSON returns: lets the wt step cache store them (an untyped return blocks every step downstream).
+_JSON = CodecRef("wt_task.cache:JSON")
+
+
+@register()
+def pick_setting(
+    collection: Annotated[dict[str, Any], Field(title="Settings")],
+    key: Annotated[str, Field(title="Key")],
+) -> Annotated[Any, _JSON]:
+    """One value of a settings dict (cacheable, unlike core's untyped get_collection_item)."""
+    return collection[key]
 
 
 @register()
@@ -84,7 +97,7 @@ def set_patrol_effort(
         ],
         Field(title="Columns", description="Columns of the patrol effort table."),
     ] = ["patrol_count", "total_distance", "total_duration"],  # noqa: B006
-) -> Annotated[dict, Field(description="grouper, map_layer (empty unless grouping by area), metrics.")]:
+) -> Annotated[dict, _JSON, Field(description="grouper, map_layer (empty unless grouping by area), metrics.")]:
     """Patrol Effort section."""
     if group_by == "area":
         if not map_layer.strip():
@@ -104,6 +117,15 @@ def effort_grouper_for(
 ) -> Annotated[str, Field(description="Individual patrol for a single patrol, else grouper.")]:
     """Effort table grouper: a single patrol keeps a one-row table grouped by patrol."""
     return "patrol_serial_number" if patrol_serial else grouper
+
+
+@register()
+def effective_map_layer(
+    map_layer: Annotated[str, Field(title="Map layer")] = "",
+    patrol_serial: Annotated[str, Field(title="Patrol serial")] = "",
+) -> Annotated[str, Field(description="'' for a single patrol (no area apportioning), else map_layer.")]:
+    """Map layer for the area grouping."""
+    return "" if patrol_serial else map_layer
 
 
 @register()
@@ -166,7 +188,9 @@ def set_event_details(
             ),
         ),
     ] = [],  # noqa: B006
-) -> Annotated[dict, Field(description="mode ('general' | 'per_type') and detail_fields {event_type: fields}.")]:
+) -> Annotated[
+    dict, _JSON, Field(description="mode ('general' | 'per_type') and detail_fields {event_type: fields}.")
+]:
     """Event Details section."""
     return {
         "mode": "general" if all_details else "per_type",

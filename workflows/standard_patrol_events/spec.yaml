@@ -83,28 +83,22 @@ workflow:
     task: set_patrol_filter
 
   - id: patrol_serial
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.patrol_filter.return }}
       key: patrol_serial
-      default: ""
 
   - id: teams
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.patrol_filter.return }}
       key: teams
-      default: []
 
   - id: leader_group_name
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.patrol_filter.return }}
       key: leader_group
-      default: ""
 
   - name: Patrol Type
     id: patrol_type
@@ -122,28 +116,22 @@ workflow:
     task: set_patrol_effort
 
   - id: effort_grouping
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.patrol_effort.return }}
       key: grouper
-      default: patrol_type
 
   - id: effort_map_layer
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.patrol_effort.return }}
       key: map_layer
-      default: ""
 
   - id: effort_metric_list
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.patrol_effort.return }}
       key: metrics
-      default: []
 
   - id: effort_grouper  # a single patrol keeps one row, grouped by patrol
     task: effort_grouper_for
@@ -457,38 +445,30 @@ workflow:
     task: set_event_details
 
   - id: detail_mode
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.event_details_settings.return }}
       key: mode
-      default: general
 
   - id: event_detail_fields
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.event_details_settings.return }}
       key: detail_fields
-      default: {}
 
   - name: Download Event Attachments
     id: download_attachments
     task: set_images_options
 
   - id: images_list_only
-    task: get_collection_item
+    task: pick_setting
     partial:
-      default: false
-      raise_on_missing: true
       collection: ${{ workflow.download_attachments.return }}
       key: list_only
 
   - id: images_max
-    task: get_collection_item
+    task: pick_setting
     partial:
-      default: 50
-      raise_on_missing: true
       collection: ${{ workflow.download_attachments.return }}
       key: max_images
 
@@ -498,12 +478,10 @@ workflow:
     task: set_report_text
 
   - id: report_language
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.report_text.return }}
       key: language
-      default: en
 
   - id: labels
     task: get_report_labels
@@ -540,12 +518,10 @@ workflow:
   # ── Maps (each drawn twice: interactive for the dashboard, static for the report) ─
   # Legs without a transport: "Sin tipo" / "No type" in the legend (as in the legs table).
   - id: no_type_label
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.labels.return }}
       key: no_type
-      default: ""
 
   - id: tracks_typed
     task: fill_na
@@ -605,16 +581,22 @@ workflow:
   # Area grouping: core's spatial grouping over the chosen map layer (no-ops without one).
   # Tracks are split at area boundaries; each leg is copied per area it touched, its
   # hours and person-days scaled by that area's share of the track.
+  - id: area_map_layer  # a single patrol is never split by area
+    task: effective_map_layer
+    partial:
+      map_layer: ${{ workflow.effort_map_layer.return }}
+      patrol_serial: ${{ workflow.patrol_serial.return }}
+
   - id: area_grouper_list
     task: area_groupers
     partial:
-      map_layer: ${{ workflow.effort_map_layer.return }}
+      map_layer: ${{ workflow.area_map_layer.return }}
 
   - id: area_feature_groups
     task: area_regions
     partial:
       client: ${{ workflow.er_client.return }}
-      map_layer: ${{ workflow.effort_map_layer.return }}
+      map_layer: ${{ workflow.area_map_layer.return }}
 
   - id: area_groupers_resolved
     task: resolve_spatial_feature_groups_for_spatial_groupers
@@ -713,12 +695,10 @@ workflow:
       labels: ${{ workflow.labels.return }}
 
   - id: no_team_label
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.labels.return }}
       key: no_team
-      default: ""
 
   # team per leg for the map: ER team, else the leader (as the report's patrols), else "Sin equipo"
   - id: tracks_teamed
@@ -1233,28 +1213,22 @@ workflow:
       template: standard
 
   - id: report_title
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.report_text.return }}
       key: title
-      default: ""
 
   - id: report_subtitle
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.report_text.return }}
       key: subtitle
-      default: ""
 
   - id: detail_intro
-    task: get_collection_item
+    task: pick_setting
     partial:
-      raise_on_missing: true
       collection: ${{ workflow.report_text.return }}
       key: details_intro
-      default: ""
 
   - id: report
     task: create_docx
