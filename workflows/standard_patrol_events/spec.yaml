@@ -347,6 +347,154 @@ rjsf-overrides:
     report_text.details_intro:
       ui:widget: textarea
 
+  # Form-root show/hide (design §3, §5): Patrol Type, Patrol Effort, Events and Event Type disappear for a
+  # Single Patrol. Nested on purpose: RJSF ignores sibling root rules and rules inside a root allOf.
+  # needs wt-compiler >= <release with root rules>  (docs/superpowers/specs/2026-11-19-wt-compiler-root-rules.md)
+  # remove:
+  # - patrol_type
+  # - patrol_effort
+  # - event_scope
+  # - event_type
+  # if:
+  #   properties:
+  #     patrol_filter:
+  #       properties:
+  #         single_patrol:
+  #           const: true
+  #       required:
+  #       - single_patrol
+  #   required:
+  #   - patrol_filter
+  # else:
+  #   properties:
+  #     patrol_type:
+  #       additionalProperties: false
+  #       properties:
+  #         vars:
+  #           title: ' '
+  #           type: array
+  #           uniqueItems: true
+  #           default: []
+  #           description: Choose the patrol types to include. Leave it empty to include all of them.
+  #           items:
+  #             type: string
+  #           ecoscope:transform:
+  #           - transformer: EarthRangerEnumResolver
+  #             transformer_kws:
+  #               type: patrol_type
+  #               depends_on: properties.er_client.properties.data_source.properties.name
+  #       type: object
+  #       required: []
+  #       title: Patrol Type
+  #     patrol_effort:
+  #       additionalProperties: true
+  #       properties:
+  #         group_by:
+  #           title: Group By
+  #           type: string
+  #           default: patrol_type
+  #           oneOf:
+  #           - const: patrol_type
+  #             title: Patrol Type
+  #           - const: team
+  #             title: Team
+  #           - const: leader
+  #             title: Leader
+  #           - const: patrol
+  #             title: Individual Patrol
+  #           - const: area
+  #             title: Area (Map Layer)
+  #         columns:
+  #           title: Columns
+  #           type: array
+  #           uniqueItems: true
+  #           description: Columns of the patrol effort table.
+  #           default:
+  #           - patrol_count
+  #           - total_distance
+  #           - total_duration
+  #           items:
+  #             type: string
+  #             oneOf:
+  #             - const: patrol_count
+  #               title: Patrols
+  #             - const: total_distance
+  #               title: Distance (km)
+  #             - const: total_duration
+  #               title: Hours
+  #             - const: patrol_days
+  #               title: Days With Patrols
+  #             - const: leg_count
+  #               title: Legs
+  #             - const: member_days
+  #               title: Person-Days
+  #             - const: area_covered_merged
+  #               title: "Area Covered (km\xB2)"
+  #       type: object
+  #       required: []
+  #       title: Patrol Effort
+  #       description: Choose how the patrol effort table is grouped and which columns it shows.
+  #       if:
+  #         properties:
+  #           group_by:
+  #             const: area
+  #         required:
+  #         - group_by
+  #       then:
+  #         properties:
+  #           map_layer:
+  #             title: Map Layer
+  #             type: string
+  #             description: Spatial feature group whose areas (e.g. regions, sectors) become the rows of the table.
+  #             ecoscope:transform:
+  #             - transformer: EarthRangerEnumResolver
+  #               transformer_kws:
+  #                 type: spatial_feature_group
+  #                 depends_on: properties.er_client.properties.data_source.properties.name
+  #         required:
+  #         - map_layer
+  #     event_scope:
+  #       additionalProperties: false
+  #       properties:
+  #         linked_only:
+  #           default: false
+  #           title: Only events linked to the patrols
+  #           type: boolean
+  #       type: object
+  #       required: []
+  #       title: Events
+  #       description: Choose which events to include.
+  #   if:
+  #     properties:
+  #       event_scope:
+  #         properties:
+  #           linked_only:
+  #             const: true
+  #         required:
+  #         - linked_only
+  #     required:
+  #     - event_scope
+  #   else:
+  #     properties:
+  #       event_type:
+  #         additionalProperties: false
+  #         properties:
+  #           vars:
+  #             title: ' '
+  #             type: array
+  #             uniqueItems: true
+  #             default: []
+  #             items:
+  #               type: string
+  #             description: Choose the event types to include. Leave it empty to include all of them.
+  #             ecoscope:transform:
+  #             - transformer: EarthRangerEnumResolver
+  #               transformer_kws:
+  #                 type: event_type
+  #                 depends_on: properties.er_client.properties.data_source.properties.name
+  #         type: object
+  #         required: []
+  #         title: Event Type
 task-instance-defaults:
   skipif:
     conditions:
