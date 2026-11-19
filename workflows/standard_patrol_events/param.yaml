@@ -14,9 +14,6 @@ time_range:
     name: (UTC-05:00) America/Guayaquil
     utc: -05:00
 base_maps: {}
-area_scope:
-  level: site
-  unit: null
 patrol_params:
   patrol_types: []
 effort_grouper:
@@ -43,7 +40,7 @@ leader_group:
 retrieved_events:
   retrieval: all_in_period
 state_events:
-  state: all
+  states: []
 event_grouping:
   var: event_type_display
 detail_mode:
@@ -51,7 +48,7 @@ detail_mode:
 event_detail_tables:
   detail_fields: {}
 images_options:
-  mode: attachments
+  skip_download: false
   max_images: 12
 report_blocks: {}
 template_path:
