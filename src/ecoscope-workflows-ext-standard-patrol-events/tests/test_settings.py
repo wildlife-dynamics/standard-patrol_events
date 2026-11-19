@@ -1,3 +1,5 @@
+import pytest
+
 from ecoscope_workflows_ext_standard_patrol_events.tasks import effective_patrol_types, set_patrol_filter
 
 
@@ -27,3 +29,9 @@ def test_precedence_single_then_team_then_leader():
 def test_patrol_types_ignored_for_single_patrol():
     assert effective_patrol_types(["Foot"], "70") == []
     assert effective_patrol_types(["Foot"], "") == ["Foot"]
+
+
+def test_single_patrol_needs_an_id():
+    for blank in ("", "  "):
+        with pytest.raises(ValueError, match="Patrol ID is required for a single patrol."):
+            set_patrol_filter(single_patrol=True, patrol_id=blank)
