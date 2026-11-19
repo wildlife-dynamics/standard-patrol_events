@@ -2,9 +2,11 @@ import pytest
 
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     effective_event_types,
+    effective_map_layer,
     effective_patrol_types,
     EventTypeFields,
     effort_grouper_for,
+    pick_setting,
     set_event_details,
     set_event_scope,
     set_patrol_effort,
@@ -101,3 +103,18 @@ def test_event_details_per_type_mapping():
         tables=[EventTypeFields(event_type="a", fields=["X", "K"]), EventTypeFields(event_type="b")],
     )
     assert out == {"mode": "per_type", "detail_fields": {"a": ["X", "K"], "b": []}}
+
+
+def test_map_layer_ignored_for_single_patrol():
+    assert effective_map_layer("Sectors", "70") == ""
+    assert effective_map_layer("Sectors", "") == "Sectors"
+
+
+def test_pick_setting_is_json_cacheable():
+    from wt_task.cache._spec import resolve_task
+
+    assert pick_setting({"a": [1]}, "a") == [1]
+    with pytest.raises(KeyError):
+        pick_setting({}, "a")
+    for f in (pick_setting, set_patrol_effort, set_event_details):
+        assert resolve_task(getattr(f, "func", f)).root_codec == "json/v1"
