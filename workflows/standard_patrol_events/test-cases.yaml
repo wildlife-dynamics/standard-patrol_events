@@ -1,4 +1,5 @@
 # One case per site; `make run PARTNER=<case>` runs a case against live EarthRanger.
+
 costaecuador:
   name: costaecuador
   description: Costa Ecuador, Aug-Oct 2026, grouped by team (community).
@@ -18,51 +19,37 @@ costaecuador:
         name: (UTC-05:00) America/Guayaquil
         utc: -05:00
     base_maps: {}
-    patrol_params:
-      patrol_types: []
-    effort_grouper:
-      var: patrol_team_name
-    effort_metrics:
-      metrics:
-        - metric: patrol_count
-        - metric: total_distance
-          unit: km
-        - metric: total_duration
-          unit: h
-    labels:
-      language: es
-    event_types:
+    patrol_filter: {}
+    patrol_type:
       vars: []
-    patrol_serial:
-      var: ""
-    tracks_color_by:
+    patrol_effort:
+      group_by: team
+      columns:
+      - patrol_count
+      - total_distance
+      - total_duration
+    patrol_grouping:
       var: patrol_type
-    teams:
+    event_scope:
+      linked_only: false
+    event_type:
       vars: []
-    leader_group:
-      group: ""
-    retrieved_events:
-      retrieval: all_in_period
     state_events:
       states: []
     event_grouping:
       var: event_type_display
-    detail_mode:
-      var: general
-    event_detail_tables:
-      detail_fields: {}
-    images_options:
+    event_details_settings:
+      all_details: true
+    download_attachments:
       skip_download: false
       max_images: 12
+    report_text:
+      language: es
+      title: Reporte de patrullajes y eventos
+      subtitle: Costa Ecuador
+      details_intro: ''
     report_blocks: {}
-    template_path:
-      template: standard
-    report_title:
-      var: Reporte de patrullajes y eventos
-    report_subtitle:
-      var: Costa Ecuador
-    detail_intro:
-      var: ''
+
 apn:
   name: apn
   description: APN Los Alerces, Aug-Oct 2026, individual patrols (new patrol model site).
@@ -82,52 +69,38 @@ apn:
         name: (UTC-03:00) America/Argentina/Buenos_Aires
         utc: -03:00
     base_maps: {}
-    patrol_params:
-      patrol_types: []
-    effort_grouper:
-      var: patrol_serial_number
-    effort_metrics:
-      metrics:
-        - metric: patrol_count
-        - metric: total_distance
-          unit: km
-        - metric: total_duration
-          unit: h
-    labels:
-      language: es
-    event_types:
+    patrol_filter: {}
+    patrol_type:
       vars: []
-    patrol_serial:
-      var: ""
-    tracks_color_by:
+    patrol_effort:
+      group_by: patrol
+      columns:
+      - patrol_count
+      - total_distance
+      - total_duration
+    patrol_grouping:
       var: patrol_type
-    teams:
+    event_scope:
+      linked_only: false
+    event_type:
       vars: []
-    leader_group:
-      group: ""
-    retrieved_events:
-      retrieval: all_in_period
     state_events:
       states: []
     event_grouping:
       var: event_type_display
-    detail_mode:
-      var: general
-    event_detail_tables:
-      detail_fields: {}
-    images_options:
+    event_details_settings:
+      all_details: true
+    download_attachments:
       skip_download: false
       max_images: 12
+    report_text:
+      language: es
+      title: Reporte de patrullajes y eventos
+      subtitle: Parque Nacional Los Alerces
+      details_intro: ''
     report_blocks:
       personnel: true
-    template_path:
-      template: standard
-    report_title:
-      var: Reporte de patrullajes y eventos
-    report_subtitle:
-      var: Parque Nacional Los Alerces
-    detail_intro:
-      var: ''
+
 mep:
   name: mep
   description: mep test site (new patrol model with teams), Aug-Oct 2026, English.
@@ -147,52 +120,38 @@ mep:
         name: (UTC+00:00) UTC
         utc: +00:00
     base_maps: {}
-    patrol_params:
-      patrol_types: []
-    effort_grouper:
-      var: patrol_team_name
-    effort_metrics:
-      metrics:
-        - metric: patrol_count
-        - metric: total_distance
-          unit: km
-        - metric: total_duration
-          unit: h
-    labels:
-      language: en
-    event_types:
+    patrol_filter: {}
+    patrol_type:
       vars: []
-    patrol_serial:
-      var: ""
-    tracks_color_by:
+    patrol_effort:
+      group_by: team
+      columns:
+      - patrol_count
+      - total_distance
+      - total_duration
+    patrol_grouping:
       var: patrol_type
-    teams:
+    event_scope:
+      linked_only: false
+    event_type:
       vars: []
-    leader_group:
-      group: ""
-    retrieved_events:
-      retrieval: all_in_period
     state_events:
       states: []
     event_grouping:
       var: event_type_display
-    detail_mode:
-      var: general
-    event_detail_tables:
-      detail_fields: {}
-    images_options:
+    event_details_settings:
+      all_details: true
+    download_attachments:
       skip_download: false
       max_images: 12
+    report_text:
+      language: en
+      title: Patrol & Events Report
+      subtitle: mep test site
+      details_intro: ''
     report_blocks:
       personnel: true
-    template_path:
-      template: standard
-    report_title:
-      var: Patrol & Events Report
-    report_subtitle:
-      var: mep test site
-    detail_intro:
-      var: ''
+
 empty_period:
   name: empty_period
   description: 'Costa Ecuador, a period with no data: every block must render ''no data''.'
@@ -212,51 +171,36 @@ empty_period:
         name: (UTC-05:00) America/Guayaquil
         utc: -05:00
     base_maps: {}
-    patrol_params:
-      patrol_types: []
-    effort_grouper:
-      var: patrol_type
-    effort_metrics:
-      metrics:
-        - metric: patrol_count
-        - metric: total_distance
-          unit: km
-        - metric: total_duration
-          unit: h
-    labels:
-      language: es
-    event_types:
+    patrol_filter: {}
+    patrol_type:
       vars: []
-    patrol_serial:
-      var: ""
-    tracks_color_by:
+    patrol_effort:
+      group_by: patrol_type
+      columns:
+      - patrol_count
+      - total_distance
+      - total_duration
+    patrol_grouping:
       var: patrol_type
-    teams:
+    event_scope:
+      linked_only: false
+    event_type:
       vars: []
-    leader_group:
-      group: ""
-    retrieved_events:
-      retrieval: all_in_period
     state_events:
       states: []
     event_grouping:
       var: event_type_display
-    detail_mode:
-      var: general
-    event_detail_tables:
-      detail_fields: {}
-    images_options:
+    event_details_settings:
+      all_details: true
+    download_attachments:
       skip_download: false
       max_images: 12
+    report_text:
+      language: es
+      title: Reporte de patrullajes y eventos
+      subtitle: Costa Ecuador
+      details_intro: ''
     report_blocks: {}
-    template_path:
-      template: standard
-    report_title:
-      var: Reporte de patrullajes y eventos
-    report_subtitle:
-      var: Costa Ecuador
-    detail_intro:
-      var: ''
 
 belize:
   name: belize
@@ -275,59 +219,43 @@ belize:
         label: America/Belize
         tzCode: America/Belize
         name: (UTC-06:00) America/Belize
-        utc: '-06:00'
+        utc: -06:00
     base_maps: {}
-    patrol_params:
-      patrol_types: []
-    effort_grouper:
-      var: patrol_serial_number
-    effort_metrics:
-      metrics:
-        - metric: patrol_count
-        - metric: total_distance
-          unit: km
-        - metric: total_duration
-          unit: h
-    labels:
-      language: en
-    event_types:
+    patrol_filter: {}
+    patrol_type:
       vars: []
-    patrol_serial:
-      var: ""
-    tracks_color_by:
+    patrol_effort:
+      group_by: patrol
+      columns:
+      - patrol_count
+      - total_distance
+      - total_duration
+    patrol_grouping:
       var: patrol_type
-    teams:
+    event_scope:
+      linked_only: false
+    event_type:
       vars: []
-    leader_group:
-      group: ""
-    retrieved_events:
-      retrieval: all_in_period
     state_events:
       states: []
     event_grouping:
       var: event_type_display
-    detail_mode:
-      var: general
-    event_detail_tables:
-      detail_fields: {}
-    images_options:
+    event_details_settings:
+      all_details: true
+    download_attachments:
       skip_download: false
       max_images: 12
+    report_text:
+      language: en
+      title: Patrol & Events Report
+      subtitle: SACD Belize
+      details_intro: ''
     report_blocks:
       personnel: true
-    template_path:
-      template: standard
-    report_title:
-      var: Patrol & Events Report
-    report_subtitle:
-      var: SACD Belize
-    detail_intro:
-      var: ''
 
 apncentral:
   name: apncentral
-  description: 'APN Central, new patrol schema with multi-leg test patrols #66-70 (Nov
-    5-12 2026), Spanish.'
+  description: 'APN Central, new patrol schema with multi-leg test patrols #66-70 (Nov 5-12 2026), Spanish.'
   params:
     workflow_details:
       name: Reporte de patrullajes y eventos
@@ -344,57 +272,42 @@ apncentral:
         name: (UTC-03:00) America/Argentina/Buenos_Aires
         utc: -03:00
     base_maps: {}
-    patrol_params:
-      patrol_types: []
-    effort_grouper:
-      var: patrol_serial_number
-    effort_metrics:
-      metrics:
-        - metric: patrol_count
-        - metric: total_distance
-          unit: km
-        - metric: total_duration
-          unit: h
-    labels:
-      language: es
-    event_types:
+    patrol_filter: {}
+    patrol_type:
       vars: []
-    patrol_serial:
-      var: ""
-    tracks_color_by:
+    patrol_effort:
+      group_by: patrol
+      columns:
+      - patrol_count
+      - total_distance
+      - total_duration
+    patrol_grouping:
       var: patrol_type
-    teams:
+    event_scope:
+      linked_only: false
+    event_type:
       vars: []
-    leader_group:
-      group: ""
-    retrieved_events:
-      retrieval: all_in_period
     state_events:
       states: []
     event_grouping:
       var: event_type_display
-    detail_mode:
-      var: general
-    event_detail_tables:
-      detail_fields: {}
-    images_options:
+    event_details_settings:
+      all_details: true
+    download_attachments:
       skip_download: false
       max_images: 12
+    report_text:
+      language: es
+      title: Reporte de patrullajes y eventos
+      subtitle: APN Central
+      details_intro: ''
     report_blocks:
       personnel: true
-    template_path:
-      template: standard
-    report_title:
-      var: Reporte de patrullajes y eventos
-    report_subtitle:
-      var: APN Central
-    detail_intro:
-      var: ''
 
 apncentral_patrol70:
   name: apncentral_patrol70
-  description: 'Single-patrol report for APN Central #70 (two legs, 11 Nov), form dates deliberately in January; new patrol schema with multi-leg test patrols #66-70 (Nov
-    5-12 2026), Spanish.'
+  description: 'Single-patrol report for APN Central #70 (two legs, 11 Nov), form dates deliberately in January; new patrol
+    schema with multi-leg test patrols #66-70 (Nov 5-12 2026), Spanish.'
   params:
     workflow_details:
       name: Reporte de patrullajes y eventos
@@ -411,52 +324,39 @@ apncentral_patrol70:
         name: (UTC-03:00) America/Argentina/Buenos_Aires
         utc: -03:00
     base_maps: {}
-    patrol_params:
-      patrol_types: []
-    effort_grouper:
-      var: patrol_serial_number
-    effort_metrics:
-      metrics:
-        - metric: patrol_count
-        - metric: total_distance
-          unit: km
-        - metric: total_duration
-          unit: h
-    labels:
-      language: es
-    event_types:
+    patrol_filter:
+      single_patrol: true
+      patrol_id: '70'
+    patrol_type:
       vars: []
-    patrol_serial:
-      var: "70"
-    tracks_color_by:
+    patrol_effort:
+      group_by: patrol
+      columns:
+      - patrol_count
+      - total_distance
+      - total_duration
+    patrol_grouping:
       var: patrol_type
-    teams:
+    event_scope:
+      linked_only: false
+    event_type:
       vars: []
-    leader_group:
-      group: ""
-    retrieved_events:
-      retrieval: all_in_period
     state_events:
       states: []
     event_grouping:
       var: event_type_display
-    detail_mode:
-      var: general
-    event_detail_tables:
-      detail_fields: {}
-    images_options:
+    event_details_settings:
+      all_details: true
+    download_attachments:
       skip_download: false
       max_images: 12
+    report_text:
+      language: es
+      title: Reporte de patrullajes y eventos
+      subtitle: APN Central
+      details_intro: ''
     report_blocks:
       personnel: true
-    template_path:
-      template: standard
-    report_title:
-      var: Reporte de patrullajes y eventos
-    report_subtitle:
-      var: APN Central
-    detail_intro:
-      var: ''
 
 mep_team:
   name: mep_team
@@ -477,50 +377,37 @@ mep_team:
         name: (UTC+00:00) UTC
         utc: +00:00
     base_maps: {}
-    patrol_params:
-      patrol_types: []
-    effort_grouper:
-      var: patrol_team_name
-    effort_metrics:
-      metrics:
-        - metric: patrol_count
-        - metric: total_distance
-          unit: km
-        - metric: total_duration
-          unit: h
-    labels:
-      language: en
-    event_types:
+    patrol_filter:
+      team: true
+      teams:
+      - Hurricane Ridge District
+    patrol_type:
       vars: []
-    patrol_serial:
-      var: ""
-    tracks_color_by:
+    patrol_effort:
+      group_by: team
+      columns:
+      - patrol_count
+      - total_distance
+      - total_duration
+    patrol_grouping:
       var: patrol_type
-    teams:
-      vars:
-        - Hurricane Ridge District
-    leader_group:
-      group: ""
-    retrieved_events:
-      retrieval: all_in_period
+    event_scope:
+      linked_only: false
+    event_type:
+      vars: []
     state_events:
       states: []
     event_grouping:
       var: event_type_display
-    detail_mode:
-      var: general
-    event_detail_tables:
-      detail_fields: {}
-    images_options:
+    event_details_settings:
+      all_details: true
+    download_attachments:
       skip_download: false
       max_images: 12
+    report_text:
+      language: en
+      title: Patrol & Events Report
+      subtitle: mep test site
+      details_intro: ''
     report_blocks:
       personnel: true
-    template_path:
-      template: standard
-    report_title:
-      var: Patrol & Events Report
-    report_subtitle:
-      var: mep test site
-    detail_intro:
-      var: ''
