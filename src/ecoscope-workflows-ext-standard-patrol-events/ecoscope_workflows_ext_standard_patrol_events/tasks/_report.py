@@ -2,6 +2,7 @@ from importlib.resources import as_file, files
 from pathlib import Path
 from typing import Annotated, Literal
 
+from ecoscope.platform.annotations import AdvancedField
 from pydantic import Field
 from wt_registry import register
 
@@ -28,27 +29,33 @@ def load_report_template(
 
 @register()
 def set_report_blocks(
-    personnel: Annotated[bool, Field(title="Personnel", description="Patrol personnel (sites with patrol attributes).")] = False,
-    headline_stats: Annotated[bool, Field(title="Headline stats")] = True,
-    time_density: Annotated[bool, Field(title="Patrol time density map")] = True,
-    event_density: Annotated[bool, Field(title="Event density map")] = True,
-    events_chart: Annotated[bool, Field(title="Events chart")] = True,
-    monthly_chart: Annotated[bool, Field(title="Events by month chart")] = False,
-    category_priority: Annotated[bool, Field(title="Events by category and priority")] = False,
-    images: Annotated[bool, Field(title="Images")] = True,
-    conclusions: Annotated[bool, Field(title="Conclusions box")] = True,
+    headline_stats: Annotated[bool, Field(title="Headline Figures")] = True,
+    personnel: Annotated[bool, Field(title="Personnel")] = False,
+    time_density: Annotated[bool, Field(title="Patrol Time Density Map")] = True,
+    event_density: Annotated[bool, Field(title="Event Density Map")] = True,
+    events_chart: Annotated[bool, Field(title="Events Chart")] = True,
+    monthly_chart: Annotated[bool, Field(title="Events by Month")] = False,
+    category_priority: Annotated[bool, Field(title="Events by Category and Priority")] = False,
+    conclusions: Annotated[bool, Field(title="Conclusions Box")] = True,
 ) -> Annotated[dict[str, str], Field(description="show_<block> template switches as 'true'/'false'.")]:
     """Optional report blocks, as template switches (docx context values are strings)."""
-    return {f"show_{k}": str(v).lower() for k, v in locals().items()}
+    switches = {f"show_{k}": str(v).lower() for k, v in locals().items()}
+    # Photos are switched off by Skip Photo Attachments (captions stay), not here.
+    return {**switches, "show_images": "true"}
 
 
 @register()
 def set_images_options(
-    mode: Annotated[
-        Literal["attachments", "blank"],
-        Field(title="Images", description="Fill from event attachments, or leave the photo cells blank to add by hand."),
-    ] = "attachments",
-    max_images: Annotated[int, Field(title="Maximum number of images", ge=0)] = 50,
+    skip_download: Annotated[
+        bool,
+        Field(
+            title="Skip Photo Attachments",
+            description="Event photos are included in the report. Tick to leave them out.",
+        ),
+    ] = False,
+    max_images: Annotated[
+        int, AdvancedField(default=50, title="Maximum Images", description="Used when photos are included.", ge=0)
+    ] = 50,
 ) -> Annotated[dict[str, bool | int], Field(description="list_only (no download) and max_images for the image tasks.")]:
-    """Images block options; 'blank' lists the photos (captions) without downloading them."""
-    return {"list_only": mode == "blank", "max_images": max_images}
+    """Images block options; skipping lists the photos (captions) without downloading them."""
+    return {"list_only": skip_download, "max_images": max_images}
