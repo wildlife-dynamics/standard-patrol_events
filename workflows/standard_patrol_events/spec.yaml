@@ -19,37 +19,333 @@ requirements:
     version: 0.9.2
     channel: conda-forge
 
+# The form as approved in docs/superpowers/specs/2026-11-19-config-form-checkbox.rjsf.json
+# (tests/test_form.py checks it). Fields shown by a tick or choice live in the section if/then/allOf.
+# grouping option values stay the column names the workflow reads (patrol_team_name, *_display).
 rjsf-overrides:
   properties:
-    patrol_grouping.properties.var.title: Colour tracks by
-    patrol_grouping.properties.var.default: patrol_type
-    patrol_grouping.properties.var.oneOf:  # a leg's column (tracks carry their leg's type and team)
-      - const: patrol_type
-        title: Patrol type
-      - const: patrol_team_name
-        title: Team
-    patrol_filter.properties.team_leader_group.ecoscope:transform:
-      - transformer: EarthRangerEnumResolver
-        transformer_kws:
-          type: subject_group_name
-          depends_on: properties.er_client.properties.data_source.properties.name
-    patrol_type.properties.vars.ecoscope:transform:
+    base_maps.properties.base_maps.ecoscope:advanced: false
+    patrol_filter.description: 'Optional: limit the patrols to one team, team leader or patrol. Leave unticked to
+      include all patrols.'
+    patrol_filter.additionalProperties: true
+    patrol_filter.properties: {}
+    patrol_filter.allOf:
+    - if:
+        anyOf:
+        - properties:
+            team:
+              const: true
+          required:
+          - team
+        - properties:
+            team_leader:
+              const: true
+          required:
+          - team_leader
+      else:
+        properties:
+          single_patrol:
+            title: Single Patrol
+            type: boolean
+            default: false
+    - if:
+        anyOf:
+        - properties:
+            single_patrol:
+              const: true
+          required:
+          - single_patrol
+        - properties:
+            team_leader:
+              const: true
+          required:
+          - team_leader
+      else:
+        properties:
+          team:
+            title: Team
+            type: boolean
+            default: false
+    - if:
+        anyOf:
+        - properties:
+            single_patrol:
+              const: true
+          required:
+          - single_patrol
+        - properties:
+            team:
+              const: true
+          required:
+          - team
+      else:
+        properties:
+          team_leader:
+            title: Team Leader
+            type: boolean
+            default: false
+    - if:
+        properties:
+          single_patrol:
+            const: true
+        required:
+        - single_patrol
+      then:
+        properties:
+          patrol_id:
+            title: Patrol ID
+            type: string
+            description: The patrol to analyze, matched against its serial number (the ID shown in EarthRanger).
+        required:
+        - patrol_id
+    - if:
+        properties:
+          team:
+            const: true
+        required:
+        - team
+      then:
+        properties:
+          teams:
+            title: ' '
+            type: array
+            minItems: 1
+            items:
+              type: string
+            description: Team names as set in EarthRanger's patrol configuration.
+    - if:
+        properties:
+          team_leader:
+            const: true
+        required:
+        - team_leader
+      then:
+        properties:
+          team_leader_group:
+            title: ' '
+            type: string
+            description: Patrols led by someone in this subject group.
+            ecoscope:transform:
+            - transformer: EarthRangerEnumResolver
+              transformer_kws:
+                type: subject_group_name
+                depends_on: properties.er_client.properties.data_source.properties.name
+    patrol_type.properties.vars:
+      title: ' '
+      type: array
+      uniqueItems: true
+      default: []
+      description: Choose the patrol types to include. Leave it empty to include all of them.
+      items:
+        type: string
+      ecoscope:transform:
       - transformer: EarthRangerEnumResolver
         transformer_kws:
           type: patrol_type
           depends_on: properties.er_client.properties.data_source.properties.name
-    event_type.properties.vars.ecoscope:transform:
+    patrol_effort.description: Choose how the patrol effort table is grouped and which columns it shows.
+    patrol_effort.additionalProperties: true
+    patrol_effort.properties:
+      group_by:
+        title: Group By
+        type: string
+        default: patrol_type
+        oneOf:
+        - const: patrol_type
+          title: Patrol Type
+        - const: team
+          title: Team
+        - const: leader
+          title: Leader
+        - const: patrol
+          title: Individual Patrol
+        - const: area
+          title: Area (Map Layer)
+      columns:
+        title: Columns
+        type: array
+        uniqueItems: true
+        description: Columns of the patrol effort table.
+        default:
+        - patrol_count
+        - total_distance
+        - total_duration
+        items:
+          type: string
+          oneOf:
+          - const: patrol_count
+            title: Patrols
+          - const: total_distance
+            title: Distance (km)
+          - const: total_duration
+            title: Hours
+          - const: patrol_days
+            title: Days With Patrols
+          - const: leg_count
+            title: Legs
+          - const: member_days
+            title: Person-Days
+          - const: area_covered_merged
+            title: Area Covered (km²)
+    patrol_effort.if:
+      properties:
+        group_by:
+          const: area
+      required:
+      - group_by
+    patrol_effort.then:
+      properties:
+        map_layer:
+          title: Map Layer
+          type: string
+          description: Spatial feature group whose areas (e.g. regions, sectors) become the rows of the table.
+          ecoscope:transform:
+          - transformer: EarthRangerEnumResolver
+            transformer_kws:
+              type: spatial_feature_group
+              depends_on: properties.er_client.properties.data_source.properties.name
+      required:
+      - map_layer
+    patrol_grouping.description: Choose how patrol tracks are coloured on the map. Tracks without a team use their
+      leader's name.
+    patrol_grouping.properties.var:
+      title: ' '
+      type: string
+      default: patrol_type
+      oneOf:
+      - const: patrol_type
+        title: Patrol Type
+      - const: patrol_team_name
+        title: Team
+    event_scope.description: Choose which events to include.
+    event_type.properties.vars:
+      title: ' '
+      type: array
+      uniqueItems: true
+      default: []
+      items:
+        type: string
+      description: Choose the event types to include. Leave it empty to include all of them.
+      ecoscope:transform:
       - transformer: EarthRangerEnumResolver
         transformer_kws:
           type: event_type
           depends_on: properties.er_client.properties.data_source.properties.name
-    event_grouping.properties.var.title: Group events by
-    event_grouping.properties.var.default: event_type_display
-    event_grouping.properties.var.oneOf:
+    state_events.description: Choose to analyze events with a certain state. If left empty, events of all states
+      will be analyzed
+    state_events.properties.states:
+      title: ' '
+      type: array
+      uniqueItems: true
+      default: []
+      items:
+        type: string
+        oneOf:
+        - const: new
+          title: New
+        - const: active
+          title: Active
+        - const: resolved
+          title: Resolved
+        - const: review
+          title: Review
+    event_grouping.description: Choose how events are grouped in the tables, charts and map colours.
+    event_grouping.properties.var:
+      title: ' '
+      type: string
+      default: event_type_display
+      oneOf:
       - const: event_type_display
-        title: Event type
+        title: Event Type
       - const: event_category_display
-        title: Event category
+        title: Event Category
+    event_details_settings.additionalProperties: true
+    event_details_settings.properties:
+      all_details:
+        title: Show all fields
+        type: boolean
+        default: true
+        description: When ticked, every event is shown with all its details. Untick to choose the fields for each
+          event type.
+    event_details_settings.if:
+      properties:
+        all_details:
+          const: false
+      required:
+      - all_details
+    event_details_settings.then:
+      properties:
+        tables:
+          title: ' '
+          type: array
+          default: []
+          description: Add an event type and choose the fields to show for it. Event types you don't add show their
+            first 3 fields.
+          items:
+            type: object
+            title: ' '
+            additionalProperties: false
+            properties:
+              event_type:
+                title: Event Type
+                type: string
+                ecoscope:transform:
+                - transformer: EarthRangerEnumResolver
+                  transformer_kws:
+                    type: event_type
+                    depends_on: properties.er_client.properties.data_source.properties.name
+              fields:
+                title: Fields
+                type: array
+                items:
+                  type: string
+                description: Field names as on the event form, one per line.
+            required:
+            - event_type
+    report_text.description: Language and titles of the Word report.
+    report_text.properties.language:
+      title: Language
+      type: string
+      default: en
+      oneOf:
+      - const: en
+        title: English
+      - const: es
+        title: Español
+      - const: pt
+        title: Português
+    report_blocks.description: Choose the optional sections to include.
+  uiSchema:
+    ui:order:
+    - workflow_details
+    - er_client
+    - time_range
+    - base_maps
+    - patrol_filter
+    - patrol_type
+    - patrol_effort
+    - patrol_grouping
+    - event_scope
+    - event_type
+    - state_events
+    - event_grouping
+    - event_details_settings
+    - download_attachments
+    - report_text
+    - report_blocks
+    - '*'
+    patrol_grouping.var:
+      ui:options:
+        label: false
+    event_grouping.var:
+      ui:options:
+        label: false
+    event_details_settings.tables:
+      items:
+        ui:options:
+          label: false
+    report_text.details_intro:
+      ui:widget: textarea
 
 task-instance-defaults:
   skipif:
@@ -714,6 +1010,7 @@ workflow:
       df: ${{ workflow.tracks_teamed.return }}
       by: [patrol_segment_id, patrol_serial_number, patrol_type, patrol_team_name, patrol_subject]
       tolerance_m: 10
+      time_column: segment_start  # fixed: keeps a leftover section out of the form
 
   - id: tracks_colored
     task: apply_color_map
