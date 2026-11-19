@@ -411,3 +411,108 @@ mep_team:
       details_intro: ''
     report_blocks:
       personnel: true
+
+mep_area:
+  name: mep_area
+  description: Area grouping against a mep map layer, Aug-Oct 2026, English.
+  params:
+    workflow_details:
+      name: Patrol & Events Report
+      description: mep test site
+    er_client:
+      data_source:
+        name: mep
+    time_range:
+      since: '2026-08-01T00:00:00'
+      until: '2026-11-01T00:00:00'
+      timezone:
+        label: UTC
+        tzCode: UTC
+        name: (UTC+00:00) UTC
+        utc: +00:00
+    base_maps: {}
+    patrol_filter: {}
+    patrol_type:
+      vars: []
+    patrol_effort:
+      group_by: area
+      map_layer: Eval-features
+      columns:
+      - patrol_count
+      - total_distance
+      - total_duration
+    patrol_grouping:
+      var: patrol_type
+    event_scope:
+      linked_only: false
+    event_type:
+      vars: []
+    state_events:
+      states: []
+    event_grouping:
+      var: event_type_display
+    event_details_settings:
+      all_details: true
+    download_attachments:
+      skip_download: false
+      max_images: 12
+    report_text:
+      language: en
+      title: Patrol & Events Report
+      subtitle: mep test site
+      details_intro: ''
+    report_blocks:
+      personnel: true
+
+apn_leader:
+  name: apn_leader
+  description: APN Los Alerces, Aug-Oct 2026, filtered to one team leader group.
+  params:
+    workflow_details:
+      name: Reporte de patrullajes y eventos
+      description: Parque Nacional Los Alerces
+    er_client:
+      data_source:
+        name: apn
+    time_range:
+      since: '2026-08-01T00:00:00'
+      until: '2026-11-01T00:00:00'
+      timezone:
+        label: America/Argentina/Buenos_Aires
+        tzCode: America/Argentina/Buenos_Aires
+        name: (UTC-03:00) America/Argentina/Buenos_Aires
+        utc: -03:00
+    base_maps: {}
+    patrol_filter:
+      team_leader: true
+      team_leader_group: GUARDAPARQUES ZONA NORTE
+    patrol_type:
+      vars: []
+    patrol_effort:
+      group_by: patrol
+      columns:
+      - patrol_count
+      - total_distance
+      - total_duration
+    patrol_grouping:
+      var: patrol_type
+    event_scope:
+      linked_only: false
+    event_type:
+      vars: []
+    state_events:
+      states: []
+    event_grouping:
+      var: event_type_display
+    event_details_settings:
+      all_details: true
+    download_attachments:
+      skip_download: false
+      max_images: 12
+    report_text:
+      language: es
+      title: Reporte de patrullajes y eventos
+      subtitle: Parque Nacional Los Alerces
+      details_intro: ''
+    report_blocks:
+      personnel: true
