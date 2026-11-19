@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 from wt_registry import register
 
 
@@ -135,3 +135,40 @@ def set_report_text(
 ) -> Annotated[dict[str, str], Field(description="language, title, subtitle, details_intro.")]:
     """Report Text section."""
     return {"language": language, "title": title, "subtitle": subtitle, "details_intro": details_intro}
+
+
+class EventTypeFields(BaseModel):
+    event_type: Annotated[str, Field(title="Event Type")]
+    fields: Annotated[
+        list[str], Field(title="Fields", description="Field names as on the event form, one per line.")
+    ] = []  # noqa: B006
+
+
+@register()
+def set_event_details(
+    all_details: Annotated[
+        bool,
+        Field(
+            title="Show all fields",
+            description=(
+                "When ticked, every event is shown with all its details. "
+                "Untick to choose the fields for each event type."
+            ),
+        ),
+    ] = True,
+    tables: Annotated[
+        list[EventTypeFields],
+        Field(
+            title=" ",
+            description=(
+                "Add an event type and choose the fields to show for it. "
+                "Event types you don't add show their first 3 fields."
+            ),
+        ),
+    ] = [],  # noqa: B006
+) -> Annotated[dict, Field(description="mode ('general' | 'per_type') and detail_fields {event_type: fields}.")]:
+    """Event Details section."""
+    return {
+        "mode": "general" if all_details else "per_type",
+        "detail_fields": {t.event_type: list(t.fields) for t in tables},
+    }

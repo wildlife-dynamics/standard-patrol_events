@@ -3,7 +3,9 @@ import pytest
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     effective_event_types,
     effective_patrol_types,
+    EventTypeFields,
     effort_grouper_for,
+    set_event_details,
     set_event_scope,
     set_patrol_effort,
     set_patrol_filter,
@@ -87,3 +89,15 @@ def test_event_types_ignored_when_linked_or_single():
 
 def test_report_text_defaults():
     assert set_report_text() == {"language": "en", "title": "Patrol & Events Report", "subtitle": "", "details_intro": ""}
+
+
+def test_event_details_default_general():
+    assert set_event_details() == {"mode": "general", "detail_fields": {}}
+
+
+def test_event_details_per_type_mapping():
+    out = set_event_details(
+        all_details=False,
+        tables=[EventTypeFields(event_type="a", fields=["X", "K"]), EventTypeFields(event_type="b")],
+    )
+    assert out == {"mode": "per_type", "detail_fields": {"a": ["X", "K"], "b": []}}
