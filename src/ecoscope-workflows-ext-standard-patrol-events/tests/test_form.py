@@ -102,3 +102,13 @@ def _mismatches():
 def test_compiled_form_matches_mock():
     mismatches = _mismatches()
     assert not mismatches, "\n".join(mismatches)
+
+
+def test_old_param_keys_rejected():
+    import jsonschema
+    import pytest
+
+    form = json.loads(COMPILED.read_text())
+    schema = {k: form[k] for k in ("properties", "$defs", "additionalProperties") if k in form}
+    with pytest.raises(jsonschema.ValidationError, match="Additional properties"):
+        jsonschema.validate({"patrol_serial": {"var": "70"}}, schema)
