@@ -1,10 +1,13 @@
 import pytest
 
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    effective_event_types,
     effective_patrol_types,
     effort_grouper_for,
+    set_event_scope,
     set_patrol_effort,
     set_patrol_filter,
+    set_report_text,
 )
 
 
@@ -69,3 +72,18 @@ def test_map_layer_ignored_unless_area():
 def test_single_patrol_groups_by_patrol():
     assert effort_grouper_for("patrol_type", "70") == "patrol_serial_number"
     assert effort_grouper_for("patrol_type") == "patrol_type"
+
+
+def test_event_scope():
+    assert set_event_scope() == "all_in_period"
+    assert set_event_scope(linked_only=True) == "linked_only"
+
+
+def test_event_types_ignored_when_linked_or_single():
+    assert effective_event_types(["a"], "all_in_period", "") == ["a"]
+    assert effective_event_types(["a"], "linked_only", "") == []
+    assert effective_event_types(["a"], "all_in_period", "70") == []
+
+
+def test_report_text_defaults():
+    assert set_report_text() == {"language": "en", "title": "Patrol & Events Report", "subtitle": "", "details_intro": ""}

@@ -104,3 +104,34 @@ def effort_grouper_for(
 ) -> Annotated[str, Field(description="Individual patrol for a single patrol, else grouper.")]:
     """Effort table grouper: a single patrol keeps a one-row table grouped by patrol."""
     return "patrol_serial_number" if patrol_serial else grouper
+
+
+@register()
+def set_event_scope(
+    linked_only: Annotated[bool, Field(title="Only events linked to the patrols")] = False,
+) -> Annotated[str, Field(description="Value for filter_linked_events.retrieval.")]:
+    """Event Scope section."""
+    return "linked_only" if linked_only else "all_in_period"
+
+
+@register()
+def effective_event_types(
+    event_types: Annotated[list[str], Field(title="Event types")] = [],  # noqa: B006
+    retrieval: Annotated[str, Field(title="Retrieval")] = "all_in_period",
+    patrol_serial: Annotated[str, Field(title="Patrol serial")] = "",
+) -> Annotated[list[str], Field(description="[] when events are linked-only or one patrol, else event_types.")]:
+    """Event types to filter on (Event Type is hidden in those two cases)."""
+    return [] if retrieval == "linked_only" or patrol_serial else list(event_types)
+
+
+@register()
+def set_report_text(
+    language: Annotated[Literal["en", "es", "pt"], Field(title="Language")] = "en",
+    title: Annotated[str, Field(title="Title")] = "Patrol & Events Report",
+    subtitle: Annotated[str, Field(title="Subtitle")] = "",
+    details_intro: Annotated[
+        str, Field(title="Event Details Introduction", description="Text shown above the event details.")
+    ] = "",
+) -> Annotated[dict[str, str], Field(description="language, title, subtitle, details_intro.")]:
+    """Report Text section."""
+    return {"language": language, "title": title, "subtitle": subtitle, "details_intro": details_intro}
