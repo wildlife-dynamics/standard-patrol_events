@@ -1,6 +1,11 @@
 import pytest
 
-from ecoscope_workflows_ext_standard_patrol_events.tasks import effective_patrol_types, set_patrol_filter
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    effective_patrol_types,
+    effort_grouper_for,
+    set_patrol_effort,
+    set_patrol_filter,
+)
 
 
 def test_default_is_no_filter():
@@ -35,3 +40,32 @@ def test_single_patrol_needs_an_id():
     for blank in ("", "  "):
         with pytest.raises(ValueError, match="Patrol ID is required for a single patrol."):
             set_patrol_filter(single_patrol=True, patrol_id=blank)
+
+
+def test_effort_defaults():
+    out = set_patrol_effort()
+    assert out["grouper"] == "patrol_type" and out["map_layer"] == ""
+    assert out["metrics"] == [
+        {"metric": "patrol_count"},
+        {"metric": "total_distance", "unit": "km"},
+        {"metric": "total_duration", "unit": "h"},
+    ]
+
+
+def test_effort_groupers():
+    assert set_patrol_effort(group_by="leader")["grouper"] == "patrol_subject"
+    assert set_patrol_effort(group_by="area", map_layer="Sectors")["grouper"] == "SpatialGrouper_Sectors"
+
+
+def test_area_needs_a_map_layer():
+    with pytest.raises(ValueError, match="Map Layer"):
+        set_patrol_effort(group_by="area")
+
+
+def test_map_layer_ignored_unless_area():
+    assert set_patrol_effort(group_by="team", map_layer="Sectors")["map_layer"] == ""
+
+
+def test_single_patrol_groups_by_patrol():
+    assert effort_grouper_for("patrol_type", "70") == "patrol_serial_number"
+    assert effort_grouper_for("patrol_type") == "patrol_type"

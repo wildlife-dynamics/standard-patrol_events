@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import Field
 from wt_registry import register
@@ -47,3 +47,60 @@ def effective_patrol_types(
 ]:
     """Patrol types to filter on."""
     return [] if patrol_serial else list(patrol_types)
+
+
+_GROUPERS = {
+    "patrol_type": "patrol_type",
+    "team": "patrol_team_name",
+    "leader": "patrol_subject",
+    "patrol": "patrol_serial_number",
+}
+_UNITS = {"total_distance": "km", "total_duration": "h"}
+
+
+@register()
+def set_patrol_effort(
+    group_by: Annotated[
+        Literal["patrol_type", "team", "leader", "patrol", "area"], Field(title="Group By")
+    ] = "patrol_type",
+    map_layer: Annotated[
+        str,
+        Field(
+            title="Map Layer",
+            description="Spatial feature group whose areas (e.g. regions, sectors) become the rows of the table.",
+        ),
+    ] = "",
+    columns: Annotated[
+        list[
+            Literal[
+                "patrol_count",
+                "total_distance",
+                "total_duration",
+                "patrol_days",
+                "leg_count",
+                "member_days",
+                "area_covered_merged",
+            ]
+        ],
+        Field(title="Columns", description="Columns of the patrol effort table."),
+    ] = ["patrol_count", "total_distance", "total_duration"],  # noqa: B006
+) -> Annotated[dict, Field(description="grouper, map_layer (empty unless grouping by area), metrics.")]:
+    """Patrol Effort section."""
+    if group_by == "area":
+        if not map_layer.strip():
+            raise ValueError("Choose a Map Layer to group patrol effort by area.")
+        map_layer = map_layer.strip()
+        grouper = f"SpatialGrouper_{map_layer}"
+    else:
+        map_layer, grouper = "", _GROUPERS[group_by]
+    metrics = [{"metric": c, **({"unit": _UNITS[c]} if c in _UNITS else {})} for c in columns]
+    return {"grouper": grouper, "map_layer": map_layer, "metrics": metrics}
+
+
+@register()
+def effort_grouper_for(
+    grouper: Annotated[str, Field(title="Grouper")],
+    patrol_serial: Annotated[str, Field(title="Patrol serial")] = "",
+) -> Annotated[str, Field(description="Individual patrol for a single patrol, else grouper.")]:
+    """Effort table grouper: a single patrol keeps a one-row table grouped by patrol."""
+    return "patrol_serial_number" if patrol_serial else grouper

@@ -4,14 +4,18 @@ from ._report import set_report_blocks as set_report_blocks
 from ._report_date import get_report_date as get_report_date
 from ._report_date import get_report_period as get_report_period
 from ._settings import effective_patrol_types as effective_patrol_types
+from ._settings import effort_grouper_for as effort_grouper_for
+from ._settings import set_patrol_effort as set_patrol_effort
 from ._settings import set_patrol_filter as set_patrol_filter
 
 __all__ = [
     "effective_patrol_types",
+    "effort_grouper_for",
     "get_report_date",
     "get_report_period",
     "load_report_template",
     "set_images_options",
+    "set_patrol_effort",
     "set_patrol_filter",
     "set_report_blocks",
 ]
