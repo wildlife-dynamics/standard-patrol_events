@@ -18,9 +18,6 @@ costaecuador:
         name: (UTC-05:00) America/Guayaquil
         utc: -05:00
     base_maps: {}
-    area_scope:
-      level: site
-      unit: null
     patrol_params:
       patrol_types: []
     effort_grouper:
@@ -47,7 +44,7 @@ costaecuador:
     retrieved_events:
       retrieval: all_in_period
     state_events:
-      state: all
+      states: []
     event_grouping:
       var: event_type_display
     detail_mode:
@@ -55,7 +52,7 @@ costaecuador:
     event_detail_tables:
       detail_fields: {}
     images_options:
-      mode: attachments
+      skip_download: false
       max_images: 12
     report_blocks: {}
     template_path:
@@ -85,9 +82,6 @@ apn:
         name: (UTC-03:00) America/Argentina/Buenos_Aires
         utc: -03:00
     base_maps: {}
-    area_scope:
-      level: site
-      unit: null
     patrol_params:
       patrol_types: []
     effort_grouper:
@@ -114,7 +108,7 @@ apn:
     retrieved_events:
       retrieval: all_in_period
     state_events:
-      state: all
+      states: []
     event_grouping:
       var: event_type_display
     detail_mode:
@@ -122,7 +116,7 @@ apn:
     event_detail_tables:
       detail_fields: {}
     images_options:
-      mode: attachments
+      skip_download: false
       max_images: 12
     report_blocks:
       personnel: true
@@ -153,9 +147,6 @@ mep:
         name: (UTC+00:00) UTC
         utc: +00:00
     base_maps: {}
-    area_scope:
-      level: site
-      unit: null
     patrol_params:
       patrol_types: []
     effort_grouper:
@@ -182,7 +173,7 @@ mep:
     retrieved_events:
       retrieval: all_in_period
     state_events:
-      state: all
+      states: []
     event_grouping:
       var: event_type_display
     detail_mode:
@@ -190,7 +181,7 @@ mep:
     event_detail_tables:
       detail_fields: {}
     images_options:
-      mode: attachments
+      skip_download: false
       max_images: 12
     report_blocks:
       personnel: true
@@ -221,9 +212,6 @@ empty_period:
         name: (UTC-05:00) America/Guayaquil
         utc: -05:00
     base_maps: {}
-    area_scope:
-      level: site
-      unit: null
     patrol_params:
       patrol_types: []
     effort_grouper:
@@ -250,7 +238,7 @@ empty_period:
     retrieved_events:
       retrieval: all_in_period
     state_events:
-      state: all
+      states: []
     event_grouping:
       var: event_type_display
     detail_mode:
@@ -258,7 +246,7 @@ empty_period:
     event_detail_tables:
       detail_fields: {}
     images_options:
-      mode: attachments
+      skip_download: false
       max_images: 12
     report_blocks: {}
     template_path:
@@ -289,9 +277,6 @@ belize:
         name: (UTC-06:00) America/Belize
         utc: '-06:00'
     base_maps: {}
-    area_scope:
-      level: site
-      unit: null
     patrol_params:
       patrol_types: []
     effort_grouper:
@@ -318,7 +303,7 @@ belize:
     retrieved_events:
       retrieval: all_in_period
     state_events:
-      state: all
+      states: []
     event_grouping:
       var: event_type_display
     detail_mode:
@@ -326,7 +311,7 @@ belize:
     event_detail_tables:
       detail_fields: {}
     images_options:
-      mode: attachments
+      skip_download: false
       max_images: 12
     report_blocks:
       personnel: true
@@ -359,9 +344,6 @@ apncentral:
         name: (UTC-03:00) America/Argentina/Buenos_Aires
         utc: -03:00
     base_maps: {}
-    area_scope:
-      level: site
-      unit: null
     patrol_params:
       patrol_types: []
     effort_grouper:
@@ -388,7 +370,7 @@ apncentral:
     retrieved_events:
       retrieval: all_in_period
     state_events:
-      state: all
+      states: []
     event_grouping:
       var: event_type_display
     detail_mode:
@@ -396,7 +378,7 @@ apncentral:
     event_detail_tables:
       detail_fields: {}
     images_options:
-      mode: attachments
+      skip_download: false
       max_images: 12
     report_blocks:
       personnel: true
@@ -429,9 +411,6 @@ apncentral_patrol70:
         name: (UTC-03:00) America/Argentina/Buenos_Aires
         utc: -03:00
     base_maps: {}
-    area_scope:
-      level: site
-      unit: null
     patrol_params:
       patrol_types: []
     effort_grouper:
@@ -458,7 +437,7 @@ apncentral_patrol70:
     retrieved_events:
       retrieval: all_in_period
     state_events:
-      state: all
+      states: []
     event_grouping:
       var: event_type_display
     detail_mode:
@@ -466,7 +445,7 @@ apncentral_patrol70:
     event_detail_tables:
       detail_fields: {}
     images_options:
-      mode: attachments
+      skip_download: false
       max_images: 12
     report_blocks:
       personnel: true
@@ -498,9 +477,6 @@ mep_team:
         name: (UTC+00:00) UTC
         utc: +00:00
     base_maps: {}
-    area_scope:
-      level: site
-      unit: null
     patrol_params:
       patrol_types: []
     effort_grouper:
@@ -528,7 +504,7 @@ mep_team:
     retrieved_events:
       retrieval: all_in_period
     state_events:
-      state: all
+      states: []
     event_grouping:
       var: event_type_display
     detail_mode:
@@ -536,7 +512,7 @@ mep_team:
     event_detail_tables:
       detail_fields: {}
     images_options:
-      mode: attachments
+      skip_download: false
       max_images: 12
     report_blocks:
       personnel: true

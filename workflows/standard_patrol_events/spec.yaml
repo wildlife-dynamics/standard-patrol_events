@@ -161,22 +161,6 @@ workflow:
     id: base_maps
     task: set_base_maps
 
-  # ── 4 · Spatial scope ────────────────────────────────────────────────────────────
-  - name: Spatial Scope
-    id: area_scope
-    task: get_area_scope
-    partial:
-      client: ${{ workflow.er_client.return }}
-
-  # site level skips; None lets select_in_area pass everything through
-  - id: area
-    task: skip_to_none
-    skipif:
-      conditions:
-        - never
-    partial:
-      df: ${{ workflow.area_scope.return }}
-
   # ── 5-6 · Patrols and patrol effort ──────────────────────────────────────────────
   - name: Patrols
     id: patrol_params
@@ -313,7 +297,7 @@ workflow:
       min_fixes: 2
 
   # A gap over 1 h between fixes is a device left on / a patrol left open, not patrolling.
-  - id: patrol_trajectory
+  - id: trajectory
     task: relocations_to_trajectory
     partial:
       relocations: ${{ workflow.patrol_tracks.return }}
@@ -325,13 +309,6 @@ workflow:
         min_speed_kmhr: 0.0011
         max_speed_kmhr: 500
       trajectory_segment_filter_overrides: null  # no per-type filters (keeps it off the form)
-
-  - id: trajectory
-    task: select_in_area
-    partial:
-      gdf: ${{ workflow.patrol_trajectory.return }}
-      area: ${{ workflow.area.return }}
-      id_column: extra__patrol_id
 
   - id: patrol_teams_utc
     task: patrols_from_legs
@@ -415,18 +392,11 @@ workflow:
       patrol_events: ${{ workflow.linked_events.return }}
       patrol_serial: ${{ workflow.patrol_serial.return }}
 
-  - id: events_in_area
-    task: select_in_area
-    partial:
-      id_column: null
-      gdf: ${{ workflow.retrieved_events.return }}
-      area: ${{ workflow.area.return }}
-
   - name: Event State
     id: state_events
     task: filter_event_state
     partial:
-      events: ${{ workflow.events_in_area.return }}
+      events: ${{ workflow.retrieved_events.return }}
 
   - id: events_with_details
     task: process_events_details
