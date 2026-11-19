@@ -900,8 +900,8 @@ workflow:
       groupers: ${{ workflow.area_grouper_list.return }}
       spatial_feature_groups: ${{ workflow.area_feature_groups.return }}
 
-  - id: effort_tracks_indexed
-    task: add_spatial_index
+  - id: effort_tracks_indexed  # keeps tracks outside every area (core drops them) under "None"
+    task: index_tracks_by_area
     partial:
       gdf: ${{ workflow.effort_tracks.return }}
       groupers: ${{ workflow.area_groupers_resolved.return }}
