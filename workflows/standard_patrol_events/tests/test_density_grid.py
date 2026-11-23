@@ -1,6 +1,6 @@
 """Density grids must stay small for any site extent. A fixed 2 km cell made
 APN (stray 0,0 points) build 10M cells and mep (US..Kenya) 33M cells: hours of CPU.
-Runs only in the ext-custom env (importorskip), like test_template."""
+Runs only where ecoscope is installed (importorskip)."""
 
 import re
 from pathlib import Path

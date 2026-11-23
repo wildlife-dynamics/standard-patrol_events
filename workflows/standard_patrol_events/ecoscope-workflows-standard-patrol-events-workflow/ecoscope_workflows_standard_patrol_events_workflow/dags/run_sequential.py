@@ -133,105 +133,6 @@ from ecoscope.platform.tasks.transformation import (
 )
 from ecoscope.platform.tasks.transformation import sort_values as sort_values
 from ecoscope.platform.tasks.transformation import with_unit as with_unit
-from ecoscope_workflows_ext_custom.tasks.analysis import (
-    format_effort_table as format_effort_table,
-)
-from ecoscope_workflows_ext_custom.tasks.analysis import (
-    grid_cell_size_for_extent as grid_cell_size_for_extent,
-)
-from ecoscope_workflows_ext_custom.tasks.analysis import (
-    headline_stats as headline_stats,
-)
-from ecoscope_workflows_ext_custom.tasks.config import (
-    set_optional_string_list as set_optional_string_list,
-)
-from ecoscope_workflows_ext_custom.tasks.io import (
-    add_missing_linked_events as add_missing_linked_events,
-)
-from ecoscope_workflows_ext_custom.tasks.io import (
-    download_event_attachments as download_event_attachments,
-)
-from ecoscope_workflows_ext_custom.tasks.io import (
-    filter_by_leaders as filter_by_leaders,
-)
-from ecoscope_workflows_ext_custom.tasks.io import get_current_user as get_current_user
-from ecoscope_workflows_ext_custom.tasks.io import (
-    get_event_type_lookup as get_event_type_lookup,
-)
-from ecoscope_workflows_ext_custom.tasks.io import (
-    get_patrols_any_type as get_patrols_any_type,
-)
-from ecoscope_workflows_ext_custom.tasks.io import (
-    report_time_range as report_time_range,
-)
-from ecoscope_workflows_ext_custom.tasks.io import (
-    sanitize_attachments as sanitize_attachments,
-)
-from ecoscope_workflows_ext_custom.tasks.localization import (
-    get_report_labels as get_report_labels,
-)
-from ecoscope_workflows_ext_custom.tasks.results import (
-    build_image_records as build_image_records,
-)
-from ecoscope_workflows_ext_custom.tasks.results import (
-    collect_map_layers as collect_map_layers,
-)
-from ecoscope_workflows_ext_custom.tasks.results import create_docx as create_docx
-from ecoscope_workflows_ext_custom.tasks.results import fit_view_state as fit_view_state
-from ecoscope_workflows_ext_custom.tasks.results import (
-    hide_save_image_button as hide_save_image_button,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    add_event_display_columns as add_event_display_columns,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    area_groupers as area_groupers,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    area_regions as area_regions,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    category_priority_table as category_priority_table,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    drop_short_tracks as drop_short_tracks,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    event_detail_table as event_detail_table,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    event_detail_table_list as event_detail_table_list,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    events_by_type_table as events_by_type_table,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    filter_by_teams as filter_by_teams,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    filter_event_state as filter_event_state,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    filter_linked_events as filter_linked_events,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    filter_patrols_by_serial as filter_patrols_by_serial,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    get_collection_item as get_collection_item,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    index_tracks_by_area as index_tracks_by_area,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    patrol_legs_table as patrol_legs_table,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    patrols_from_legs as patrols_from_legs,
-)
-from ecoscope_workflows_ext_custom.tasks.transformation import (
-    team_or_leader as team_or_leader,
-)
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     effective_event_types as effective_event_types,
 )
@@ -279,6 +180,111 @@ from ecoscope_workflows_ext_standard_patrol_events.tasks import (
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     set_report_text as set_report_text,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.analysis import (
+    format_effort_table as format_effort_table,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.analysis import (
+    grid_cell_size_for_extent as grid_cell_size_for_extent,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.analysis import (
+    headline_stats as headline_stats,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.config import (
+    set_optional_string_list as set_optional_string_list,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.io import (
+    add_missing_linked_events as add_missing_linked_events,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.io import (
+    download_event_attachments as download_event_attachments,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.io import (
+    filter_by_leaders as filter_by_leaders,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.io import (
+    get_current_user as get_current_user,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.io import (
+    get_event_type_lookup as get_event_type_lookup,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.io import (
+    get_patrols_any_type as get_patrols_any_type,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.io import (
+    report_time_range as report_time_range,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.io import (
+    sanitize_attachments as sanitize_attachments,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.localization import (
+    get_report_labels as get_report_labels,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
+    build_image_records as build_image_records,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
+    collect_map_layers as collect_map_layers,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
+    create_docx as create_docx,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
+    fit_view_state as fit_view_state,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
+    hide_save_image_button as hide_save_image_button,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    add_event_display_columns as add_event_display_columns,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    area_groupers as area_groupers,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    area_regions as area_regions,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    category_priority_table as category_priority_table,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    drop_short_tracks as drop_short_tracks,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    event_detail_table as event_detail_table,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    event_detail_table_list as event_detail_table_list,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    events_by_type_table as events_by_type_table,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    filter_by_teams as filter_by_teams,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    filter_event_state as filter_event_state,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    filter_linked_events as filter_linked_events,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    filter_patrols_by_serial as filter_patrols_by_serial,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    get_collection_item as get_collection_item,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    index_tracks_by_area as index_tracks_by_area,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    patrol_legs_table as patrol_legs_table,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    patrols_from_legs as patrols_from_legs,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    team_or_leader as team_or_leader,
 )
 from wt_contracts import validate as _validate
 from wt_task import task

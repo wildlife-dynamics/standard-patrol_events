@@ -7,13 +7,12 @@ OUTPUT_DIR ?= /tmp/$(WORKFLOW)/$(PARTNER)
 
 # Dev loop: one pixi env (`dev` in pixi.toml) compiles the workflow with wt-compiler
 # --from-env (tasks read from the installed env: no throwaway env, no downloads) and runs
-# it with the step cache (--with-caching). ext-custom and the data package are linked
+# it with the step cache (--with-caching). the task package (wd-partner-tasks) is linked
 # editable, so their edits apply on the next run. The compiled package is bound to the
 # dev env's exact versions: run it with `make run-dev`, and `make recompile` before
 # committing the package. Paths resolve per checkout (main or worktree).
 W_DYNAMICS ?= $(abspath $(shell git rev-parse --path-format=absolute --git-common-dir)/../..)
-EXT_CUSTOM ?= $(W_DYNAMICS)/ecoscope-workflow-task-library-spe/src/ecoscope-workflows-ext-custom
-# The data package lives in wd-partner-tasks.
+# The task package lives in wd-partner-tasks.
 PARTNER_TASKS ?= $(W_DYNAMICS)/wd-partner-tasks-standard-patrol-events
 EXT_SPE := $(PARTNER_TASKS)/src/ecoscope-workflows-ext-standard-patrol-events
 DEV_ENV := .pixi/envs/dev
@@ -54,7 +53,7 @@ run-dev:
 	else pixi run yq -y '."$(PARTNER)".params' workflows/$(WORKFLOW)/test-cases.yaml > $(OUTPUT_DIR)/params.yaml; fi
 	cd $(PKG_DIR) && ECOSCOPE_WORKFLOWS_RESULTS="file://$(OUTPUT_DIR)" \
 		WT_CACHE__STORE=$(CACHE_DIR) WT_CACHE__SCOPE=local-dev WT_CACHE__IO_TTL=12h WT_CACHE__LAZY=true \
-		WT_CACHE__EPOCH=$$($(CURDIR)/dev/epoch.sh $(EXT_CUSTOM) $(EXT_SPE)) \
+		WT_CACHE__EPOCH=$$($(CURDIR)/dev/epoch.sh $(EXT_SPE)) \
 		$(CURDIR)/$(DEV_ENV)/bin/python -m ecoscope_workflows_$(WORKFLOW)_workflow.cli run \
 		--config-file $(OUTPUT_DIR)/params.yaml --execution-mode sequential --no-mock-io
 
@@ -65,7 +64,7 @@ clear-cache:
 	rm -rf /tmp/$(WORKFLOW)/wt-cache
 
 # top_level.txt maps each editable package to its distribution, so the cache can version it.
-LINKED := ecoscope_workflows_ext_custom ecoscope_workflows_ext_standard_patrol_events
+LINKED := ecoscope_workflows_ext_standard_patrol_events
 link:
 	# pip's reinstall at a new version leaves the old dist-info holding only our
 	# top_level.txt; that stub shadows the real metadata and blocks pip, so clear it first.
@@ -73,7 +72,7 @@ link:
 		if [ -d $$d ] && [ ! -f $$d/METADATA ]; then rm -f $$d/top_level.txt && rmdir $$d; fi; \
 	done; done
 	$(DEV_ENV)/bin/python -m pip install -q --no-deps \
-		-e $(EXT_CUSTOM) -e $(EXT_SPE)
+		-e $(EXT_SPE)
 	# Listed in RECORD, so pip removes it with the package on the next reinstall (no stub).
 	for pkg in $(LINKED); do for d in $(DEV_ENV)/lib/python3*/site-packages/$${pkg}-*.dist-info; do \
 		if [ -f $$d/METADATA ]; then echo $$pkg > $$d/top_level.txt; \
