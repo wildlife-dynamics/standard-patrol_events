@@ -10,13 +10,13 @@ artifacts_sha256_strict: f965f61fce7cc584dbedb380414892cde105fbb08fd0b8b2000e18b
 installed_requirements:
 - channel: https://repo.prefix.dev/ecoscope-workflows/
   name: ecoscope-platform
-  version: {version: ==2.38.0}
+  version: {version: ==2.39.1}
 - channel: file:///tmp/ecoscope-workflows-custom/release/artifacts/
   name: ecoscope-workflows-ext-custom
   version: {version: ==0.1.6.dev68+g994bd478.d20261119}
 - channel: file:///tmp/ecoscope-workflows-custom/release/artifacts/
   name: ecoscope-workflows-ext-standard-patrol-events
-  version: {version: ==10000.dev59+g833a503cc.d20261119}
+  version: {version: ==10000.dev218+gc25e3ea76}
 - channel: conda-forge
   name: pydeck
   version: {version: ==0.9.2}

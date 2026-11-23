@@ -9,6 +9,8 @@ docxtpl rules: {%p %} alone in its paragraph, {%tr %} alone in its row, {%tc %} 
 """
 
 from pathlib import Path
+import subprocess
+import os
 
 from docx import Document
 from docx.enum.section import WD_ORIENT, WD_SECTION
@@ -18,8 +20,10 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
-OUT = (Path(__file__).parent.parent / "src/ecoscope-workflows-ext-standard-patrol-events"
-       / "ecoscope_workflows_ext_standard_patrol_events/data/standard_patrol_events.docx")
+# The data package lives in a wd-partner-tasks checkout next to this repo (or $PARTNER_TASKS).
+_W = Path(subprocess.check_output(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], text=True).strip()).parents[1]
+PARTNER_PKG = Path(os.environ.get("PARTNER_TASKS", _W / "wd-partner-tasks-standard-patrol-events")) / "src/ecoscope-workflows-ext-standard-patrol-events"
+OUT = PARTNER_PKG / "ecoscope_workflows_ext_standard_patrol_events/data/standard_patrol_events.docx"
 ACCENT = RGBColor(0x1F, 0x4E, 0x46)  # deep green
 MUTED = RGBColor(0x6B, 0x72, 0x80)
 TABLE_STYLE = "Light List Accent 1"
