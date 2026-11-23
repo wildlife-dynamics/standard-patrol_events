@@ -1,0 +1,178 @@
+{
+  "properties": {
+    "er_client": {
+      "additionalProperties": false,
+      "properties": {
+        "data_source": {
+          "$ref": "#/$defs/EarthRangerConnection",
+          "description": "Select one of your configured data sources.",
+          "title": ""
+        }
+      },
+      "required": [
+        "data_source"
+      ],
+      "type": "object",
+      "title": "Data Source"
+    },
+    "time_range": {
+      "additionalProperties": false,
+      "properties": {
+        "since": {
+          "description": "The start time",
+          "format": "date-time",
+          "title": "Since",
+          "type": "string"
+        },
+        "until": {
+          "description": "The end time",
+          "format": "date-time",
+          "title": "Until",
+          "type": "string"
+        },
+        "timezone": {
+          "$ref": "#/$defs/TimezoneInfo",
+          "default": null,
+          "title": "Timezone"
+        }
+      },
+      "required": [
+        "since",
+        "until"
+      ],
+      "type": "object",
+      "description": "Choose the period of time to analyze.",
+      "title": "Time Range"
+    },
+    "patrols": {
+      "type": "object",
+      "title": "Patrols",
+      "properties": {
+        "get": {
+          "title": "Get",
+          "type": "string",
+          "default": "all",
+          "oneOf": [
+            {
+              "const": "all",
+              "title": "All patrols in the period"
+            },
+            {
+              "const": "single",
+              "title": "Single patrol"
+            }
+          ]
+        }
+      },
+      "required": [
+        "get"
+      ],
+      "if": {
+        "properties": {
+          "get": {
+            "const": "single"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "patrol_id": {
+            "title": "Patrol ID",
+            "type": "string",
+            "description": "EarthRanger patrol serial number, e.g. 70."
+          }
+        },
+        "required": [
+          "patrol_id"
+        ]
+      },
+      "else": {
+        "properties": {
+          "patrol_types": {
+            "title": "Patrol Type",
+            "type": "array",
+            "uniqueItems": true,
+            "default": [],
+            "description": "Specify the patrol type(s) to analyze (optional). Leave empty to analyze all patrol types.",
+            "items": {
+              "type": "string"
+            },
+            "ecoscope:transform": [
+              {
+                "transformer": "EarthRangerEnumResolver",
+                "transformer_kws": {
+                  "type": "patrol_type",
+                  "depends_on": "properties.er_client.properties.data_source.properties.name"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "EarthRangerConnection": {
+      "properties": {
+        "name": {
+          "title": "Data Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "EarthRangerConnection",
+      "type": "object"
+    },
+    "TimezoneInfo": {
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "tzCode": {
+          "title": "Tzcode",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "utc": {
+          "title": "Utc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "tzCode",
+        "name",
+        "utc"
+      ],
+      "title": "TimezoneInfo",
+      "type": "object"
+    }
+  },
+  "uiSchema": {
+    "ui:order": [
+      "er_client",
+      "time_range",
+      "patrols"
+    ],
+    "patrols": {
+      "ui:order": [
+        "get",
+        "patrol_id",
+        "patrol_types"
+      ],
+      "get": {
+        "ui:widget": "radio",
+        "ui:options": {
+          "label": false
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

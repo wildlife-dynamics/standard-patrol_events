@@ -1,0 +1,2018 @@
+id: standard_patrol_events
+
+# Standard Patrol & Events (MRD-2): one workflow for any site. Every difference between
+# sites is a form parameter; labels, logos and wording live in the report template.
+# Outputs: a dashboard (interactive) and a Word report, both fed by the same tasks.
+
+requirements:
+  - name: ecoscope-platform
+    version: "==2.39.1"
+    channel: https://repo.prefix.dev/ecoscope-workflows/
+  - name: ecoscope-workflows-ext-standard-patrol-events
+    version: "==0.0.3"
+    channel: https://repo.prefix.dev/ecoscope-workflows-custom/
+  - name: pydeck
+    version: 0.9.2
+    channel: conda-forge
+
+# The form as approved in docs/superpowers/specs/2026-11-19-config-form-checkbox.rjsf.json
+# (tests/test_form.py checks it). Fields shown by a tick or choice live in the section if/then/allOf.
+# grouping option values stay the column names the workflow reads (patrol_team_name, *_display).
+rjsf-overrides:
+  properties:
+    patrol_filter.description: 'Optional: limit the patrols to one team, team leader or patrol. Leave unticked to
+      include all patrols.'
+    patrol_filter.additionalProperties: true
+    patrol_filter.properties: {}
+    patrol_filter.allOf:
+    - if:
+        anyOf:
+        - properties:
+            team:
+              const: true
+          required:
+          - team
+        - properties:
+            team_leader:
+              const: true
+          required:
+          - team_leader
+      else:
+        properties:
+          single_patrol:
+            title: Single Patrol
+            type: boolean
+            default: false
+    - if:
+        anyOf:
+        - properties:
+            single_patrol:
+              const: true
+          required:
+          - single_patrol
+        - properties:
+            team_leader:
+              const: true
+          required:
+          - team_leader
+      else:
+        properties:
+          team:
+            title: Team
+            type: boolean
+            default: false
+    - if:
+        anyOf:
+        - properties:
+            single_patrol:
+              const: true
+          required:
+          - single_patrol
+        - properties:
+            team:
+              const: true
+          required:
+          - team
+      else:
+        properties:
+          team_leader:
+            title: Team Leader
+            type: boolean
+            default: false
+    - if:
+        properties:
+          single_patrol:
+            const: true
+        required:
+        - single_patrol
+      then:
+        properties:
+          patrol_id:
+            title: Patrol ID
+            type: string
+            description: The patrol to analyze, matched against its serial number (the ID shown in EarthRanger).
+        required:
+        - patrol_id
+    - if:
+        properties:
+          team:
+            const: true
+        required:
+        - team
+      then:
+        properties:
+          teams:
+            title: ' '
+            type: array
+            minItems: 1
+            items:
+              type: string
+            description: Team names as set in EarthRanger's patrol configuration.
+    - if:
+        properties:
+          team_leader:
+            const: true
+        required:
+        - team_leader
+      then:
+        properties:
+          leaders:
+            title: ' '
+            type: array
+            minItems: 1
+            items:
+              type: string
+            description: Leader names as in EarthRanger.
+    patrol_type.properties.vars:
+      title: ' '
+      type: array
+      uniqueItems: true
+      default: []
+      description: Choose the patrol types to include. Leave it empty to include all of them.
+      items:
+        type: string
+      ecoscope:transform:
+      - transformer: EarthRangerEnumResolver
+        transformer_kws:
+          type: patrol_type
+          depends_on: properties.er_client.properties.data_source.properties.name
+    patrol_effort.description: Choose how the patrol effort table is grouped and which columns it shows.
+    patrol_effort.additionalProperties: true
+    patrol_effort.properties:
+      group_by:
+        title: Group By
+        type: string
+        default: patrol_type
+        oneOf:
+        - const: patrol_type
+          title: Patrol Type
+        - const: team
+          title: Team
+        - const: leader
+          title: Leader
+        - const: patrol
+          title: Individual Patrol
+        - const: area
+          title: Area (Map Layer)
+      columns:
+        title: Columns
+        type: array
+        uniqueItems: true
+        description: Columns of the patrol effort table.
+        default:
+        - patrol_count
+        - total_distance
+        - total_duration
+        items:
+          type: string
+          oneOf:
+          - const: patrol_count
+            title: Patrols
+          - const: total_distance
+            title: Distance (km)
+          - const: total_duration
+            title: Hours
+          - const: patrol_days
+            title: Days With Patrols
+          - const: leg_count
+            title: Legs
+          - const: member_days
+            title: Person-Days
+          - const: area_covered_merged
+            title: Area Covered (km²)
+    patrol_effort.if:
+      properties:
+        group_by:
+          const: area
+      required:
+      - group_by
+    patrol_effort.then:
+      properties:
+        map_layer:
+          title: Map Layer
+          type: string
+          description: Spatial feature group whose areas (e.g. regions, sectors) become the rows of the table.
+          ecoscope:transform:
+          - transformer: EarthRangerEnumResolver
+            transformer_kws:
+              type: spatial_feature_group
+              depends_on: properties.er_client.properties.data_source.properties.name
+      required:
+      - map_layer
+    patrol_grouping.description: Choose how patrol tracks are coloured on the map. Tracks without a team use their
+      leader's name.
+    patrol_grouping.properties.var:
+      title: ' '
+      type: string
+      default: patrol_type
+      oneOf:
+      - const: patrol_type
+        title: Patrol Type
+      - const: patrol_team_name
+        title: Team
+    event_scope.description: Choose which events to include.
+    event_type.properties.vars:
+      title: ' '
+      type: array
+      uniqueItems: true
+      default: []
+      items:
+        type: string
+      description: Choose the event types to include. Leave it empty to include all of them.
+      ecoscope:transform:
+      - transformer: EarthRangerEnumResolver
+        transformer_kws:
+          type: event_type
+          depends_on: properties.er_client.properties.data_source.properties.name
+    state_events.description: Choose to analyze events with a certain state. If left empty, events of all states
+      will be analyzed
+    state_events.properties.states:
+      title: ' '
+      type: array
+      uniqueItems: true
+      default: []
+      items:
+        type: string
+        oneOf:
+        - const: new
+          title: New
+        - const: active
+          title: Active
+        - const: resolved
+          title: Resolved
+        - const: review
+          title: Review
+    event_grouping.description: Choose how events are grouped in the tables, charts and map colours.
+    event_grouping.properties.var:
+      title: ' '
+      type: string
+      default: event_type_display
+      oneOf:
+      - const: event_type_display
+        title: Event Type
+      - const: event_category_display
+        title: Event Category
+    event_details_settings.additionalProperties: true
+    event_details_settings.properties:
+      all_details:
+        title: Show all fields
+        type: boolean
+        default: true
+        description: When ticked, every event is shown with all its details. Untick to choose the fields for each
+          event type.
+    event_details_settings.if:
+      properties:
+        all_details:
+          const: false
+      required:
+      - all_details
+    event_details_settings.then:
+      properties:
+        tables:
+          title: ' '
+          type: array
+          default: []
+          description: Add an event type and choose the fields to show for it. Event types you don't add show their
+            first 3 fields.
+          items:
+            type: object
+            title: ' '
+            additionalProperties: false
+            properties:
+              event_type:
+                title: Event Type
+                type: string
+                ecoscope:transform:
+                - transformer: EarthRangerEnumResolver
+                  transformer_kws:
+                    type: event_type
+                    depends_on: properties.er_client.properties.data_source.properties.name
+              fields:
+                title: Fields
+                type: array
+                items:
+                  type: string
+                description: Field names as on the event form, one per line.
+            required:
+            - event_type
+    report_text.description: Name the report, choose its language and pick what it includes.
+    report_text.properties.language:
+      title: Language
+      description: Choose the language for the report's headings and labels.
+      type: string
+      default: en
+      oneOf:
+      - const: en
+        title: English
+      - const: es
+        title: Español
+      - const: pt
+        title: Português
+    report_text.properties.sections.uniqueItems: true
+    report_text.properties.sections.items:
+      type: string
+      oneOf:
+      - const: headline_stats
+        title: Headline Figures
+      - const: personnel
+        title: Personnel
+      - const: time_density
+        title: Patrol Time Density Map
+      - const: event_density
+        title: Event Density Map
+      - const: events_chart
+        title: Events Chart
+      - const: monthly_chart
+        title: Events by Month
+      - const: category_priority
+        title: Events by Category and Priority
+      - const: conclusions
+        title: Conclusions Box
+  uiSchema:
+    ui:order:
+    - workflow_details
+    - er_client
+    - time_range
+    - base_maps
+    - patrol_filter
+    - patrol_type
+    - patrol_effort
+    - patrol_grouping
+    - event_scope
+    - event_type
+    - state_events
+    - event_grouping
+    - event_details_settings
+    - report_text
+    - download_attachments
+    - '*'
+    patrol_grouping.var:
+      ui:options:
+        label: false
+    event_grouping.var:
+      ui:options:
+        label: false
+    event_details_settings.tables:
+      items:
+        ui:options:
+          label: false
+    report_text:
+      ui:order: [title, subtitle, language, sections, details_intro]
+      title:
+        ui:placeholder: Patrol & Events Report
+      subtitle:
+        ui:placeholder: e.g. Parque Nacional Los Alerces
+      details_intro:
+        ui:widget: textarea
+        ui:placeholder: e.g. Events recorded by rangers during the period.
+    # additionalProperties is true there for the if/then fields: hide RJSF's "+" button, and the
+    # values a hidden field leaves behind (else RJSF shows them as editable "<name> Key" rows)
+    patrol_filter.ui:options.expandable: false
+    patrol_filter.additionalProperties.ui:widget: hidden
+    patrol_effort.ui:options.expandable: false
+    patrol_effort.additionalProperties.ui:widget: hidden
+    event_details_settings.ui:options.expandable: false
+    event_details_settings.additionalProperties.ui:widget: hidden
+
+  # Form-root show/hide (design §3, §5): Patrol Type, Patrol Effort, Events and Event Type disappear for a
+  # Single Patrol. Nested on purpose: RJSF ignores sibling root rules and rules inside a root allOf.
+  # Applied after every compile by dev/add_root_rules.py until wt-compiler emits root rules
+  # (docs/superpowers/specs/2026-11-19-wt-compiler-root-rules.md); then uncomment this and delete the script.
+  # remove:
+  # - patrol_type
+  # - patrol_effort
+  # - event_scope
+  # - event_type
+  # if:
+  #   properties:
+  #     patrol_filter:
+  #       properties:
+  #         single_patrol:
+  #           const: true
+  #       required:
+  #       - single_patrol
+  #   required:
+  #   - patrol_filter
+  # else:
+  #   properties:
+  #     patrol_type:
+  #       additionalProperties: false
+  #       properties:
+  #         vars:
+  #           title: ' '
+  #           type: array
+  #           uniqueItems: true
+  #           default: []
+  #           description: Choose the patrol types to include. Leave it empty to include all of them.
+  #           items:
+  #             type: string
+  #           ecoscope:transform:
+  #           - transformer: EarthRangerEnumResolver
+  #             transformer_kws:
+  #               type: patrol_type
+  #               depends_on: properties.er_client.properties.data_source.properties.name
+  #       type: object
+  #       required: []
+  #       title: Patrol Type
+  #     patrol_effort:
+  #       additionalProperties: true
+  #       properties:
+  #         group_by:
+  #           title: Group By
+  #           type: string
+  #           default: patrol_type
+  #           oneOf:
+  #           - const: patrol_type
+  #             title: Patrol Type
+  #           - const: team
+  #             title: Team
+  #           - const: leader
+  #             title: Leader
+  #           - const: patrol
+  #             title: Individual Patrol
+  #           - const: area
+  #             title: Area (Map Layer)
+  #         columns:
+  #           title: Columns
+  #           type: array
+  #           uniqueItems: true
+  #           description: Columns of the patrol effort table.
+  #           default:
+  #           - patrol_count
+  #           - total_distance
+  #           - total_duration
+  #           items:
+  #             type: string
+  #             oneOf:
+  #             - const: patrol_count
+  #               title: Patrols
+  #             - const: total_distance
+  #               title: Distance (km)
+  #             - const: total_duration
+  #               title: Hours
+  #             - const: patrol_days
+  #               title: Days With Patrols
+  #             - const: leg_count
+  #               title: Legs
+  #             - const: member_days
+  #               title: Person-Days
+  #             - const: area_covered_merged
+  #               title: "Area Covered (km\xB2)"
+  #       type: object
+  #       required: []
+  #       title: Patrol Effort
+  #       description: Choose how the patrol effort table is grouped and which columns it shows.
+  #       if:
+  #         properties:
+  #           group_by:
+  #             const: area
+  #         required:
+  #         - group_by
+  #       then:
+  #         properties:
+  #           map_layer:
+  #             title: Map Layer
+  #             type: string
+  #             description: Spatial feature group whose areas (e.g. regions, sectors) become the rows of the table.
+  #             ecoscope:transform:
+  #             - transformer: EarthRangerEnumResolver
+  #               transformer_kws:
+  #                 type: spatial_feature_group
+  #                 depends_on: properties.er_client.properties.data_source.properties.name
+  #         required:
+  #         - map_layer
+  #     event_scope:
+  #       additionalProperties: false
+  #       properties:
+  #         linked_only:
+  #           default: false
+  #           title: Only events linked to the patrols
+  #           type: boolean
+  #       type: object
+  #       required: []
+  #       title: Events
+  #       description: Choose which events to include.
+  #   if:
+  #     properties:
+  #       event_scope:
+  #         properties:
+  #           linked_only:
+  #             const: true
+  #         required:
+  #         - linked_only
+  #     required:
+  #     - event_scope
+  #   else:
+  #     properties:
+  #       event_type:
+  #         additionalProperties: false
+  #         properties:
+  #           vars:
+  #             title: ' '
+  #             type: array
+  #             uniqueItems: true
+  #             default: []
+  #             items:
+  #               type: string
+  #             description: Choose the event types to include. Leave it empty to include all of them.
+  #             ecoscope:transform:
+  #             - transformer: EarthRangerEnumResolver
+  #               transformer_kws:
+  #                 type: event_type
+  #                 depends_on: properties.er_client.properties.data_source.properties.name
+  #         type: object
+  #         required: []
+  #         title: Event Type
+task-instance-defaults:
+  skipif:
+    conditions:
+      - any_is_empty_df
+      - any_dependency_skipped
+
+workflow:
+  # ── 1-3 · Workflow, data source, time range ─────────────────────────────────────
+  - name: Workflow Details
+    id: workflow_details
+    task: set_workflow_details
+
+  - name: Data Source
+    id: er_client
+    task: set_er_connection
+
+  - name: Time Range
+    id: time_range
+    task: set_time_range
+    partial:
+      time_format: "%d %b %Y"
+
+  - name: Base Maps
+    id: base_maps
+    task: set_base_maps
+
+  # ── Patrol Filter (at most one of team, team leader, single patrol) and Patrol Type ──
+  - name: Patrol Filter
+    id: patrol_filter
+    task: set_patrol_filter
+
+  - id: patrol_serial
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.patrol_filter.return }}
+      key: patrol_serial
+
+  - id: teams
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.patrol_filter.return }}
+      key: teams
+
+  - id: leader_names
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.patrol_filter.return }}
+      key: leaders
+
+  - name: Patrol Type
+    id: patrol_type
+    task: set_optional_string_list
+
+  - id: patrol_types  # a single patrol ignores Patrol Type
+    task: effective_patrol_types
+    partial:
+      patrol_types: ${{ workflow.patrol_type.return }}
+      patrol_serial: ${{ workflow.patrol_serial.return }}
+
+  # ── Patrol Effort: grouping, area layer and table columns ───────────────────────
+  - name: Patrol Effort
+    id: patrol_effort
+    task: set_patrol_effort
+
+  - id: effort_grouping
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.patrol_effort.return }}
+      key: grouper
+
+  - id: effort_map_layer
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.patrol_effort.return }}
+      key: map_layer
+
+  - id: effort_metric_list
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.patrol_effort.return }}
+      key: metrics
+
+  - id: effort_grouper  # a single patrol keeps one row, grouped by patrol
+    task: effort_grouper_for
+    partial:
+      grouper: ${{ workflow.effort_grouping.return }}
+      patrol_serial: ${{ workflow.patrol_serial.return }}
+
+  - name: Patrol Grouping
+    id: patrol_grouping
+    task: set_string_var
+
+  # ── Events and Event Type ───────────────────────────────────────────────────────
+  - name: Events
+    id: event_scope
+    task: set_event_scope
+
+  - name: Event Type
+    id: event_type
+    task: set_optional_string_list
+
+  - id: event_types  # linked-only or a single patrol ignores Event Type
+    task: effective_event_types
+    partial:
+      event_types: ${{ workflow.event_type.return }}
+      retrieval: ${{ workflow.event_scope.return }}
+      patrol_serial: ${{ workflow.patrol_serial.return }}
+
+  # Report period: the form's dates, or the patrol's own span when a Patrol ID is set
+  - id: report_range
+    task: report_time_range
+    partial:
+      client: ${{ workflow.er_client.return }}
+      time_range: ${{ workflow.time_range.return }}
+      patrol_serial: ${{ workflow.patrol_serial.return }}
+
+  - id: timezone
+    task: get_timezone_from_time_range
+    partial:
+      time_range: ${{ workflow.report_range.return }}
+
+  - id: current_user
+    task: get_current_user
+    partial:
+      client: ${{ workflow.er_client.return }}
+
+  - id: user_first_name
+    task: get_collection_item
+    partial:
+      raise_on_missing: false
+      collection: ${{ workflow.current_user.return }}
+      key: first_name
+      default: ""
+
+  - id: user_last_name
+    task: get_collection_item
+    partial:
+      raise_on_missing: false
+      collection: ${{ workflow.current_user.return }}
+      key: last_name
+      default: ""
+
+  - id: generated_by
+    task: concat_string_vars
+    partial:
+      values:
+        - ${{ workflow.user_first_name.return }}
+        - " "
+        - ${{ workflow.user_last_name.return }}
+
+  # ── 5-6 · Patrols and patrol effort ──────────────────────────────────────────────
+  - id: patrol_params
+    task: set_patrols_and_patrol_events_params
+    partial:
+      patrol_types: ${{ workflow.patrol_types.return }}
+      event_states: null
+      patrols_overlap_daterange: true
+      client: ${{ workflow.er_client.return }}
+      time_range: ${{ workflow.report_range.return }}
+      event_types: []
+      status: [done]
+      raise_on_empty: false
+      include_patrol_details: true
+      truncate_to_time_range: true
+      include_null_geometry: false
+      sub_page_size: 100
+
+  - id: patrols_fetched  # empty type list = no filter (core reads it as active types only)
+    task: get_patrols_any_type
+    partial:
+      combined_params: ${{ workflow.patrol_params.return }}
+
+  - id: patrols_serial  # one patrol when a Patrol ID is set
+    task: filter_patrols_by_serial
+    partial:
+      patrols_df: ${{ workflow.patrols_fetched.return }}
+      patrol_serial: ${{ workflow.patrol_serial.return }}
+
+  # Patrol legs from core (as the Patrol Effort catalogue workflow does): one row per leg,
+  # pauses skipped, clipped to the period; then ER team, member/asset and patrol-type names.
+  - id: patrol_legs
+    task: get_patrol_segments_from_patrols_df
+    partial:
+      patrols_df: ${{ workflow.patrols_serial.return }}
+      time_range: ${{ workflow.report_range.return }}
+      truncate_to_time_range: true
+      raise_on_empty: false
+
+  - id: legs_team_names
+    task: add_patrol_team_names
+    partial:
+      df: ${{ workflow.patrol_legs.return }}
+      client: ${{ workflow.er_client.return }}
+
+  # Team filter (ER team names, not leaders): patrols with a leg in a chosen team, with
+  # all their legs; everything downstream follows
+  - id: patrols_team
+    task: filter_by_teams
+    partial:
+      df: ${{ workflow.patrols_serial.return }}
+      legs: ${{ workflow.legs_team_names.return }}
+      teams: ${{ workflow.teams.return }}
+      id_column: id
+
+  - id: legs_teamed
+    task: filter_by_teams
+    partial:
+      df: ${{ workflow.legs_team_names.return }}
+      legs: ${{ workflow.legs_team_names.return }}
+      teams: ${{ workflow.teams.return }}
+      id_column: patrol_id
+
+  # Leader filter: patrols with a leg led by one of the typed leader names
+  - id: patrols
+    task: filter_by_leaders
+    partial:
+      df: ${{ workflow.patrols_team.return }}
+      patrols_df: ${{ workflow.patrols_team.return }}
+      leaders: ${{ workflow.leader_names.return }}
+      id_column: id
+
+  - id: legs_led
+    task: filter_by_leaders
+    partial:
+      df: ${{ workflow.legs_teamed.return }}
+      patrols_df: ${{ workflow.patrols_team.return }}
+      leaders: ${{ workflow.leader_names.return }}
+      id_column: patrol_id
+
+  - id: legs_roster_names
+    task: add_patrol_roster_names
+    partial:
+      df: ${{ workflow.legs_led.return }}
+      client: ${{ workflow.er_client.return }}
+
+  - id: legs_named
+    task: add_patrol_type_display_names
+    partial:
+      df: ${{ workflow.legs_roster_names.return }}
+      client: ${{ workflow.er_client.return }}
+
+  - id: legs_local
+    task: convert_values_to_timezone
+    partial:
+      df: ${{ workflow.legs_named.return }}
+      timezone: ${{ workflow.timezone.return }}
+      columns: [segment_start, segment_end]
+
+  - id: patrol_observations
+    task: get_patrol_observations_from_patrols_df_and_combined_params
+    partial:
+      patrols_df: ${{ workflow.patrols.return }}
+      combined_params: ${{ workflow.patrol_params.return }}
+
+  - id: patrol_relocations
+    task: process_relocations
+    partial:
+      observations: ${{ workflow.patrol_observations.return }}
+      relocs_columns: [patrol_id, patrol_start_time, patrol_end_time, patrol_type__display,
+                       patrol_serial_number, patrol_segment_id, patrol_subject,
+                       groupby_col, fixtime, junk_status, geometry]
+      filter_point_coords:
+        - {x: 180.0, y: 90.0}
+        - {x: 0.0, y: 0.0}
+        - {x: 1.0, y: 1.0}
+
+  # A trajectory needs 2 fixes; a period where every patrol has 1 fix crashed the run.
+  - id: patrol_tracks
+    task: drop_short_tracks
+    partial:
+      relocations: ${{ workflow.patrol_relocations.return }}
+      group_column: groupby_col
+      min_fixes: 2
+
+  # A gap over 1 h between fixes is a device left on / a patrol left open, not patrolling.
+  - id: trajectory
+    task: relocations_to_trajectory
+    partial:
+      relocations: ${{ workflow.patrol_tracks.return }}
+      trajectory_segment_filter:
+        min_length_meters: 0.001  # the lowest values the filter accepts
+        max_length_meters: 1000000
+        min_time_secs: 1
+        max_time_secs: 3600
+        min_speed_kmhr: 0.0011
+        max_speed_kmhr: 500
+      trajectory_segment_filter_overrides: null  # no per-type filters (keeps it off the form)
+
+  - id: patrol_teams_utc
+    task: patrols_from_legs
+    partial:
+      legs: ${{ workflow.legs_named.return }}
+      patrols_df: ${{ workflow.patrols.return }}
+
+  - id: patrol_teams
+    task: convert_values_to_timezone
+    partial:
+      df: ${{ workflow.patrol_teams_utc.return }}
+      timezone: ${{ workflow.timezone.return }}
+      columns: [start, end]
+
+  # ── 7 · Events ──────────────────────────────────────────────────────────────────
+  - id: period_events_fetched
+    task: get_events
+    partial:
+      event_types: ${{ workflow.event_types.return }}
+      event_columns: ["id", "time", "event_type", "event_category", "title", "reported_by", "serial_number", "event_details", "geometry", "state", "priority", "priority_label", "patrol_segments"]
+      event_states: null
+      include_updates: false
+      include_related_events: false
+      force_point_geometry: true
+      client: ${{ workflow.er_client.return }}
+      time_range: ${{ workflow.report_range.return }}
+      include_details: true
+      include_display_values: false
+      include_null_geometry: true
+      raise_on_empty: false
+
+  # ER's list endpoint hides events of retired types; a patrol's own linked ones are
+  # fetched one by one (only when no event types are selected).
+  - id: period_events
+    task: add_missing_linked_events
+    partial:
+      client: ${{ workflow.er_client.return }}
+      patrols_df: ${{ workflow.patrols.return }}
+      events: ${{ workflow.period_events_fetched.return }}
+      event_types: ${{ workflow.event_types.return }}
+
+  - id: linked_events
+    task: unpack_events_from_patrols_df_and_combined_params
+    partial:
+      patrols_df: ${{ workflow.patrols.return }}
+      combined_params: ${{ workflow.patrol_params.return }}
+
+  - id: retrieved_events
+    task: filter_linked_events
+    skipif:
+      conditions:
+        - any_dependency_skipped
+    partial:
+      events: ${{ workflow.period_events.return }}
+      patrol_events: ${{ workflow.linked_events.return }}
+      retrieval: ${{ workflow.event_scope.return }}
+      patrol_serial: ${{ workflow.patrol_serial.return }}
+
+  - name: Event State
+    id: state_events
+    task: filter_event_state
+    partial:
+      events: ${{ workflow.retrieved_events.return }}
+
+  - id: events_with_details
+    task: process_events_details
+    partial:
+      map_to_titles: true
+      ordered: true
+      df: ${{ workflow.state_events.return }}
+      client: ${{ workflow.er_client.return }}
+
+  - id: event_type_lookup
+    task: get_event_type_lookup
+    partial:
+      client: ${{ workflow.er_client.return }}
+
+  - id: events_display
+    task: add_event_display_columns
+    partial:
+      events: ${{ workflow.events_with_details.return }}
+      lookup: ${{ workflow.event_type_lookup.return }}
+
+  - id: events
+    task: convert_values_to_timezone
+    partial:
+      df: ${{ workflow.events_display.return }}
+      timezone: ${{ workflow.timezone.return }}
+      columns: [time]
+
+  - name: Event Grouping
+    id: event_grouping
+    task: set_string_var
+
+  # ── 8 · Event details ───────────────────────────────────────────────────────────
+  - name: Event Details
+    id: event_details_settings
+    task: set_event_details
+
+  - id: detail_mode
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.event_details_settings.return }}
+      key: mode
+
+  - id: event_detail_fields
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.event_details_settings.return }}
+      key: detail_fields
+
+  - name: Download Event Attachments
+    id: download_attachments
+    task: set_images_options
+
+  - id: images_list_only
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.download_attachments.return }}
+      key: list_only
+
+  - id: images_max
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.download_attachments.return }}
+      key: max_images
+
+  # ── 11 · Report text, language and labels; report sections ──────────────────────
+  - name: Report Settings
+    id: report_text
+    task: set_report_text
+
+  - id: report_language
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.report_text.return }}
+      key: language
+
+  - id: labels
+    task: get_report_labels
+    partial:
+      language: ${{ workflow.report_language.return }}
+
+  - id: date_generated
+    task: get_report_date
+    partial:
+      timezone_info: ${{ workflow.timezone.return }}
+      labels: ${{ workflow.labels.return }}
+
+  - id: report_period
+    task: get_report_period
+    partial:
+      time_range: ${{ workflow.report_range.return }}
+      labels: ${{ workflow.labels.return }}
+
+  - id: report_sections
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.report_text.return }}
+      key: sections
+
+  - id: report_blocks
+    task: set_report_blocks
+    partial:
+      sections: ${{ workflow.report_sections.return }}
+
+  # Who went on patrol (MRD personnel block): one row per leg — patrol number and date,
+  # patrol type, time, leader, members.
+  - id: personnel
+    task: patrol_legs_table
+    skipif:  # legs are reported even with no events (or no tracks)
+      conditions:
+        - never
+    partial:
+      legs: ${{ workflow.legs_local.return }}
+      labels: ${{ workflow.labels.return }}
+
+  # ── Maps (each drawn twice: interactive for the dashboard, static for the report) ─
+  # Legs without a transport: "Sin tipo" / "No type" in the legend (as in the legs table).
+  - id: no_type_label
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.labels.return }}
+      key: no_type
+
+  - id: tracks_typed
+    task: fill_na
+    partial:
+      df: ${{ workflow.trajectory.return }}
+      value: ${{ workflow.no_type_label.return }}
+      columns: [extra__patrol_type__display]
+
+  # ── Patrol effort on core's summary pipeline (as the Patrol Effort module) ──────────
+  # Tracks get the legs' column names, local time, leg names and a date (patrol days);
+  # core summarises tracks and legs per group and overall; format_effort_table adds the
+  # report's headers, Total row and the MRD's per-grouping columns.
+  - id: effort_tracks_renamed
+    task: map_columns
+    partial:
+      df: ${{ workflow.tracks_typed.return }}
+      drop_columns: []
+      retain_columns: []
+      rename_columns:
+        extra__patrol_id: patrol_id
+        extra__patrol_serial_number: patrol_serial_number
+        extra__patrol_type__display: patrol_type
+        extra__patrol_segment_id: patrol_segment_id
+        extra__patrol_subject: patrol_subject
+      raise_if_not_found: false
+      duplicate_strategy: suffix
+
+  - id: effort_tracks_local
+    task: convert_values_to_timezone
+    partial:
+      df: ${{ workflow.effort_tracks_renamed.return }}
+      timezone: ${{ workflow.timezone.return }}
+      columns: [segment_start, segment_end]
+
+  - id: effort_tracks_named
+    task: add_leg_names_to_tracks
+    partial:
+      df: ${{ workflow.effort_tracks_local.return }}
+      legs: ${{ workflow.legs_named.return }}
+
+  - id: effort_tracks
+    task: decompose_datetime
+    partial:
+      df: ${{ workflow.effort_tracks_named.return }}
+      datetime_column: segment_start
+      components: [date]
+      remove_source: false
+      column_prefix: null
+
+  - id: effort_legs
+    task: fill_na
+    partial:
+      df: ${{ workflow.legs_local.return }}
+      value: ${{ workflow.no_type_label.return }}
+      columns: [patrol_type]
+
+  # Area grouping: core's spatial grouping over the chosen map layer (no-ops without one).
+  # Tracks are split at area boundaries; each leg is copied per area it touched, its
+  # hours and person-days scaled by that area's share of the track.
+  - id: area_map_layer  # a single patrol is never split by area
+    task: effective_map_layer
+    partial:
+      map_layer: ${{ workflow.effort_map_layer.return }}
+      patrol_serial: ${{ workflow.patrol_serial.return }}
+
+  - id: area_grouper_list
+    task: area_groupers
+    partial:
+      map_layer: ${{ workflow.area_map_layer.return }}
+
+  - id: area_feature_groups
+    task: area_regions
+    partial:
+      client: ${{ workflow.er_client.return }}
+      map_layer: ${{ workflow.area_map_layer.return }}
+
+  - id: area_groupers_resolved
+    task: resolve_spatial_feature_groups_for_spatial_groupers
+    partial:
+      groupers: ${{ workflow.area_grouper_list.return }}
+      spatial_feature_groups: ${{ workflow.area_feature_groups.return }}
+
+  - id: effort_tracks_indexed  # keeps tracks outside every area (core drops them) under "None"
+    task: index_tracks_by_area
+    partial:
+      gdf: ${{ workflow.effort_tracks.return }}
+      groupers: ${{ workflow.area_groupers_resolved.return }}
+
+  - id: effort_legs_indexed
+    task: apportion_legs_by_spatial_index
+    partial:
+      legs: ${{ workflow.effort_legs.return }}
+      indexed_traj: ${{ workflow.effort_tracks_indexed.return }}
+      groupers: ${{ workflow.area_groupers_resolved.return }}
+      drop_unplaced: false
+
+  - id: effort_metrics
+    task: set_patrol_summary_metrics
+    partial:
+      metrics: ${{ workflow.effort_metric_list.return }}
+
+  - id: effort_track_metrics
+    task: select_track_metrics
+    partial:
+      summary_params: ${{ workflow.effort_metrics.return }}
+
+  - id: effort_leg_metrics
+    task: select_leg_metrics
+    partial:
+      summary_params: ${{ workflow.effort_metrics.return }}
+
+  - id: effort_by_tracks
+    task: summarize_df
+    partial:
+      df: ${{ workflow.effort_tracks_indexed.return }}
+      summary_params: ${{ workflow.effort_track_metrics.return }}
+      groupby_cols: ["${{ workflow.effort_grouper.return }}"]
+      reset_index: true
+
+  - id: effort_by_legs
+    task: summarize_df
+    partial:
+      df: ${{ workflow.effort_legs_indexed.return }}
+      summary_params: ${{ workflow.effort_leg_metrics.return }}
+      groupby_cols: ["${{ workflow.effort_grouper.return }}"]
+      reset_index: true
+
+  - id: effort_summary
+    task: join_summary_tables
+    skipif:  # an empty side (e.g. no leg metrics chosen) is fine: core ignores it
+      conditions:
+        - any_dependency_skipped
+    partial:
+      tables: ["${{ workflow.effort_by_tracks.return }}", "${{ workflow.effort_by_legs.return }}"]
+
+  - id: effort_tracks_total
+    task: summarize_df
+    partial:
+      df: ${{ workflow.effort_tracks.return }}
+      summary_params: ${{ workflow.effort_track_metrics.return }}
+      groupby_cols: null
+      reset_index: false
+
+  - id: effort_legs_total
+    task: summarize_df
+    partial:
+      df: ${{ workflow.effort_legs.return }}
+      summary_params: ${{ workflow.effort_leg_metrics.return }}
+      groupby_cols: null
+      reset_index: false
+
+  - id: effort_totals
+    task: join_summary_tables
+    skipif:  # an empty side (e.g. no leg metrics chosen) is fine: core ignores it
+      conditions:
+        - any_dependency_skipped
+    partial:
+      tables: ["${{ workflow.effort_tracks_total.return }}", "${{ workflow.effort_legs_total.return }}"]
+
+  - id: effort
+    task: format_effort_table
+    skipif:  # shows "no data" when there is nothing to summarise
+      conditions:
+        - never
+    partial:
+      summary: ${{ workflow.effort_summary.return }}
+      totals: ${{ workflow.effort_totals.return }}
+      patrols: ${{ workflow.patrol_teams.return }}
+      legs: ${{ workflow.legs_local.return }}
+      grouper: ${{ workflow.effort_grouper.return }}
+      labels: ${{ workflow.labels.return }}
+
+  - id: no_team_label
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.labels.return }}
+      key: no_team
+
+  # team per leg for the map: ER team, else the leader (as the report's patrols), else "Sin equipo"
+  - id: tracks_teamed
+    task: team_or_leader
+    partial:
+      df: ${{ workflow.effort_tracks_named.return }}
+      no_team: ${{ workflow.no_team_label.return }}
+
+  - id: tracks_colored
+    task: apply_color_map
+    partial:
+      df: ${{ workflow.tracks_teamed.return }}
+      input_column_name: ${{ workflow.patrol_grouping.return }}
+      colormap: tab10
+      output_column_name: patrol_color
+
+  - id: td_legend_title
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.labels.return }}
+      key: time_density_legend
+
+  - id: ed_legend_title
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.labels.return }}
+      key: event_density_legend
+
+  # legend titles follow the chosen grouping, in the report language
+  - id: patrol_legend_title
+    task: grouping_label
+    partial:
+      column: ${{ workflow.patrol_grouping.return }}
+      labels: ${{ workflow.labels.return }}
+
+  - id: event_legend_title
+    task: grouping_label
+    partial:
+      column: ${{ workflow.event_grouping.return }}
+      labels: ${{ workflow.labels.return }}
+
+  - id: tracks_layer
+    task: create_path_layer
+    partial:
+      data_url: null
+      tooltip_columns: [patrol_serial_number, patrol_type, patrol_team_name, patrol_subject]
+      geodataframe: ${{ workflow.tracks_colored.return }}
+      layer_style: {get_color: patrol_color, get_width: 2}
+      legend:
+        label_column: ${{ workflow.patrol_grouping.return }}
+        color_column: patrol_color
+        title: ${{ workflow.patrol_legend_title.return }}
+
+  - id: events_with_geometry
+    task: ecoscope.platform.tasks.transformation.drop_null_geometry
+    partial:
+      gdf: ${{ workflow.events.return }}
+
+  # Placeholder points (e.g. 0,0) stretch maps and the density grid to the whole
+  # globe (APN: 10M cells, 40 min). Maps only; the events still count in tables.
+  - id: events_located
+    task: apply_reloc_coord_filter
+    partial:
+      df: ${{ workflow.events_with_geometry.return }}
+      reset_index: false
+      roi_gdf: null
+      roi_name: null
+      bounding_box: {min_y: -90.0, max_y: 90.0, min_x: -180.0, max_x: 180.0}
+      filter_point_coords:
+        - {x: 180.0, y: 90.0}
+        - {x: 0.0, y: 0.0}
+        - {x: 1.0, y: 1.0}
+
+  - id: events_colored
+    task: apply_color_map
+    partial:
+      df: ${{ workflow.events_located.return }}
+      input_column_name: ${{ workflow.event_grouping.return }}
+      colormap: tab20
+      output_column_name: event_color
+
+  - id: events_layer
+    task: create_scatterplot_layer
+    partial:
+      data_url: null
+      geodataframe: ${{ workflow.events_colored.return }}
+      layer_style: {get_fill_color: event_color, get_radius: 5}
+      legend:
+        label_column: ${{ workflow.event_grouping.return }}
+        color_column: event_color
+        title: ${{ workflow.event_legend_title.return }}
+      tooltip_columns: [serial_number, event_type_display]
+
+  # A period with no events skips the events layer; keep the tracks map anyway.
+  - id: tracks_layers
+    task: collect_map_layers
+    skipif:
+      conditions:
+        - never
+    partial:
+      layers: ["${{ workflow.tracks_layer.return }}", "${{ workflow.events_layer.return }}"]
+
+  - id: tracks_view  # dashboard widget (~650x400 px)
+    task: fit_view_state
+    partial:
+      geo_layers: ${{ workflow.tracks_layers.return }}
+      width_px: 650
+      height_px: 400
+      padding: 0.08
+      max_zoom: 18  # a few-metre track (e.g. a test patrol) still shows as a line
+
+  - id: tracks_view_static  # report map (1280x720 px)
+    task: fit_view_state
+    partial:
+      geo_layers: ${{ workflow.tracks_layers.return }}
+      width_px: 1280
+      height_px: 720
+      padding: 0.08
+      max_zoom: 18  # a few-metre track (e.g. a test patrol) still shows as a line
+
+  - id: tracks_map_html
+    task: draw_map
+    partial:
+      output_type: "html"
+      max_zoom: 20
+      geo_layers: ${{ workflow.tracks_layers.return }}
+      tile_layers: ${{ workflow.base_maps.return }}
+      view_state: ${{ workflow.tracks_view.return }}
+      static: false
+      title: null
+      legend_style: {placement: bottom-right}
+
+  - id: tracks_map
+    task: persist_text
+    partial:
+      text: ${{ workflow.tracks_map_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: tracks_map
+
+  - id: tracks_map_static_html
+    task: draw_map
+    partial:
+      output_type: "html"
+      max_zoom: 20
+      geo_layers: ${{ workflow.tracks_layers.return }}
+      tile_layers: ${{ workflow.base_maps.return }}
+      view_state: ${{ workflow.tracks_view_static.return }}
+      static: true
+      title: null
+      legend_style: {placement: bottom-right}
+
+  - id: tracks_map_static_clean  # report image: no camera button
+    task: hide_save_image_button
+    partial:
+      html: ${{ workflow.tracks_map_static_html.return }}
+
+  - id: tracks_map_static
+    task: persist_text
+    partial:
+      text: ${{ workflow.tracks_map_static_clean.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: tracks_map_static
+
+  # patrol time density
+  - id: td_meshgrid
+    task: create_meshgrid
+    partial:
+      auto_scale_or_custom_cell_size: {"auto_scale_or_custom": "Auto-scale"}
+      crs: "EPSG:3857"
+      aoi: ${{ workflow.trajectory.return }}
+      intersecting_only: false
+
+  - id: td_density
+    task: calculate_linear_time_density
+    partial:
+      percentiles: ["50", "60", "70", "80", "90", "100"]
+      trajectory_gdf: ${{ workflow.trajectory.return }}
+      meshgrid: ${{ workflow.td_meshgrid.return }}
+
+  - id: td_drop_nan
+    task: drop_nan_values_by_column
+    partial:
+      df: ${{ workflow.td_density.return }}
+      column_name: percentile
+
+  - id: td_sorted
+    task: sort_values
+    partial:
+      df: ${{ workflow.td_drop_nan.return }}
+      column_name: percentile
+      ascending: true
+      na_position: last
+
+  - id: td_to_str
+    task: convert_column_values_to_string
+    partial:
+      df: ${{ workflow.td_sorted.return }}
+      columns: [percentile]
+
+  - id: td_colored
+    task: apply_color_map
+    partial:
+      df: ${{ workflow.td_to_str.return }}
+      input_column_name: percentile
+      colormap: RdYlGn_r
+      output_column_name: percentile_colormap
+
+  - id: td_wgs84
+    task: ensure_wgs84
+    partial:
+      df: ${{ workflow.td_colored.return }}
+
+  - id: td_layer
+    task: create_polygon_layer_pydeck
+    partial:
+      data_url: null
+      tooltip_columns: null
+      geodataframe: ${{ workflow.td_wgs84.return }}
+      layer_style: {get_fill_color: percentile_colormap, opacity: 0.6}
+      legend:
+        label_column: percentile
+        label_suffix: " %"
+        color_column: percentile_colormap
+        title: ${{ workflow.td_legend_title.return }}
+
+  - id: td_view  # dashboard widget (~650x400 px)
+    task: fit_view_state
+    partial:
+      geo_layers: ["${{ workflow.td_layer.return }}"]
+      width_px: 650
+      height_px: 400
+      padding: 0.08
+      max_zoom: 18  # a few-metre track (e.g. a test patrol) still shows as a line
+
+  - id: td_view_static  # report map (1280x720 px)
+    task: fit_view_state
+    partial:
+      geo_layers: ["${{ workflow.td_layer.return }}"]
+      width_px: 1280
+      height_px: 720
+      padding: 0.08
+      max_zoom: 18  # a few-metre track (e.g. a test patrol) still shows as a line
+
+  - id: td_map_html
+    task: draw_map
+    partial:
+      output_type: "html"
+      max_zoom: 20
+      geo_layers: ["${{ workflow.td_layer.return }}"]
+      tile_layers: ${{ workflow.base_maps.return }}
+      view_state: ${{ workflow.td_view.return }}
+      static: false
+      title: null
+      legend_style: {placement: bottom-right}
+
+  - id: time_density_map
+    task: persist_text
+    partial:
+      text: ${{ workflow.td_map_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: time_density_map
+
+  - id: td_map_static_html
+    task: draw_map
+    partial:
+      output_type: "html"
+      max_zoom: 20
+      geo_layers: ["${{ workflow.td_layer.return }}"]
+      tile_layers: ${{ workflow.base_maps.return }}
+      view_state: ${{ workflow.td_view_static.return }}
+      static: true
+      title: null
+      legend_style: {placement: bottom-right}
+
+  - id: td_map_static_clean  # report image: no camera button
+    task: hide_save_image_button
+    partial:
+      html: ${{ workflow.td_map_static_html.return }}
+
+  - id: time_density_map_static
+    task: persist_text
+    partial:
+      text: ${{ workflow.td_map_static_clean.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: time_density_map_static
+
+  # event density (ordered classes, as ops-dashboard)
+  # ~30 cells across the events' extent: readable on the map at any site size
+  # (core auto-scale makes ~1 km cells, invisible on a 100+ km map view).
+  - id: ed_cell_size
+    task: grid_cell_size_for_extent
+    skipif:
+      conditions:
+        - any_is_empty_df
+        - any_dependency_skipped
+        - all_geometry_are_none
+    partial:
+      aoi: ${{ workflow.events_located.return }}
+      cells_across: 30
+      min_size_m: 250.0
+
+  - id: ed_meshgrid
+    task: create_meshgrid
+    skipif:
+      conditions:
+        - any_is_empty_df
+        - any_dependency_skipped
+        - all_geometry_are_none
+    partial:
+      crs: "EPSG:3857"
+      aoi: ${{ workflow.events_located.return }}
+      intersecting_only: false
+      auto_scale_or_custom_cell_size: ${{ workflow.ed_cell_size.return }}  # never a fixed size: mep (US..Kenya) made 33M cells
+
+  - id: ed_density
+    task: calculate_feature_density
+    partial:
+      sum_column: null
+      geodataframe: ${{ workflow.events_located.return }}
+      meshgrid: ${{ workflow.ed_meshgrid.return }}
+      geometry_type: point
+
+  - id: ed_nonzero
+    task: drop_nan_values_by_column
+    partial:
+      df: ${{ workflow.ed_density.return }}
+      column_name: density
+
+  - id: ed_sorted
+    task: sort_values
+    partial:
+      df: ${{ workflow.ed_nonzero.return }}
+      column_name: density
+      ascending: true
+      na_position: last
+
+  - id: ed_classified
+    task: apply_classification
+    partial:
+      df: ${{ workflow.ed_sorted.return }}
+      input_column_name: density
+      output_column_name: density_bins
+      classification_options: {scheme: equal_interval, k: 5}
+      label_options: {label_ranges: true, label_decimals: 0}
+
+  - id: ed_colored
+    task: apply_color_map
+    partial:
+      df: ${{ workflow.ed_classified.return }}
+      input_column_name: density_bins
+      colormap: RdYlGn_r
+      output_column_name: density_colormap
+
+  - id: ed_wgs84
+    task: ensure_wgs84
+    partial:
+      df: ${{ workflow.ed_colored.return }}
+
+  - id: ed_layer
+    task: create_polygon_layer_pydeck
+    partial:
+      data_url: null
+      tooltip_columns: null
+      geodataframe: ${{ workflow.ed_wgs84.return }}
+      layer_style: {get_fill_color: density_colormap, opacity: 0.6}
+      legend:
+        label_column: density_bins
+        color_column: density_colormap
+        title: ${{ workflow.ed_legend_title.return }}
+
+  - id: ed_view  # dashboard widget (~650x400 px)
+    task: fit_view_state
+    partial:
+      geo_layers: ["${{ workflow.ed_layer.return }}"]
+      width_px: 650
+      height_px: 400
+      padding: 0.08
+      max_zoom: 18  # a few-metre track (e.g. a test patrol) still shows as a line
+
+  - id: ed_view_static  # report map (1280x720 px)
+    task: fit_view_state
+    partial:
+      geo_layers: ["${{ workflow.ed_layer.return }}"]
+      width_px: 1280
+      height_px: 720
+      padding: 0.08
+      max_zoom: 18  # a few-metre track (e.g. a test patrol) still shows as a line
+
+  - id: ed_map_html
+    task: draw_map
+    partial:
+      output_type: "html"
+      max_zoom: 20
+      geo_layers: ["${{ workflow.ed_layer.return }}"]
+      tile_layers: ${{ workflow.base_maps.return }}
+      view_state: ${{ workflow.ed_view.return }}
+      static: false
+      title: null
+      legend_style: {placement: bottom-right}
+
+  - id: event_density_map
+    task: persist_text
+    partial:
+      text: ${{ workflow.ed_map_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: event_density_map
+
+  - id: ed_map_static_html
+    task: draw_map
+    partial:
+      output_type: "html"
+      max_zoom: 20
+      geo_layers: ["${{ workflow.ed_layer.return }}"]
+      tile_layers: ${{ workflow.base_maps.return }}
+      view_state: ${{ workflow.ed_view_static.return }}
+      static: true
+      title: null
+      legend_style: {placement: bottom-right}
+
+  - id: ed_map_static_clean  # report image: no camera button
+    task: hide_save_image_button
+    partial:
+      html: ${{ workflow.ed_map_static_html.return }}
+
+  - id: event_density_map_static
+    task: persist_text
+    partial:
+      text: ${{ workflow.ed_map_static_clean.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: event_density_map_static
+
+  # ── Charts ──────────────────────────────────────────────────────────────────────
+  - id: events_bar_html
+    task: draw_bar_chart
+    partial:
+      layout_kwargs: null
+      dataframe: ${{ workflow.events.return }}
+      category: ${{ workflow.event_grouping.return }}
+      bar_chart_configs:
+        - {column: serial_number, agg_func: count, label: Events}
+
+  - id: events_bar
+    task: persist_text
+    partial:
+      text: ${{ workflow.events_bar_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: events_bar
+
+  - id: monthly_html
+    task: draw_time_series_bar_chart
+    partial:
+      color_column: null
+      plot_style: null
+      layout_style: null
+      dataframe: ${{ workflow.events.return }}
+      x_axis: time
+      y_axis: serial_number
+      category: ${{ workflow.event_grouping.return }}
+      agg_function: count
+      time_interval: month
+
+  - id: monthly_chart
+    task: persist_text
+    partial:
+      text: ${{ workflow.monthly_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: monthly_chart
+
+  # ── Tables ──────────────────────────────────────────────────────────────────────
+  - id: events_by_type
+    task: events_by_type_table
+    partial:
+      events: ${{ workflow.events.return }}
+      labels: ${{ workflow.labels.return }}
+
+  - id: category_priority
+    task: category_priority_table
+    partial:
+      events: ${{ workflow.events.return }}
+      labels: ${{ workflow.labels.return }}
+
+  - id: event_details
+    task: event_detail_table
+    partial:
+      events: ${{ workflow.events.return }}
+      labels: ${{ workflow.labels.return }}
+      detail_fields: null  # general table: every field, " | " separated
+      max_fields: null
+
+  - id: event_detail_tables
+    task: event_detail_table_list
+    partial:
+      detail_fields: ${{ workflow.event_detail_fields.return }}
+      fallback_n: 3
+      events: ${{ workflow.events.return }}
+      labels: ${{ workflow.labels.return }}
+
+  # ── 9 · Images ──────────────────────────────────────────────────────────────────
+  - id: attachments
+    task: download_event_attachments
+    partial:
+      attachments_subdir: "attachments"
+      use_index_as_id: false  # get_events puts the ER id in an `id` column
+      skip_download: false
+      client: ${{ workflow.er_client.return }}
+      event_gdf: ${{ workflow.events.return }}
+      output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      list_only: ${{ workflow.images_list_only.return }}
+      max_files: ${{ workflow.images_max.return }}  # fetch only what the report shows
+
+  - id: sanitized_attachments
+    task: sanitize_attachments
+    partial:
+      paths: ${{ workflow.attachments.return }}
+      output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      keep_missing: ${{ workflow.images_list_only.return }}
+
+  - id: images
+    task: build_image_records
+    partial:
+      events: ${{ workflow.events.return }}
+      attachment_paths: ${{ workflow.sanitized_attachments.return }}
+      output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      max_images: ${{ workflow.images_max.return }}
+      labels: ${{ workflow.labels.return }}
+
+  # ── 10-11 · Report ──────────────────────────────────────────────────────────────
+  - id: headline
+    task: headline_stats
+    skipif:
+      conditions:
+        - never
+    partial:
+      patrols: ${{ workflow.patrol_teams.return }}
+      trajectory: ${{ workflow.trajectory.return }}
+      events: ${{ workflow.events.return }}
+      totals: ${{ workflow.effort_totals.return }}
+
+  - id: template_path  # one template, set here (not on the form)
+    task: load_report_template
+    partial:
+      template: standard
+
+  - id: report_title
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.report_text.return }}
+      key: title
+
+  - id: report_subtitle
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.report_text.return }}
+      key: subtitle
+
+  - id: detail_intro
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.report_text.return }}
+      key: details_intro
+
+  - id: report
+    task: create_docx
+    skipif:
+      conditions:
+        - never
+    partial:
+      groupers: null
+      skip: false
+      missing_text: null
+      template_path: ${{ workflow.template_path.return }}
+      output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_prefix: standard_patrol_events
+      # first dict wins on a key clash: figures before labels (labels also has an `n_events` column label)
+      extra_text:
+        - ${{ workflow.headline.return }}
+        - ${{ workflow.report_blocks.return }}
+        - ${{ workflow.labels.return }}
+      context:
+        items:
+          - {item_type: text, key: title, value: "${{ workflow.report_title.return }}"}
+          - {item_type: text, key: subtitle, value: "${{ workflow.report_subtitle.return }}"}
+          - {item_type: text, key: period, value: "${{ workflow.report_period.return }}"}
+          - {item_type: text, key: generated_by, value: "${{ workflow.generated_by.return }}"}
+          - {item_type: text, key: date_generated, value: "${{ workflow.date_generated.return }}"}
+          - {item_type: text, key: detail_intro, value: "${{ workflow.detail_intro.return }}"}
+          - {item_type: text, key: detail_mode, value: "${{ workflow.detail_mode.return }}"}
+          - {item_type: table, key: personnel, value: "${{ workflow.personnel.return }}"}
+          - {item_type: table, key: effort, value: "${{ workflow.effort.return }}"}
+          - {item_type: table, key: events_by_type, value: "${{ workflow.events_by_type.return }}"}
+          - {item_type: table, key: category_priority, value: "${{ workflow.category_priority.return }}"}
+          - {item_type: table, key: event_details, value: "${{ workflow.event_details.return }}"}
+          - {item_type: table_list, key: event_detail_tables, value: "${{ workflow.event_detail_tables.return }}"}
+          - {item_type: image, key: tracks_map, value: "${{ workflow.tracks_map_static.return }}", width_inches: 6.6, screenshot_config: {full_page: false}}
+          - {item_type: image, key: time_density_map, value: "${{ workflow.time_density_map_static.return }}", width_inches: 6.6, screenshot_config: {full_page: false}}
+          - {item_type: image, key: event_density_map, value: "${{ workflow.event_density_map_static.return }}", width_inches: 6.6, screenshot_config: {full_page: false}}
+          - {item_type: image, key: events_bar, value: "${{ workflow.events_bar.return }}", width_inches: 6.6}
+          - {item_type: image, key: monthly_chart, value: "${{ workflow.monthly_chart.return }}", width_inches: 6.6}
+          - {item_type: image_list, key: images, value: "${{ workflow.images.return }}", width_inches: 3.4}
+
+  # ── Dashboard ───────────────────────────────────────────────────────────────────
+  - id: kpi_patrols
+    task: dataframe_column_nunique
+    partial:
+      df: ${{ workflow.patrol_teams.return }}
+      column_name: patrol_id
+
+  - id: kpi_patrols_widget
+    task: create_single_value_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      decimal_places: 0
+      title: Patrols
+      data: ${{ workflow.kpi_patrols.return }}
+
+  - id: kpi_km
+    task: dataframe_column_sum
+    partial:
+      df: ${{ workflow.trajectory.return }}
+      column_name: dist_meters
+
+  - id: kpi_km_unit
+    task: with_unit
+    partial:
+      value: ${{ workflow.kpi_km.return }}
+      original_unit: m
+      new_unit: km
+
+  - id: kpi_km_widget
+    task: create_single_value_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Distance
+      data: ${{ workflow.kpi_km_unit.return }}
+      decimal_places: 0
+
+  - id: kpi_hours
+    task: dataframe_column_sum
+    partial:
+      df: ${{ workflow.trajectory.return }}
+      column_name: timespan_seconds
+
+  - id: kpi_hours_unit
+    task: with_unit
+    partial:
+      value: ${{ workflow.kpi_hours.return }}
+      original_unit: s
+      new_unit: h
+
+  - id: kpi_hours_widget
+    task: create_single_value_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Patrol hours
+      data: ${{ workflow.kpi_hours_unit.return }}
+      decimal_places: 0
+
+  - id: kpi_events
+    task: dataframe_count
+    partial:
+      df: ${{ workflow.events.return }}
+
+  - id: kpi_events_widget
+    task: create_single_value_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      decimal_places: 0
+      title: Events
+      data: ${{ workflow.kpi_events.return }}
+
+  - id: tracks_widget
+    task: create_map_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Patrol tracks and events
+      data: ${{ workflow.tracks_map.return }}
+
+  - id: effort_table_html
+    task: draw_table
+    partial:
+      columns: null
+      table_config: null
+      dataframe: ${{ workflow.effort.return }}
+
+  - id: effort_table
+    task: persist_text
+    partial:
+      text: ${{ workflow.effort_table_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: effort_table
+
+  - id: effort_widget
+    task: create_table_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Patrol effort
+      data: ${{ workflow.effort_table.return }}
+
+  - id: legs_table_html
+    task: draw_table
+    partial:
+      columns: null
+      table_config: null
+      dataframe: ${{ workflow.personnel.return }}
+
+  - id: legs_table
+    task: persist_text
+    partial:
+      text: ${{ workflow.legs_table_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: legs_table
+
+  - id: legs_widget
+    task: create_table_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Patrol legs
+      data: ${{ workflow.legs_table.return }}
+
+  - id: td_widget
+    task: create_map_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Patrol time density
+      data: ${{ workflow.time_density_map.return }}
+
+  - id: ed_widget
+    task: create_map_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Event density
+      data: ${{ workflow.event_density_map.return }}
+
+  - id: events_bar_widget
+    task: create_plot_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Events
+      data: ${{ workflow.events_bar.return }}
+
+  - id: monthly_widget
+    task: create_plot_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Events by month
+      data: ${{ workflow.monthly_chart.return }}
+
+  - id: event_summary_html
+    task: draw_table
+    partial:
+      columns: null
+      table_config: null
+      dataframe: ${{ workflow.events_by_type.return }}
+
+  - id: event_summary_table
+    task: persist_text
+    partial:
+      text: ${{ workflow.event_summary_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: event_summary_table
+
+  - id: event_summary_widget
+    task: create_table_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Event summary
+      data: ${{ workflow.event_summary_table.return }}
+
+  - id: event_records_html
+    task: draw_table
+    partial:
+      columns: null
+      table_config: null
+      dataframe: ${{ workflow.event_details.return }}
+
+  - id: event_records_table
+    task: persist_text
+    partial:
+      text: ${{ workflow.event_records_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: event_records_table
+
+  - id: event_records_widget
+    task: create_table_widget_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      title: Event records
+      data: ${{ workflow.event_records_table.return }}
+
+  # the Word report as a dashboard download (as bl-crop-raid-report / bl-pcf-report)
+  - id: report_files
+    task: create_files_single_view
+    partial:
+      files:
+        - ${{ workflow.report.return }}
+
+  - id: dashboard
+    task: gather_dashboard
+    skipif:
+      conditions:
+        - never
+    partial:
+      details: ${{ workflow.workflow_details.return }}
+      time_range: ${{ workflow.report_range.return }}
+      widgets:
+        - ${{ workflow.kpi_patrols_widget.return }}
+        - ${{ workflow.kpi_km_widget.return }}
+        - ${{ workflow.kpi_hours_widget.return }}
+        - ${{ workflow.kpi_events_widget.return }}
+        - ${{ workflow.tracks_widget.return }}
+        - ${{ workflow.effort_widget.return }}
+        - ${{ workflow.td_widget.return }}
+        - ${{ workflow.ed_widget.return }}
+        - ${{ workflow.events_bar_widget.return }}
+        - ${{ workflow.monthly_widget.return }}
+        - ${{ workflow.event_summary_widget.return }}
+        - ${{ workflow.event_records_widget.return }}
+        - ${{ workflow.legs_widget.return }}
+      files: ${{ workflow.report_files.return }}

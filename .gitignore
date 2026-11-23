@@ -1,0 +1,9 @@
+.scripts/output/
+
+# Build / run outputs
+/tmp
+.pixi
+workflows/*/ecoscope-workflows-*-workflow/.pixi
+_version.py
+__pycache__/
+.pytest_cache/

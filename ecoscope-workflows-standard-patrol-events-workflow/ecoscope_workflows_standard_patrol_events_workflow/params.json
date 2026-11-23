@@ -1,0 +1,699 @@
+{
+  "properties": {
+    "workflow_details": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Workflow Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Workflow Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object",
+      "description": "Add information that will help to differentiate this workflow from another.",
+      "title": "Workflow Details"
+    },
+    "er_client": {
+      "additionalProperties": false,
+      "properties": {
+        "data_source": {
+          "$ref": "#/$defs/EarthRangerConnection",
+          "description": "Select one of your configured data sources.",
+          "title": ""
+        }
+      },
+      "required": [
+        "data_source"
+      ],
+      "type": "object",
+      "title": "Data Source"
+    },
+    "time_range": {
+      "additionalProperties": false,
+      "properties": {
+        "since": {
+          "description": "The start time",
+          "format": "date-time",
+          "title": "Since",
+          "type": "string"
+        },
+        "until": {
+          "description": "The end time",
+          "format": "date-time",
+          "title": "Until",
+          "type": "string"
+        },
+        "timezone": {
+          "$ref": "#/$defs/TimezoneInfo",
+          "default": null,
+          "title": "Timezone"
+        }
+      },
+      "required": [
+        "since",
+        "until"
+      ],
+      "type": "object",
+      "description": "Choose the period of time to analyze.",
+      "title": "Time Range"
+    },
+    "base_maps": {
+      "additionalProperties": false,
+      "properties": {
+        "base_maps": {
+          "default": [
+            {
+              "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+              "opacity": 1,
+              "max_zoom": 20,
+              "min_zoom": 0
+            },
+            {
+              "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+              "opacity": 0.5,
+              "max_zoom": 20,
+              "min_zoom": 0
+            }
+          ],
+          "description": "Select tile layers to use as base layers in map outputs. The first layer in the list will be the bottommost layer displayed.",
+          "ecoscope:advanced": true,
+          "items": {
+            "anyOf": [
+              {
+                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                "properties": {
+                  "url": {
+                    "default": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    "title": "Preset Layer URL",
+                    "type": "string",
+                    "const": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    "enum": [
+                      "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    ]
+                  },
+                  "opacity": {
+                    "default": 1,
+                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
+                    "maximum": 1,
+                    "minimum": 0,
+                    "title": "Layer Opacity",
+                    "type": "number"
+                  }
+                },
+                "title": "Open Street Map",
+                "type": "object"
+              },
+              {
+                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                "properties": {
+                  "url": {
+                    "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                    "title": "Preset Layer URL",
+                    "type": "string",
+                    "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                    "enum": [
+                      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+                    ]
+                  },
+                  "opacity": {
+                    "default": 1,
+                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
+                    "maximum": 1,
+                    "minimum": 0,
+                    "title": "Layer Opacity",
+                    "type": "number"
+                  }
+                },
+                "title": "Roadmap",
+                "type": "object"
+              },
+              {
+                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                "properties": {
+                  "url": {
+                    "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                    "title": "Preset Layer URL",
+                    "type": "string",
+                    "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                    "enum": [
+                      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                    ]
+                  },
+                  "opacity": {
+                    "default": 1,
+                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
+                    "maximum": 1,
+                    "minimum": 0,
+                    "title": "Layer Opacity",
+                    "type": "number"
+                  }
+                },
+                "title": "Satellite",
+                "type": "object"
+              },
+              {
+                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                "properties": {
+                  "url": {
+                    "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+                    "title": "Preset Layer URL",
+                    "type": "string",
+                    "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+                    "enum": [
+                      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+                    ]
+                  },
+                  "opacity": {
+                    "default": 1,
+                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
+                    "maximum": 1,
+                    "minimum": 0,
+                    "title": "Layer Opacity",
+                    "type": "number"
+                  }
+                },
+                "title": "Terrain",
+                "type": "object"
+              },
+              {
+                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                "properties": {
+                  "url": {
+                    "default": "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+                    "title": "Preset Layer URL",
+                    "type": "string",
+                    "const": "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+                    "enum": [
+                      "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}"
+                    ]
+                  },
+                  "opacity": {
+                    "default": 1,
+                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
+                    "maximum": 1,
+                    "minimum": 0,
+                    "title": "Layer Opacity",
+                    "type": "number"
+                  }
+                },
+                "title": "USGS Hillshade",
+                "type": "object"
+              },
+              {
+                "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                "properties": {
+                  "url": {
+                    "default": "https://example.tiles.com/{z}/{x}/{y}.png",
+                    "description": "The URL of a publicly accessible tiled raster service.",
+                    "pattern": "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9()@:%_\\+.~#?&//=\\{\\}]*)",
+                    "title": "Custom Layer URL",
+                    "type": "string"
+                  },
+                  "opacity": {
+                    "default": 1,
+                    "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
+                    "maximum": 1,
+                    "minimum": 0,
+                    "title": "Custom Layer Opacity",
+                    "type": "number"
+                  },
+                  "max_zoom": {
+                    "default": 20,
+                    "description": "Set the maximum zoom level to fetch tiles for.",
+                    "title": "Custom Layer Max Zoom",
+                    "type": "integer"
+                  },
+                  "min_zoom": {
+                    "default": 0,
+                    "description": "Set the minimum zoom level to fetch tiles for.",
+                    "title": "Custom Layer Min Zoom",
+                    "type": "integer"
+                  }
+                },
+                "title": "Custom Layer (Advanced)",
+                "type": "object"
+              }
+            ],
+            "title": "Base Layer"
+          },
+          "title": " ",
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": "Base Maps"
+    },
+    "patrol_filter": {
+      "additionalProperties": false,
+      "properties": {
+        "team": {
+          "default": false,
+          "title": "Team",
+          "type": "boolean"
+        },
+        "teams": {
+          "default": [],
+          "description": "Team names as set in EarthRanger's patrol configuration.",
+          "items": {
+            "type": "string"
+          },
+          "title": " ",
+          "type": "array"
+        },
+        "team_leader": {
+          "default": false,
+          "title": "Team Leader",
+          "type": "boolean"
+        },
+        "leaders": {
+          "default": [],
+          "description": "Leader names as in EarthRanger.",
+          "items": {
+            "type": "string"
+          },
+          "title": " ",
+          "type": "array"
+        },
+        "single_patrol": {
+          "default": false,
+          "title": "Single Patrol",
+          "type": "boolean"
+        },
+        "patrol_id": {
+          "default": "",
+          "description": "The patrol to analyze, matched against its serial number (the ID shown in EarthRanger).",
+          "title": "Patrol ID",
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": "Patrol Filter"
+    },
+    "patrol_type": {
+      "additionalProperties": false,
+      "properties": {
+        "vars": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "",
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": "Patrol Type"
+    },
+    "patrol_effort": {
+      "additionalProperties": false,
+      "properties": {
+        "group_by": {
+          "default": "patrol_type",
+          "enum": [
+            "patrol_type",
+            "team",
+            "leader",
+            "patrol",
+            "area"
+          ],
+          "title": "Group By",
+          "type": "string"
+        },
+        "map_layer": {
+          "default": "",
+          "description": "Spatial feature group whose areas (e.g. regions, sectors) become the rows of the table.",
+          "title": "Map Layer",
+          "type": "string"
+        },
+        "columns": {
+          "default": [
+            "patrol_count",
+            "total_distance",
+            "total_duration"
+          ],
+          "description": "Columns of the patrol effort table.",
+          "items": {
+            "enum": [
+              "patrol_count",
+              "total_distance",
+              "total_duration",
+              "patrol_days",
+              "leg_count",
+              "member_days",
+              "area_covered_merged"
+            ],
+            "type": "string"
+          },
+          "title": "Columns",
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": "Patrol Effort"
+    },
+    "patrol_grouping": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": "Patrol Grouping"
+    },
+    "event_scope": {
+      "additionalProperties": false,
+      "properties": {
+        "linked_only": {
+          "default": false,
+          "title": "Only events linked to the patrols",
+          "type": "boolean"
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": "Events"
+    },
+    "event_type": {
+      "additionalProperties": false,
+      "properties": {
+        "vars": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "",
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": "Event Type"
+    },
+    "state_events": {
+      "additionalProperties": false,
+      "properties": {
+        "states": {
+          "default": [],
+          "description": "Choose to analyze events with a certain state. If left empty, events of all states will be analyzed",
+          "items": {
+            "enum": [
+              "new",
+              "active",
+              "resolved",
+              "review"
+            ],
+            "type": "string"
+          },
+          "title": " ",
+          "type": "array"
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": "Event State"
+    },
+    "event_grouping": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": "Event Grouping"
+    },
+    "event_details_settings": {
+      "additionalProperties": false,
+      "properties": {
+        "all_details": {
+          "default": true,
+          "description": "When ticked, every event is shown with all its details. Untick to choose the fields for each event type.",
+          "title": "Show all fields",
+          "type": "boolean"
+        },
+        "tables": {
+          "default": [],
+          "description": "Add an event type and choose the fields to show for it. Event types you don't add show their first 3 fields.",
+          "items": {
+            "$ref": "#/$defs/EventTypeFields"
+          },
+          "title": " ",
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": "Event Details"
+    },
+    "download_attachments": {
+      "additionalProperties": false,
+      "properties": {
+        "skip_download": {
+          "default": false,
+          "description": "Event photos are included in the report. Tick to leave them out.",
+          "title": "Leave Out Event Photos",
+          "type": "boolean"
+        },
+        "max_images": {
+          "default": 50,
+          "description": "Used when photos are included.",
+          "ecoscope:advanced": true,
+          "minimum": 0,
+          "title": "Maximum Images",
+          "type": "integer"
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": "Download Event Attachments"
+    },
+    "report_text": {
+      "additionalProperties": false,
+      "properties": {
+        "language": {
+          "default": "en",
+          "description": "Choose the language for the report's headings and labels.",
+          "enum": [
+            "en",
+            "es",
+            "pt"
+          ],
+          "title": "Language",
+          "type": "string"
+        },
+        "title": {
+          "default": "Patrol & Events Report",
+          "description": "Enter the main heading for the first page.",
+          "title": "Title",
+          "type": "string"
+        },
+        "subtitle": {
+          "default": "",
+          "description": "Add an optional line under the title, e.g. the protected area.",
+          "title": "Subtitle",
+          "type": "string"
+        },
+        "details_intro": {
+          "default": "",
+          "description": "Add optional text to show before the event details.",
+          "ecoscope:advanced": true,
+          "title": "Event Details Introduction",
+          "type": "string"
+        },
+        "sections": {
+          "default": [
+            "headline_stats",
+            "personnel",
+            "time_density",
+            "event_density",
+            "events_chart",
+            "monthly_chart",
+            "category_priority",
+            "conclusions"
+          ],
+          "description": "Remove any sections you don't need. All are included by default.",
+          "items": {
+            "enum": [
+              "headline_stats",
+              "personnel",
+              "time_density",
+              "event_density",
+              "events_chart",
+              "monthly_chart",
+              "category_priority",
+              "conclusions"
+            ],
+            "type": "string"
+          },
+          "title": "Report Sections",
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": "Report Settings"
+    }
+  },
+  "$defs": {
+    "EarthRangerConnection": {
+      "properties": {
+        "name": {
+          "title": "Data Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "EarthRangerConnection",
+      "type": "object"
+    },
+    "TimezoneInfo": {
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "tzCode": {
+          "title": "Tzcode",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "utc": {
+          "title": "Utc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "tzCode",
+        "name",
+        "utc"
+      ],
+      "title": "TimezoneInfo",
+      "type": "object"
+    },
+    "EventTypeFields": {
+      "properties": {
+        "event_type": {
+          "title": "Event Type",
+          "type": "string"
+        },
+        "fields": {
+          "default": [],
+          "description": "Field names as on the event form, one per line.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Fields",
+          "type": "array"
+        }
+      },
+      "required": [
+        "event_type"
+      ],
+      "title": "EventTypeFields",
+      "type": "object"
+    }
+  },
+  "uiSchema": {
+    "workflow_details": {
+      "ui:order": [
+        "name",
+        "description"
+      ]
+    },
+    "time_range": {
+      "ui:order": [
+        "since",
+        "until",
+        "timezone"
+      ]
+    },
+    "patrol_filter": {
+      "ui:order": [
+        "team",
+        "teams",
+        "team_leader",
+        "leaders",
+        "single_patrol",
+        "patrol_id"
+      ]
+    },
+    "patrol_effort": {
+      "ui:order": [
+        "group_by",
+        "map_layer",
+        "columns"
+      ]
+    },
+    "event_details_settings": {
+      "ui:order": [
+        "all_details",
+        "tables"
+      ]
+    },
+    "download_attachments": {
+      "ui:order": [
+        "skip_download",
+        "max_images"
+      ]
+    },
+    "report_text": {
+      "ui:order": [
+        "language",
+        "title",
+        "subtitle",
+        "details_intro",
+        "sections"
+      ]
+    },
+    "ui:order": [
+      "workflow_details",
+      "er_client",
+      "time_range",
+      "base_maps",
+      "patrol_filter",
+      "patrol_type",
+      "patrol_effort",
+      "patrol_grouping",
+      "event_scope",
+      "event_type",
+      "state_events",
+      "event_grouping",
+      "event_details_settings",
+      "download_attachments",
+      "report_text"
+    ]
+  },
+  "additionalProperties": false
+}

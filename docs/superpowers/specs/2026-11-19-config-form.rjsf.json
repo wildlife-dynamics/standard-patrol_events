@@ -1,0 +1,1474 @@
+{
+  "properties": {
+    "workflow_details": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Workflow Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Workflow Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object",
+      "description": "Add information that will help to differentiate this workflow from another.",
+      "title": "Workflow Details"
+    },
+    "er_client": {
+      "additionalProperties": false,
+      "properties": {
+        "data_source": {
+          "$ref": "#/$defs/EarthRangerConnection",
+          "description": "Select one of your configured data sources.",
+          "title": ""
+        }
+      },
+      "required": [
+        "data_source"
+      ],
+      "type": "object",
+      "title": "Data Source"
+    },
+    "time_range": {
+      "additionalProperties": false,
+      "properties": {
+        "since": {
+          "description": "The start time",
+          "format": "date-time",
+          "title": "Since",
+          "type": "string"
+        },
+        "until": {
+          "description": "The end time",
+          "format": "date-time",
+          "title": "Until",
+          "type": "string"
+        },
+        "timezone": {
+          "$ref": "#/$defs/TimezoneInfo",
+          "default": null,
+          "title": "Timezone"
+        }
+      },
+      "required": [
+        "since",
+        "until"
+      ],
+      "type": "object",
+      "description": "Choose the period of time to analyze.",
+      "title": "Time Range"
+    },
+    "Patrols": {
+      "type": "object",
+      "description": "Report on all patrols in the period, or on one patrol.",
+      "ecoscope:task_group": true,
+      "properties": {
+        "patrol_scope": {
+          "additionalProperties": false,
+          "properties": {
+            "scope": {
+              "title": "Report on",
+              "default": {
+                "mode": "all"
+              },
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/AllPatrols"
+                },
+                {
+                  "$ref": "#/$defs/OnePatrol"
+                }
+              ]
+            }
+          },
+          "required": [
+            "scope"
+          ],
+          "type": "object",
+          "title": "Patrols"
+        }
+      }
+    },
+    "Events": {
+      "type": "object",
+      "description": "Which events, and how they are grouped in tables, charts and maps.",
+      "ecoscope:task_group": true,
+      "properties": {
+        "event_types": {
+          "additionalProperties": false,
+          "properties": {
+            "vars": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Event types",
+              "type": "array",
+              "description": "Event type values to include. Leave empty for all types (then events of retired types linked to patrols are included too).",
+              "ecoscope:transform": [
+                {
+                  "transformer": "EarthRangerEnumResolver",
+                  "transformer_kws": {
+                    "type": "event_type",
+                    "depends_on": "properties.er_client.properties.data_source.properties.name"
+                  }
+                }
+              ]
+            }
+          },
+          "type": "object",
+          "required": [],
+          "title": "Event types"
+        },
+        "state_events": {
+          "additionalProperties": false,
+          "properties": {
+            "state": {
+              "default": "all",
+              "description": "All events, resolved only, or active (new + active) only. Only useful where the site uses event state for data QA.",
+              "enum": [
+                "all",
+                "resolved",
+                "active"
+              ],
+              "title": "Event state",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "type": "object",
+          "title": "Event State"
+        },
+        "event_grouping": {
+          "additionalProperties": false,
+          "properties": {
+            "var": {
+              "title": "Group events by",
+              "type": "string",
+              "default": "event_type_display",
+              "oneOf": [
+                {
+                  "const": "event_type_display",
+                  "title": "Event type"
+                },
+                {
+                  "const": "event_category_display",
+                  "title": "Event category"
+                }
+              ]
+            }
+          },
+          "required": [
+            "var"
+          ],
+          "type": "object",
+          "title": "Event Grouping"
+        }
+      }
+    },
+    "Event Details": {
+      "type": "object",
+      "description": "How event details are laid out in the report.",
+      "ecoscope:task_group": true,
+      "properties": {
+        "detail_layout": {
+          "additionalProperties": false,
+          "properties": {
+            "layout": {
+              "title": "Layout",
+              "default": {
+                "layout": "general"
+              },
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/GeneralTable"
+                },
+                {
+                  "$ref": "#/$defs/TablePerType"
+                }
+              ]
+            }
+          },
+          "required": [
+            "layout"
+          ],
+          "type": "object",
+          "title": "Event details"
+        },
+        "detail_intro": {
+          "additionalProperties": false,
+          "properties": {
+            "var": {
+              "default": "",
+              "title": "Event details introduction",
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "required": [],
+          "title": "Event Details Introduction"
+        }
+      }
+    },
+    "images": {
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "title": "Images",
+          "default": {
+            "source": "attachments",
+            "max_images": 50
+          },
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FromAttachments"
+            },
+            {
+              "$ref": "#/$defs/LeaveBlank"
+            }
+          ]
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "type": "object",
+      "title": "Images"
+    },
+    "Report": {
+      "type": "object",
+      "description": "Language, titles and the optional sections of the Word report.",
+      "ecoscope:task_group": true,
+      "properties": {
+        "labels": {
+          "additionalProperties": false,
+          "properties": {
+            "language": {
+              "default": "en",
+              "description": "Report language: 'en', 'es' or 'pt'.",
+              "enum": [
+                "en",
+                "es",
+                "pt"
+              ],
+              "title": "Language",
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "description": "Column and label strings for patrol & events reports in en, es or pt.",
+          "required": [],
+          "title": "Report Language"
+        },
+        "report_title": {
+          "additionalProperties": false,
+          "properties": {
+            "var": {
+              "title": "Title",
+              "type": "string",
+              "default": "Patrol & Events Report"
+            }
+          },
+          "required": [
+            "var"
+          ],
+          "type": "object",
+          "title": "Report Title"
+        },
+        "report_subtitle": {
+          "additionalProperties": false,
+          "properties": {
+            "var": {
+              "default": "",
+              "title": "Subtitle",
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "required": [],
+          "title": "Report Subtitle"
+        },
+        "report_blocks": {
+          "additionalProperties": false,
+          "properties": {
+            "personnel": {
+              "default": false,
+              "description": "Patrol personnel (sites with patrol attributes).",
+              "title": "Personnel",
+              "type": "boolean"
+            },
+            "headline_stats": {
+              "default": true,
+              "title": "Headline stats",
+              "type": "boolean"
+            },
+            "time_density": {
+              "default": true,
+              "title": "Patrol time density map",
+              "type": "boolean"
+            },
+            "event_density": {
+              "default": true,
+              "title": "Event density map",
+              "type": "boolean"
+            },
+            "events_chart": {
+              "default": true,
+              "title": "Events chart",
+              "type": "boolean"
+            },
+            "monthly_chart": {
+              "default": false,
+              "title": "Events by month chart",
+              "type": "boolean"
+            },
+            "category_priority": {
+              "default": false,
+              "title": "Events by category and priority",
+              "type": "boolean"
+            },
+            "images": {
+              "default": true,
+              "title": "Images",
+              "type": "boolean"
+            },
+            "conclusions": {
+              "default": true,
+              "title": "Conclusions box",
+              "type": "boolean"
+            }
+          },
+          "type": "object",
+          "required": [],
+          "title": "Report Blocks"
+        }
+      }
+    },
+    "Map Style": {
+      "type": "object",
+      "description": "Base maps and track colours (most sites keep the defaults).",
+      "ecoscope:task_group": true,
+      "properties": {
+        "base_maps": {
+          "additionalProperties": false,
+          "properties": {
+            "base_maps": {
+              "default": [
+                {
+                  "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+                  "opacity": 1,
+                  "max_zoom": 20,
+                  "min_zoom": 0
+                },
+                {
+                  "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                  "opacity": 0.5,
+                  "max_zoom": 20,
+                  "min_zoom": 0
+                }
+              ],
+              "description": "Select tile layers to use as base layers in map outputs. The first layer in the list will be the bottommost layer displayed.",
+              "ecoscope:advanced": true,
+              "items": {
+                "anyOf": [
+                  {
+                    "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                    "properties": {
+                      "url": {
+                        "default": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        "title": "Preset Layer URL",
+                        "type": "string",
+                        "const": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        "enum": [
+                          "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        ]
+                      },
+                      "opacity": {
+                        "default": 1,
+                        "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
+                        "maximum": 1,
+                        "minimum": 0,
+                        "title": "Layer Opacity",
+                        "type": "number"
+                      }
+                    },
+                    "title": "Open Street Map",
+                    "type": "object"
+                  },
+                  {
+                    "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                    "properties": {
+                      "url": {
+                        "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                        "title": "Preset Layer URL",
+                        "type": "string",
+                        "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                        "enum": [
+                          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+                        ]
+                      },
+                      "opacity": {
+                        "default": 1,
+                        "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
+                        "maximum": 1,
+                        "minimum": 0,
+                        "title": "Layer Opacity",
+                        "type": "number"
+                      }
+                    },
+                    "title": "Roadmap",
+                    "type": "object"
+                  },
+                  {
+                    "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                    "properties": {
+                      "url": {
+                        "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                        "title": "Preset Layer URL",
+                        "type": "string",
+                        "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                        "enum": [
+                          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                        ]
+                      },
+                      "opacity": {
+                        "default": 1,
+                        "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
+                        "maximum": 1,
+                        "minimum": 0,
+                        "title": "Layer Opacity",
+                        "type": "number"
+                      }
+                    },
+                    "title": "Satellite",
+                    "type": "object"
+                  },
+                  {
+                    "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                    "properties": {
+                      "url": {
+                        "default": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+                        "title": "Preset Layer URL",
+                        "type": "string",
+                        "const": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+                        "enum": [
+                          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+                        ]
+                      },
+                      "opacity": {
+                        "default": 1,
+                        "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
+                        "maximum": 1,
+                        "minimum": 0,
+                        "title": "Layer Opacity",
+                        "type": "number"
+                      }
+                    },
+                    "title": "Terrain",
+                    "type": "object"
+                  },
+                  {
+                    "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                    "properties": {
+                      "url": {
+                        "default": "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+                        "title": "Preset Layer URL",
+                        "type": "string",
+                        "const": "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+                        "enum": [
+                          "https://server.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}"
+                        ]
+                      },
+                      "opacity": {
+                        "default": 1,
+                        "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
+                        "maximum": 1,
+                        "minimum": 0,
+                        "title": "Layer Opacity",
+                        "type": "number"
+                      }
+                    },
+                    "title": "USGS Hillshade",
+                    "type": "object"
+                  },
+                  {
+                    "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
+                    "properties": {
+                      "url": {
+                        "default": "https://example.tiles.com/{z}/{x}/{y}.png",
+                        "description": "The URL of a publicly accessible tiled raster service.",
+                        "pattern": "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}([-a-zA-Z0-9()@:%_\\+.~#?&//=\\{\\}]*)",
+                        "title": "Custom Layer URL",
+                        "type": "string"
+                      },
+                      "opacity": {
+                        "default": 1,
+                        "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
+                        "maximum": 1,
+                        "minimum": 0,
+                        "title": "Custom Layer Opacity",
+                        "type": "number"
+                      },
+                      "max_zoom": {
+                        "default": 20,
+                        "description": "Set the maximum zoom level to fetch tiles for.",
+                        "title": "Custom Layer Max Zoom",
+                        "type": "integer"
+                      },
+                      "min_zoom": {
+                        "default": 0,
+                        "description": "Set the minimum zoom level to fetch tiles for.",
+                        "title": "Custom Layer Min Zoom",
+                        "type": "integer"
+                      }
+                    },
+                    "title": "Custom Layer (Advanced)",
+                    "type": "object"
+                  }
+                ],
+                "title": "Base Layer"
+              },
+              "title": " ",
+              "type": "array"
+            }
+          },
+          "type": "object",
+          "required": [],
+          "title": "Base Maps"
+        },
+        "tracks_color_by": {
+          "additionalProperties": false,
+          "properties": {
+            "var": {
+              "title": "Colour tracks by",
+              "type": "string",
+              "default": "patrol_type",
+              "oneOf": [
+                {
+                  "const": "patrol_type",
+                  "title": "Patrol type"
+                },
+                {
+                  "const": "patrol_team_name",
+                  "title": "Team"
+                }
+              ]
+            }
+          },
+          "required": [
+            "var"
+          ],
+          "type": "object",
+          "title": "Tracks Map"
+        }
+      },
+      "ecoscope:advanced": true
+    }
+  },
+  "$defs": {
+    "EarthRangerConnection": {
+      "properties": {
+        "name": {
+          "title": "Data Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "EarthRangerConnection",
+      "type": "object"
+    },
+    "TimezoneInfo": {
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "tzCode": {
+          "title": "Tzcode",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "utc": {
+          "title": "Utc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "tzCode",
+        "name",
+        "utc"
+      ],
+      "title": "TimezoneInfo",
+      "type": "object"
+    },
+    "ActiveDurationMetric": {
+      "properties": {
+        "metric": {
+          "const": "active_duration",
+          "default": "active_duration",
+          "title": "Metric",
+          "type": "string"
+        },
+        "unit": {
+          "default": "h",
+          "oneOf": [
+            {
+              "const": "h",
+              "title": "Hours (h)"
+            },
+            {
+              "const": "d",
+              "title": "Days (d)"
+            }
+          ],
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "title": "Active Duration",
+      "type": "object"
+    },
+    "CustomMetric": {
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "convert_units": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "original_unit": {
+                "oneOf": [
+                  {
+                    "const": "m",
+                    "title": "Meters (m)"
+                  },
+                  {
+                    "const": "km",
+                    "title": "Kilometers (km)"
+                  },
+                  {
+                    "const": "m²",
+                    "title": "Square Meters (m²)"
+                  },
+                  {
+                    "const": "km²",
+                    "title": "Square Kilometers (km²)"
+                  },
+                  {
+                    "const": "s",
+                    "title": "Seconds (s)"
+                  },
+                  {
+                    "const": "h",
+                    "title": "Hours (h)"
+                  },
+                  {
+                    "const": "d",
+                    "title": "Days (d)"
+                  },
+                  {
+                    "const": "m/s",
+                    "title": "Meters per Second (m/s)"
+                  },
+                  {
+                    "const": "km/h",
+                    "title": "Kilometers per Hour (km/h)"
+                  },
+                  {
+                    "const": "%",
+                    "title": "Percent (%)"
+                  }
+                ],
+                "title": "Original Unit",
+                "type": "string"
+              },
+              "new_unit": {
+                "oneOf": [
+                  {
+                    "const": "m",
+                    "title": "Meters (m)"
+                  },
+                  {
+                    "const": "km",
+                    "title": "Kilometers (km)"
+                  },
+                  {
+                    "const": "m²",
+                    "title": "Square Meters (m²)"
+                  },
+                  {
+                    "const": "km²",
+                    "title": "Square Kilometers (km²)"
+                  },
+                  {
+                    "const": "s",
+                    "title": "Seconds (s)"
+                  },
+                  {
+                    "const": "h",
+                    "title": "Hours (h)"
+                  },
+                  {
+                    "const": "d",
+                    "title": "Days (d)"
+                  },
+                  {
+                    "const": "m/s",
+                    "title": "Meters per Second (m/s)"
+                  },
+                  {
+                    "const": "km/h",
+                    "title": "Kilometers per Hour (km/h)"
+                  },
+                  {
+                    "const": "%",
+                    "title": "Percent (%)"
+                  }
+                ],
+                "title": "New Unit",
+                "type": "string"
+              }
+            }
+          }
+        }
+      ],
+      "description": "Define your own metric: pick a column and statistic, with optional unit conversion.",
+      "properties": {
+        "display_name": {
+          "description": "Column header shown in the summary table.",
+          "title": "Display Name",
+          "type": "string"
+        },
+        "aggregator": {
+          "enum": [
+            "sum",
+            "count",
+            "min",
+            "max",
+            "mean",
+            "nunique",
+            "median"
+          ],
+          "title": "Statistic",
+          "type": "string"
+        },
+        "column": {
+          "description": "Column to aggregate.",
+          "title": "Column",
+          "type": "string"
+        },
+        "decimal_places": {
+          "default": 2,
+          "title": "Decimal Places",
+          "type": "integer"
+        },
+        "convert_units": {
+          "default": false,
+          "title": "Convert Units",
+          "type": "boolean"
+        },
+        "metric": {
+          "const": "custom",
+          "default": "custom",
+          "title": "Metric",
+          "type": "string"
+        }
+      },
+      "required": [
+        "display_name",
+        "aggregator",
+        "column"
+      ],
+      "title": "Custom",
+      "type": "object"
+    },
+    "ElapsedDurationMetric": {
+      "properties": {
+        "metric": {
+          "const": "elapsed_duration",
+          "default": "elapsed_duration",
+          "title": "Metric",
+          "type": "string"
+        },
+        "unit": {
+          "default": "h",
+          "oneOf": [
+            {
+              "const": "h",
+              "title": "Hours (h)"
+            },
+            {
+              "const": "d",
+              "title": "Days (d)"
+            }
+          ],
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "title": "Elapsed Duration",
+      "type": "object"
+    },
+    "LegCountMetric": {
+      "properties": {
+        "metric": {
+          "const": "leg_count",
+          "default": "leg_count",
+          "title": "Metric",
+          "type": "string"
+        }
+      },
+      "title": "Leg Count",
+      "type": "object"
+    },
+    "MemberDaysMetric": {
+      "properties": {
+        "metric": {
+          "const": "member_days",
+          "default": "member_days",
+          "title": "Metric",
+          "type": "string"
+        }
+      },
+      "title": "Member-days",
+      "type": "object"
+    },
+    "MergedAreaCoveredMetric": {
+      "description": "Area covered with overlaps counted once — the distinct ground footprint.",
+      "properties": {
+        "metric": {
+          "const": "area_covered_merged",
+          "default": "area_covered_merged",
+          "title": "Metric",
+          "type": "string"
+        },
+        "swath_width_meters": {
+          "default": 500.0,
+          "description": "Full corridor width in meters.",
+          "title": "Swath Width (m)",
+          "type": "number"
+        }
+      },
+      "title": "Area Covered (Merged)",
+      "type": "object"
+    },
+    "PatrolCountMetric": {
+      "properties": {
+        "metric": {
+          "const": "patrol_count",
+          "default": "patrol_count",
+          "title": "Metric",
+          "type": "string"
+        }
+      },
+      "title": "Patrol Count",
+      "type": "object"
+    },
+    "PatrolDaysMetric": {
+      "properties": {
+        "metric": {
+          "const": "patrol_days",
+          "default": "patrol_days",
+          "title": "Metric",
+          "type": "string"
+        }
+      },
+      "title": "Patrol Days",
+      "type": "object"
+    },
+    "TotalDistanceMetric": {
+      "properties": {
+        "metric": {
+          "const": "total_distance",
+          "default": "total_distance",
+          "title": "Metric",
+          "type": "string"
+        },
+        "unit": {
+          "default": "km",
+          "oneOf": [
+            {
+              "const": "km",
+              "title": "Kilometers (km)"
+            },
+            {
+              "const": "m",
+              "title": "Meters (m)"
+            }
+          ],
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "title": "Total Distance",
+      "type": "object"
+    },
+    "TotalDurationMetric": {
+      "properties": {
+        "metric": {
+          "const": "total_duration",
+          "default": "total_duration",
+          "title": "Metric",
+          "type": "string"
+        },
+        "unit": {
+          "default": "h",
+          "oneOf": [
+            {
+              "const": "h",
+              "title": "Hours (h)"
+            },
+            {
+              "const": "d",
+              "title": "Days (d)"
+            }
+          ],
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "title": "Total Duration",
+      "type": "object"
+    },
+    "UnmergedAreaCoveredMetric": {
+      "description": "Area covered summed segment by segment — total patrol efforts.",
+      "properties": {
+        "metric": {
+          "const": "area_covered_unmerged",
+          "default": "area_covered_unmerged",
+          "title": "Metric",
+          "type": "string"
+        },
+        "swath_width_meters": {
+          "default": 500.0,
+          "description": "Full corridor width in meters.",
+          "title": "Swath Width (m)",
+          "type": "number"
+        }
+      },
+      "title": "Area Covered (Unmerged)",
+      "type": "object"
+    },
+    "Everyone": {
+      "title": "Everyone",
+      "type": "object",
+      "properties": {
+        "by": {
+          "const": "everyone",
+          "default": "everyone",
+          "type": "string"
+        }
+      },
+      "required": [
+        "by"
+      ]
+    },
+    "ByTeam": {
+      "title": "Team",
+      "type": "object",
+      "properties": {
+        "by": {
+          "const": "team",
+          "default": "team",
+          "type": "string"
+        },
+        "teams": {
+          "title": "Teams",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "EarthRanger patrol team names, as set in the patrol configuration."
+        }
+      },
+      "required": [
+        "by",
+        "teams"
+      ]
+    },
+    "ByLeaderGroup": {
+      "title": "Leader's group",
+      "type": "object",
+      "properties": {
+        "by": {
+          "const": "leader_group",
+          "default": "leader_group",
+          "type": "string"
+        },
+        "group": {
+          "title": "Subject group",
+          "type": "string",
+          "ecoscope:transform": [
+            {
+              "transformer": "EarthRangerEnumResolver",
+              "transformer_kws": {
+                "type": "subject_group_name",
+                "depends_on": "properties.er_client.properties.data_source.properties.name"
+              }
+            }
+          ],
+          "description": "Patrols led by a person in this group (one of your patrol member groups)."
+        }
+      },
+      "required": [
+        "by",
+        "group"
+      ]
+    },
+    "EffortByPatrolType": {
+      "title": "Patrol type",
+      "type": "object",
+      "properties": {
+        "by": {
+          "const": "patrol_type",
+          "default": "patrol_type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "by"
+      ]
+    },
+    "EffortByTeam": {
+      "title": "Team",
+      "type": "object",
+      "properties": {
+        "by": {
+          "const": "team",
+          "default": "team",
+          "type": "string"
+        }
+      },
+      "required": [
+        "by"
+      ]
+    },
+    "EffortByLeader": {
+      "title": "Leader",
+      "type": "object",
+      "properties": {
+        "by": {
+          "const": "leader",
+          "default": "leader",
+          "type": "string"
+        }
+      },
+      "required": [
+        "by"
+      ]
+    },
+    "EffortByPatrol": {
+      "title": "Individual patrol",
+      "type": "object",
+      "properties": {
+        "by": {
+          "const": "patrol",
+          "default": "patrol",
+          "type": "string"
+        }
+      },
+      "required": [
+        "by"
+      ]
+    },
+    "EffortByArea": {
+      "title": "Area (map layer)",
+      "type": "object",
+      "properties": {
+        "by": {
+          "const": "area",
+          "default": "area",
+          "type": "string"
+        },
+        "map_layer": {
+          "title": "Map layer",
+          "type": "string",
+          "ecoscope:transform": [
+            {
+              "transformer": "EarthRangerEnumResolver",
+              "transformer_kws": {
+                "type": "spatial_feature_group",
+                "depends_on": "properties.er_client.properties.data_source.properties.name"
+              }
+            }
+          ],
+          "description": "Spatial feature group whose areas (e.g. regions, sectors) become the rows."
+        }
+      },
+      "required": [
+        "by",
+        "map_layer"
+      ]
+    },
+    "AllPatrols": {
+      "title": "All patrols in the period",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "const": "all",
+          "default": "all",
+          "type": "string"
+        },
+        "patrol_types": {
+          "title": "Patrol types",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "default": [],
+          "description": "Leave empty for all patrol types.",
+          "ecoscope:transform": [
+            {
+              "transformer": "EarthRangerEnumResolver",
+              "transformer_kws": {
+                "type": "patrol_type",
+                "depends_on": "properties.er_client.properties.data_source.properties.name"
+              }
+            }
+          ]
+        },
+        "patrols_by": {
+          "title": "Patrols by",
+          "default": {
+            "by": "everyone"
+          },
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Everyone"
+            },
+            {
+              "$ref": "#/$defs/ByTeam"
+            },
+            {
+              "$ref": "#/$defs/ByLeaderGroup"
+            }
+          ]
+        },
+        "group_effort_by": {
+          "title": "Group patrol effort by",
+          "default": {
+            "by": "patrol_type"
+          },
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EffortByPatrolType"
+            },
+            {
+              "$ref": "#/$defs/EffortByTeam"
+            },
+            {
+              "$ref": "#/$defs/EffortByLeader"
+            },
+            {
+              "$ref": "#/$defs/EffortByPatrol"
+            },
+            {
+              "$ref": "#/$defs/EffortByArea"
+            }
+          ]
+        },
+        "effort_columns": {
+          "default": [
+            {
+              "metric": "patrol_count"
+            },
+            {
+              "metric": "total_distance",
+              "unit": "km"
+            },
+            {
+              "metric": "total_duration",
+              "unit": "h"
+            }
+          ],
+          "description": "Columns of the patrol effort table (the Patrol Effort module's metrics). Add legs, person-days or area covered as needed.",
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "active_duration": "#/$defs/ActiveDurationMetric",
+                "area_covered_merged": "#/$defs/MergedAreaCoveredMetric",
+                "area_covered_unmerged": "#/$defs/UnmergedAreaCoveredMetric",
+                "custom": "#/$defs/CustomMetric",
+                "elapsed_duration": "#/$defs/ElapsedDurationMetric",
+                "leg_count": "#/$defs/LegCountMetric",
+                "member_days": "#/$defs/MemberDaysMetric",
+                "patrol_count": "#/$defs/PatrolCountMetric",
+                "patrol_days": "#/$defs/PatrolDaysMetric",
+                "total_distance": "#/$defs/TotalDistanceMetric",
+                "total_duration": "#/$defs/TotalDurationMetric"
+              },
+              "propertyName": "metric"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/PatrolCountMetric"
+              },
+              {
+                "$ref": "#/$defs/PatrolDaysMetric"
+              },
+              {
+                "$ref": "#/$defs/TotalDistanceMetric"
+              },
+              {
+                "$ref": "#/$defs/TotalDurationMetric"
+              },
+              {
+                "$ref": "#/$defs/MergedAreaCoveredMetric"
+              },
+              {
+                "$ref": "#/$defs/UnmergedAreaCoveredMetric"
+              },
+              {
+                "$ref": "#/$defs/ActiveDurationMetric"
+              },
+              {
+                "$ref": "#/$defs/ElapsedDurationMetric"
+              },
+              {
+                "$ref": "#/$defs/LegCountMetric"
+              },
+              {
+                "$ref": "#/$defs/MemberDaysMetric"
+              },
+              {
+                "$ref": "#/$defs/CustomMetric"
+              }
+            ]
+          },
+          "title": "Effort columns",
+          "type": "array"
+        },
+        "events_to_include": {
+          "title": "Events to include",
+          "type": "string",
+          "default": "all_in_period",
+          "oneOf": [
+            {
+              "const": "all_in_period",
+              "title": "All events in the period"
+            },
+            {
+              "const": "linked_only",
+              "title": "Only events linked to these patrols"
+            }
+          ]
+        }
+      },
+      "required": [
+        "mode",
+        "patrols_by",
+        "group_effort_by",
+        "events_to_include"
+      ]
+    },
+    "OnePatrol": {
+      "title": "One patrol",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "const": "single",
+          "default": "single",
+          "type": "string"
+        },
+        "patrol_id": {
+          "title": "Patrol ID",
+          "type": "string",
+          "description": "EarthRanger patrol serial number, e.g. 70. The report covers this patrol's own dates, its legs and its linked events."
+        }
+      },
+      "required": [
+        "mode",
+        "patrol_id"
+      ]
+    },
+    "GeneralTable": {
+      "title": "One general table (all fields)",
+      "type": "object",
+      "properties": {
+        "layout": {
+          "const": "general",
+          "default": "general",
+          "type": "string"
+        }
+      },
+      "required": [
+        "layout"
+      ]
+    },
+    "TablePerType": {
+      "title": "One table per event type",
+      "type": "object",
+      "properties": {
+        "layout": {
+          "const": "per_type",
+          "default": "per_type",
+          "type": "string"
+        },
+        "fields_shown": {
+          "title": "Fields shown",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Event field names, one per line. Leave empty for each type's first 3 fields."
+        }
+      },
+      "required": [
+        "layout"
+      ]
+    },
+    "FromAttachments": {
+      "title": "From event attachments",
+      "type": "object",
+      "properties": {
+        "source": {
+          "const": "attachments",
+          "default": "attachments",
+          "type": "string"
+        },
+        "max_images": {
+          "title": "Maximum number of images",
+          "type": "integer",
+          "minimum": 0,
+          "default": 50
+        }
+      },
+      "required": [
+        "source",
+        "max_images"
+      ]
+    },
+    "LeaveBlank": {
+      "title": "Leave blank (add photos by hand)",
+      "type": "object",
+      "properties": {
+        "source": {
+          "const": "blank",
+          "default": "blank",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source"
+      ]
+    }
+  },
+  "uiSchema": {
+    "ui:order": [
+      "workflow_details",
+      "er_client",
+      "time_range",
+      "Patrols",
+      "Events",
+      "Event Details",
+      "images",
+      "Report",
+      "Map Style"
+    ],
+    "Patrols": {
+      "ui:order": [
+        "patrol_scope"
+      ],
+      "patrol_scope": {
+        "scope": {
+          "mode": {
+            "ui:widget": "hidden"
+          },
+          "patrols_by": {
+            "by": {
+              "ui:widget": "hidden"
+            }
+          },
+          "group_effort_by": {
+            "by": {
+              "ui:widget": "hidden"
+            }
+          },
+          "events_to_include": {
+            "ui:widget": "radio"
+          }
+        }
+      }
+    },
+    "Events": {
+      "ui:order": [
+        "event_types",
+        "state_events",
+        "event_grouping"
+      ]
+    },
+    "Event Details": {
+      "ui:order": [
+        "detail_layout",
+        "detail_intro"
+      ],
+      "detail_layout": {
+        "layout": {
+          "layout": {
+            "ui:widget": "hidden"
+          }
+        }
+      }
+    },
+    "Report": {
+      "ui:order": [
+        "labels",
+        "report_title",
+        "report_subtitle",
+        "report_blocks"
+      ]
+    },
+    "Map Style": {
+      "ui:order": [
+        "base_maps",
+        "tracks_color_by"
+      ]
+    },
+    "workflow_details": {
+      "ui:order": [
+        "name",
+        "description"
+      ]
+    },
+    "time_range": {
+      "ui:order": [
+        "since",
+        "until",
+        "timezone"
+      ]
+    },
+    "images": {
+      "source": {
+        "source": {
+          "ui:widget": "hidden"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
