@@ -16,22 +16,35 @@ from ecoscope.platform.tasks.analysis import (
     dataframe_column_sum as dataframe_column_sum,
 )
 from ecoscope.platform.tasks.analysis import dataframe_count as dataframe_count
-from ecoscope.platform.tasks.config import concat_string_vars as concat_string_vars
-from ecoscope.platform.tasks.config import (
-    set_list_of_string_vars as set_list_of_string_vars,
+from ecoscope.platform.tasks.analysis import join_summary_tables as join_summary_tables
+from ecoscope.platform.tasks.analysis import select_leg_metrics as select_leg_metrics
+from ecoscope.platform.tasks.analysis import (
+    select_track_metrics as select_track_metrics,
 )
+from ecoscope.platform.tasks.analysis import (
+    set_patrol_summary_metrics as set_patrol_summary_metrics,
+)
+from ecoscope.platform.tasks.analysis import summarize_df as summarize_df
+from ecoscope.platform.tasks.config import concat_string_vars as concat_string_vars
 from ecoscope.platform.tasks.config import set_string_var as set_string_var
 from ecoscope.platform.tasks.config import set_workflow_details as set_workflow_details
 from ecoscope.platform.tasks.filter import (
     get_timezone_from_time_range as get_timezone_from_time_range,
 )
 from ecoscope.platform.tasks.filter import set_time_range as set_time_range
+from ecoscope.platform.tasks.io import (
+    add_patrol_roster_names as add_patrol_roster_names,
+)
+from ecoscope.platform.tasks.io import add_patrol_team_names as add_patrol_team_names
+from ecoscope.platform.tasks.io import (
+    add_patrol_type_display_names as add_patrol_type_display_names,
+)
 from ecoscope.platform.tasks.io import get_events as get_events
 from ecoscope.platform.tasks.io import (
     get_patrol_observations_from_patrols_df_and_combined_params as get_patrol_observations_from_patrols_df_and_combined_params,
 )
 from ecoscope.platform.tasks.io import (
-    get_patrols_from_combined_params as get_patrols_from_combined_params,
+    get_patrol_segments_from_patrols_df as get_patrol_segments_from_patrols_df,
 )
 from ecoscope.platform.tasks.io import persist_text as persist_text
 from ecoscope.platform.tasks.io import process_events_details as process_events_details
@@ -47,6 +60,9 @@ from ecoscope.platform.tasks.preprocessing import (
 )
 from ecoscope.platform.tasks.preprocessing import (
     relocations_to_trajectory as relocations_to_trajectory,
+)
+from ecoscope.platform.tasks.results import (
+    create_files_single_view as create_files_single_view,
 )
 from ecoscope.platform.tasks.results import (
     create_map_widget_single_view as create_map_widget_single_view,
@@ -82,11 +98,17 @@ from ecoscope.platform.tasks.skip import (
 from ecoscope.platform.tasks.skip import any_is_empty_df as any_is_empty_df
 from ecoscope.platform.tasks.skip import never as never
 from ecoscope.platform.tasks.transformation import (
+    add_leg_names_to_tracks as add_leg_names_to_tracks,
+)
+from ecoscope.platform.tasks.transformation import (
     apply_classification as apply_classification,
 )
 from ecoscope.platform.tasks.transformation import apply_color_map as apply_color_map
 from ecoscope.platform.tasks.transformation import (
     apply_reloc_coord_filter as apply_reloc_coord_filter,
+)
+from ecoscope.platform.tasks.transformation import (
+    apportion_legs_by_spatial_index as apportion_legs_by_spatial_index,
 )
 from ecoscope.platform.tasks.transformation import (
     convert_column_values_to_string as convert_column_values_to_string,
@@ -95,38 +117,52 @@ from ecoscope.platform.tasks.transformation import (
     convert_values_to_timezone as convert_values_to_timezone,
 )
 from ecoscope.platform.tasks.transformation import (
+    decompose_datetime as decompose_datetime,
+)
+from ecoscope.platform.tasks.transformation import (
     drop_nan_values_by_column as drop_nan_values_by_column,
 )
 from ecoscope.platform.tasks.transformation import (
     drop_null_geometry as drop_null_geometry,
 )
 from ecoscope.platform.tasks.transformation import ensure_wgs84 as ensure_wgs84
+from ecoscope.platform.tasks.transformation import fill_na as fill_na
+from ecoscope.platform.tasks.transformation import map_columns as map_columns
+from ecoscope.platform.tasks.transformation import (
+    resolve_spatial_feature_groups_for_spatial_groupers as resolve_spatial_feature_groups_for_spatial_groupers,
+)
 from ecoscope.platform.tasks.transformation import sort_values as sort_values
 from ecoscope.platform.tasks.transformation import with_unit as with_unit
+from ecoscope_workflows_ext_custom.tasks.analysis import (
+    format_effort_table as format_effort_table,
+)
 from ecoscope_workflows_ext_custom.tasks.analysis import (
     grid_cell_size_for_extent as grid_cell_size_for_extent,
 )
 from ecoscope_workflows_ext_custom.tasks.analysis import (
     headline_stats as headline_stats,
 )
-from ecoscope_workflows_ext_custom.tasks.analysis import (
-    patrol_effort_table as patrol_effort_table,
+from ecoscope_workflows_ext_custom.tasks.config import (
+    set_optional_string_list as set_optional_string_list,
+)
+from ecoscope_workflows_ext_custom.tasks.io import (
+    add_missing_linked_events as add_missing_linked_events,
 )
 from ecoscope_workflows_ext_custom.tasks.io import (
     download_event_attachments as download_event_attachments,
+)
+from ecoscope_workflows_ext_custom.tasks.io import (
+    filter_by_leaders as filter_by_leaders,
 )
 from ecoscope_workflows_ext_custom.tasks.io import get_current_user as get_current_user
 from ecoscope_workflows_ext_custom.tasks.io import (
     get_event_type_lookup as get_event_type_lookup,
 )
 from ecoscope_workflows_ext_custom.tasks.io import (
-    get_patrol_leg_schemas as get_patrol_leg_schemas,
+    get_patrols_any_type as get_patrols_any_type,
 )
 from ecoscope_workflows_ext_custom.tasks.io import (
-    get_patrol_team_sources as get_patrol_team_sources,
-)
-from ecoscope_workflows_ext_custom.tasks.io import (
-    get_patrol_type_display as get_patrol_type_display,
+    report_time_range as report_time_range,
 )
 from ecoscope_workflows_ext_custom.tasks.io import (
     sanitize_attachments as sanitize_attachments,
@@ -137,20 +173,28 @@ from ecoscope_workflows_ext_custom.tasks.localization import (
 from ecoscope_workflows_ext_custom.tasks.results import (
     build_image_records as build_image_records,
 )
+from ecoscope_workflows_ext_custom.tasks.results import (
+    collect_map_layers as collect_map_layers,
+)
 from ecoscope_workflows_ext_custom.tasks.results import create_docx as create_docx
 from ecoscope_workflows_ext_custom.tasks.results import fit_view_state as fit_view_state
-from ecoscope_workflows_ext_custom.tasks.skip import skip_to_none as skip_to_none
-from ecoscope_workflows_ext_custom.tasks.spatial_ops import (
-    get_area_scope as get_area_scope,
-)
-from ecoscope_workflows_ext_custom.tasks.spatial_ops import (
-    select_in_area as select_in_area,
+from ecoscope_workflows_ext_custom.tasks.results import (
+    hide_save_image_button as hide_save_image_button,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
     add_event_display_columns as add_event_display_columns,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
+    area_groupers as area_groupers,
+)
+from ecoscope_workflows_ext_custom.tasks.transformation import (
+    area_regions as area_regions,
+)
+from ecoscope_workflows_ext_custom.tasks.transformation import (
     category_priority_table as category_priority_table,
+)
+from ecoscope_workflows_ext_custom.tasks.transformation import (
+    drop_short_tracks as drop_short_tracks,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
     event_detail_table as event_detail_table,
@@ -162,31 +206,79 @@ from ecoscope_workflows_ext_custom.tasks.transformation import (
     events_by_type_table as events_by_type_table,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
+    filter_by_teams as filter_by_teams,
+)
+from ecoscope_workflows_ext_custom.tasks.transformation import (
     filter_event_state as filter_event_state,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
     filter_linked_events as filter_linked_events,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
+    filter_patrols_by_serial as filter_patrols_by_serial,
+)
+from ecoscope_workflows_ext_custom.tasks.transformation import (
     get_collection_item as get_collection_item,
+)
+from ecoscope_workflows_ext_custom.tasks.transformation import (
+    index_tracks_by_area as index_tracks_by_area,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
     patrol_legs_table as patrol_legs_table,
 )
 from ecoscope_workflows_ext_custom.tasks.transformation import (
-    resolve_patrol_team as resolve_patrol_team,
+    patrols_from_legs as patrols_from_legs,
+)
+from ecoscope_workflows_ext_custom.tasks.transformation import (
+    team_or_leader as team_or_leader,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    effective_event_types as effective_event_types,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    effective_map_layer as effective_map_layer,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    effective_patrol_types as effective_patrol_types,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    effort_grouper_for as effort_grouper_for,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     get_report_date as get_report_date,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    get_report_period as get_report_period,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    grouping_label as grouping_label,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     load_report_template as load_report_template,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    pick_setting as pick_setting,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    set_event_details as set_event_details,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    set_event_scope as set_event_scope,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     set_images_options as set_images_options,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    set_patrol_effort as set_patrol_effort,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    set_patrol_filter as set_patrol_filter,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     set_report_blocks as set_report_blocks,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks import (
+    set_report_text as set_report_text,
 )
 from wt_contracts import validate as _validate
 from wt_task import task
@@ -249,6 +341,333 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    base_maps = (
+        task(set_base_maps)
+        .validate()
+        .set_task_instance_id("base_maps")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("base_maps") or {}))
+        .call()
+    )
+
+    patrol_filter = (
+        task(set_patrol_filter)
+        .validate()
+        .set_task_instance_id("patrol_filter")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("patrol_filter") or {}))
+        .call()
+    )
+
+    patrol_serial = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("patrol_serial")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=patrol_filter,
+            key="patrol_serial",
+            **(params.get("patrol_serial") or {}),
+        )
+        .call()
+    )
+
+    teams = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("teams")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(collection=patrol_filter, key="teams", **(params.get("teams") or {}))
+        .call()
+    )
+
+    leader_names = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("leader_names")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=patrol_filter,
+            key="leaders",
+            **(params.get("leader_names") or {}),
+        )
+        .call()
+    )
+
+    patrol_type = (
+        task(set_optional_string_list)
+        .validate()
+        .set_task_instance_id("patrol_type")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("patrol_type") or {}))
+        .call()
+    )
+
+    patrol_types = (
+        task(effective_patrol_types)
+        .validate()
+        .set_task_instance_id("patrol_types")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            patrol_types=patrol_type,
+            patrol_serial=patrol_serial,
+            **(params.get("patrol_types") or {}),
+        )
+        .call()
+    )
+
+    patrol_effort = (
+        task(set_patrol_effort)
+        .validate()
+        .set_task_instance_id("patrol_effort")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("patrol_effort") or {}))
+        .call()
+    )
+
+    effort_grouping = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("effort_grouping")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=patrol_effort,
+            key="grouper",
+            **(params.get("effort_grouping") or {}),
+        )
+        .call()
+    )
+
+    effort_map_layer = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("effort_map_layer")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=patrol_effort,
+            key="map_layer",
+            **(params.get("effort_map_layer") or {}),
+        )
+        .call()
+    )
+
+    effort_metric_list = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("effort_metric_list")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=patrol_effort,
+            key="metrics",
+            **(params.get("effort_metric_list") or {}),
+        )
+        .call()
+    )
+
+    effort_grouper = (
+        task(effort_grouper_for)
+        .validate()
+        .set_task_instance_id("effort_grouper")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            grouper=effort_grouping,
+            patrol_serial=patrol_serial,
+            **(params.get("effort_grouper") or {}),
+        )
+        .call()
+    )
+
+    patrol_grouping = (
+        task(set_string_var)
+        .validate()
+        .set_task_instance_id("patrol_grouping")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("patrol_grouping") or {}))
+        .call()
+    )
+
+    event_scope = (
+        task(set_event_scope)
+        .validate()
+        .set_task_instance_id("event_scope")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("event_scope") or {}))
+        .call()
+    )
+
+    event_type = (
+        task(set_optional_string_list)
+        .validate()
+        .set_task_instance_id("event_type")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("event_type") or {}))
+        .call()
+    )
+
+    event_types = (
+        task(effective_event_types)
+        .validate()
+        .set_task_instance_id("event_types")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            event_types=event_type,
+            retrieval=event_scope,
+            patrol_serial=patrol_serial,
+            **(params.get("event_types") or {}),
+        )
+        .call()
+    )
+
+    report_range = (
+        task(report_time_range)
+        .validate()
+        .set_task_instance_id("report_range")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            client=er_client,
+            time_range=time_range,
+            patrol_serial=patrol_serial,
+            **(params.get("report_range") or {}),
+        )
+        .call()
+    )
+
     timezone = (
         task(get_timezone_from_time_range)
         .validate()
@@ -262,7 +681,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(time_range=time_range, **(params.get("timezone") or {}))
+        .partial(time_range=report_range, **(params.get("timezone") or {}))
         .call()
     )
 
@@ -349,73 +768,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    date_generated = (
-        task(get_report_date)
-        .validate()
-        .set_task_instance_id("date_generated")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(timezone_info=timezone, **(params.get("date_generated") or {}))
-        .call()
-    )
-
-    base_maps = (
-        task(set_base_maps)
-        .validate()
-        .set_task_instance_id("base_maps")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(**(params.get("base_maps") or {}))
-        .call()
-    )
-
-    area_scope = (
-        task(get_area_scope)
-        .validate()
-        .set_task_instance_id("area_scope")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(client=er_client, **(params.get("area_scope") or {}))
-        .call()
-    )
-
-    area = (
-        task(skip_to_none)
-        .validate()
-        .set_task_instance_id("area")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(df=area_scope, **(params.get("area") or {}))
-        .call()
-    )
-
     patrol_params = (
         task(set_patrols_and_patrol_events_params)
         .validate()
@@ -430,10 +782,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            patrol_types=patrol_types,
             event_states=None,
             patrols_overlap_daterange=True,
             client=er_client,
-            time_range=time_range,
+            time_range=report_range,
             event_types=[],
             status=["done"],
             raise_on_empty=False,
@@ -446,8 +799,134 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    patrols_fetched = (
+        task(get_patrols_any_type)
+        .validate()
+        .set_task_instance_id("patrols_fetched")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(combined_params=patrol_params, **(params.get("patrols_fetched") or {}))
+        .call()
+    )
+
+    patrols_serial = (
+        task(filter_patrols_by_serial)
+        .validate()
+        .set_task_instance_id("patrols_serial")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            patrols_df=patrols_fetched,
+            patrol_serial=patrol_serial,
+            **(params.get("patrols_serial") or {}),
+        )
+        .call()
+    )
+
+    patrol_legs = (
+        task(get_patrol_segments_from_patrols_df)
+        .validate()
+        .set_task_instance_id("patrol_legs")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            patrols_df=patrols_serial,
+            time_range=report_range,
+            truncate_to_time_range=True,
+            raise_on_empty=False,
+            **(params.get("patrol_legs") or {}),
+        )
+        .call()
+    )
+
+    legs_team_names = (
+        task(add_patrol_team_names)
+        .validate()
+        .set_task_instance_id("legs_team_names")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=patrol_legs, client=er_client, **(params.get("legs_team_names") or {})
+        )
+        .call()
+    )
+
+    patrols_team = (
+        task(filter_by_teams)
+        .validate()
+        .set_task_instance_id("patrols_team")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=patrols_serial,
+            legs=legs_team_names,
+            teams=teams,
+            id_column="id",
+            **(params.get("patrols_team") or {}),
+        )
+        .call()
+    )
+
+    legs_teamed = (
+        task(filter_by_teams)
+        .validate()
+        .set_task_instance_id("legs_teamed")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=legs_team_names,
+            legs=legs_team_names,
+            teams=teams,
+            id_column="patrol_id",
+            **(params.get("legs_teamed") or {}),
+        )
+        .call()
+    )
+
     patrols = (
-        task(get_patrols_from_combined_params)
+        task(filter_by_leaders)
         .validate()
         .set_task_instance_id("patrols")
         .handle_errors()
@@ -459,7 +938,96 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(combined_params=patrol_params, **(params.get("patrols") or {}))
+        .partial(
+            df=patrols_team,
+            patrols_df=patrols_team,
+            leaders=leader_names,
+            id_column="id",
+            **(params.get("patrols") or {}),
+        )
+        .call()
+    )
+
+    legs_led = (
+        task(filter_by_leaders)
+        .validate()
+        .set_task_instance_id("legs_led")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=legs_teamed,
+            patrols_df=patrols_team,
+            leaders=leader_names,
+            id_column="patrol_id",
+            **(params.get("legs_led") or {}),
+        )
+        .call()
+    )
+
+    legs_roster_names = (
+        task(add_patrol_roster_names)
+        .validate()
+        .set_task_instance_id("legs_roster_names")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=legs_led, client=er_client, **(params.get("legs_roster_names") or {})
+        )
+        .call()
+    )
+
+    legs_named = (
+        task(add_patrol_type_display_names)
+        .validate()
+        .set_task_instance_id("legs_named")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=legs_roster_names, client=er_client, **(params.get("legs_named") or {})
+        )
+        .call()
+    )
+
+    legs_local = (
+        task(convert_values_to_timezone)
+        .validate()
+        .set_task_instance_id("legs_local")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=legs_named,
+            timezone=timezone,
+            columns=["segment_start", "segment_end"],
+            **(params.get("legs_local") or {}),
+        )
         .call()
     )
 
@@ -505,6 +1073,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                 "patrol_end_time",
                 "patrol_type__display",
                 "patrol_serial_number",
+                "patrol_segment_id",
+                "patrol_subject",
                 "groupby_col",
                 "fixtime",
                 "junk_status",
@@ -520,10 +1090,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    patrol_trajectory = (
-        task(relocations_to_trajectory)
+    patrol_tracks = (
+        task(drop_short_tracks)
         .validate()
-        .set_task_instance_id("patrol_trajectory")
+        .set_task_instance_id("patrol_tracks")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -535,21 +1105,15 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         )
         .partial(
             relocations=patrol_relocations,
-            trajectory_segment_filter={
-                "min_length_meters": 0.001,
-                "max_length_meters": 1000000,
-                "min_time_secs": 1,
-                "max_time_secs": 3600,
-                "min_speed_kmhr": 0.0011,
-                "max_speed_kmhr": 500,
-            },
-            **(params.get("patrol_trajectory") or {}),
+            group_column="groupby_col",
+            min_fixes=2,
+            **(params.get("patrol_tracks") or {}),
         )
         .call()
     )
 
     trajectory = (
-        task(select_in_area)
+        task(relocations_to_trajectory)
         .validate()
         .set_task_instance_id("trajectory")
         .handle_errors()
@@ -562,50 +1126,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            gdf=patrol_trajectory,
-            area=area,
-            id_column="extra__patrol_id",
+            relocations=patrol_tracks,
+            trajectory_segment_filter={
+                "min_length_meters": 0.001,
+                "max_length_meters": 1000000,
+                "min_time_secs": 1,
+                "max_time_secs": 3600,
+                "min_speed_kmhr": 0.0011,
+                "max_speed_kmhr": 500,
+            },
+            trajectory_segment_filter_overrides=None,
             **(params.get("trajectory") or {}),
         )
         .call()
     )
 
-    team_sources = (
-        task(get_patrol_team_sources)
-        .validate()
-        .set_task_instance_id("team_sources")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(client=er_client, **(params.get("team_sources") or {}))
-        .call()
-    )
-
-    team_groups = (
-        task(set_list_of_string_vars)
-        .validate()
-        .set_task_instance_id("team_groups")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(**(params.get("team_groups") or {}))
-        .call()
-    )
-
     patrol_teams_utc = (
-        task(resolve_patrol_team)
+        task(patrols_from_legs)
         .validate()
         .set_task_instance_id("patrol_teams_utc")
         .handle_errors()
@@ -618,9 +1155,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            legs=legs_named,
             patrols_df=patrols,
-            sources=team_sources,
-            team_groups=team_groups,
             **(params.get("patrol_teams_utc") or {}),
         )
         .call()
@@ -648,85 +1184,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    patrol_type_display = (
-        task(get_patrol_type_display)
-        .validate()
-        .set_task_instance_id("patrol_type_display")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(client=er_client, **(params.get("patrol_type_display") or {}))
-        .call()
-    )
-
-    effort_grouper = (
-        task(set_string_var)
-        .validate()
-        .set_task_instance_id("effort_grouper")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(**(params.get("effort_grouper") or {}))
-        .call()
-    )
-
-    labels = (
-        task(get_report_labels)
-        .validate()
-        .set_task_instance_id("labels")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(**(params.get("labels") or {}))
-        .call()
-    )
-
-    effort = (
-        task(patrol_effort_table)
-        .validate()
-        .set_task_instance_id("effort")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            trajectory=trajectory,
-            patrols=patrol_teams,
-            grouper=effort_grouper,
-            labels=labels,
-            patrol_type_display=patrol_type_display,
-            **(params.get("effort") or {}),
-        )
-        .call()
-    )
-
-    period_events = (
+    period_events_fetched = (
         task(get_events)
         .validate()
-        .set_task_instance_id("period_events")
+        .set_task_instance_id("period_events_fetched")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -737,6 +1198,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            event_types=event_types,
             event_columns=[
                 "id",
                 "time",
@@ -757,11 +1219,34 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             include_related_events=False,
             force_point_geometry=True,
             client=er_client,
-            time_range=time_range,
+            time_range=report_range,
             include_details=True,
             include_display_values=False,
             include_null_geometry=True,
             raise_on_empty=False,
+            **(params.get("period_events_fetched") or {}),
+        )
+        .call()
+    )
+
+    period_events = (
+        task(add_missing_linked_events)
+        .validate()
+        .set_task_instance_id("period_events")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            client=er_client,
+            patrols_df=patrols,
+            events=period_events_fetched,
+            event_types=event_types,
             **(params.get("period_events") or {}),
         )
         .call()
@@ -803,29 +1288,9 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             events=period_events,
             patrol_events=linked_events,
+            retrieval=event_scope,
+            patrol_serial=patrol_serial,
             **(params.get("retrieved_events") or {}),
-        )
-        .call()
-    )
-
-    events_in_area = (
-        task(select_in_area)
-        .validate()
-        .set_task_instance_id("events_in_area")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            id_column=None,
-            gdf=retrieved_events,
-            area=area,
-            **(params.get("events_in_area") or {}),
         )
         .call()
     )
@@ -843,7 +1308,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(events=events_in_area, **(params.get("state_events") or {}))
+        .partial(events=retrieved_events, **(params.get("state_events") or {}))
         .call()
     )
 
@@ -930,51 +1395,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    leg_schemas = (
-        task(get_patrol_leg_schemas)
-        .validate()
-        .set_task_instance_id("leg_schemas")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            client=er_client, patrols_df=patrols, **(params.get("leg_schemas") or {})
-        )
-        .call()
-    )
-
-    personnel = (
-        task(patrol_legs_table)
-        .validate()
-        .set_task_instance_id("personnel")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            patrols_df=patrols,
-            sources=team_sources,
-            schemas=leg_schemas,
-            patrol_type_display=patrol_type_display,
-            labels=labels,
-            timezone=timezone,
-            events=events,
-            closing_event_types=["cierre_de_patrulla"],
-            max_fields=10,
-            **(params.get("personnel") or {}),
-        )
-        .call()
-    )
-
     event_grouping = (
         task(set_string_var)
         .validate()
@@ -992,6 +1412,809 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    event_details_settings = (
+        task(set_event_details)
+        .validate()
+        .set_task_instance_id("event_details_settings")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("event_details_settings") or {}))
+        .call()
+    )
+
+    detail_mode = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("detail_mode")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=event_details_settings,
+            key="mode",
+            **(params.get("detail_mode") or {}),
+        )
+        .call()
+    )
+
+    event_detail_fields = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("event_detail_fields")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=event_details_settings,
+            key="detail_fields",
+            **(params.get("event_detail_fields") or {}),
+        )
+        .call()
+    )
+
+    download_attachments = (
+        task(set_images_options)
+        .validate()
+        .set_task_instance_id("download_attachments")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("download_attachments") or {}))
+        .call()
+    )
+
+    images_list_only = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("images_list_only")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=download_attachments,
+            key="list_only",
+            **(params.get("images_list_only") or {}),
+        )
+        .call()
+    )
+
+    images_max = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("images_max")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=download_attachments,
+            key="max_images",
+            **(params.get("images_max") or {}),
+        )
+        .call()
+    )
+
+    report_text = (
+        task(set_report_text)
+        .validate()
+        .set_task_instance_id("report_text")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("report_text") or {}))
+        .call()
+    )
+
+    report_language = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("report_language")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=report_text,
+            key="language",
+            **(params.get("report_language") or {}),
+        )
+        .call()
+    )
+
+    labels = (
+        task(get_report_labels)
+        .validate()
+        .set_task_instance_id("labels")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(language=report_language, **(params.get("labels") or {}))
+        .call()
+    )
+
+    date_generated = (
+        task(get_report_date)
+        .validate()
+        .set_task_instance_id("date_generated")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            timezone_info=timezone,
+            labels=labels,
+            **(params.get("date_generated") or {}),
+        )
+        .call()
+    )
+
+    report_period = (
+        task(get_report_period)
+        .validate()
+        .set_task_instance_id("report_period")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            time_range=report_range,
+            labels=labels,
+            **(params.get("report_period") or {}),
+        )
+        .call()
+    )
+
+    report_sections = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("report_sections")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=report_text,
+            key="sections",
+            **(params.get("report_sections") or {}),
+        )
+        .call()
+    )
+
+    report_blocks = (
+        task(set_report_blocks)
+        .validate()
+        .set_task_instance_id("report_blocks")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(sections=report_sections, **(params.get("report_blocks") or {}))
+        .call()
+    )
+
+    personnel = (
+        task(patrol_legs_table)
+        .validate()
+        .set_task_instance_id("personnel")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(legs=legs_local, labels=labels, **(params.get("personnel") or {}))
+        .call()
+    )
+
+    no_type_label = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("no_type_label")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=labels, key="no_type", **(params.get("no_type_label") or {})
+        )
+        .call()
+    )
+
+    tracks_typed = (
+        task(fill_na)
+        .validate()
+        .set_task_instance_id("tracks_typed")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=trajectory,
+            value=no_type_label,
+            columns=["extra__patrol_type__display"],
+            **(params.get("tracks_typed") or {}),
+        )
+        .call()
+    )
+
+    effort_tracks_renamed = (
+        task(map_columns)
+        .validate()
+        .set_task_instance_id("effort_tracks_renamed")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=tracks_typed,
+            drop_columns=[],
+            retain_columns=[],
+            rename_columns={
+                "extra__patrol_id": "patrol_id",
+                "extra__patrol_serial_number": "patrol_serial_number",
+                "extra__patrol_type__display": "patrol_type",
+                "extra__patrol_segment_id": "patrol_segment_id",
+                "extra__patrol_subject": "patrol_subject",
+            },
+            raise_if_not_found=False,
+            duplicate_strategy="suffix",
+            **(params.get("effort_tracks_renamed") or {}),
+        )
+        .call()
+    )
+
+    effort_tracks_local = (
+        task(convert_values_to_timezone)
+        .validate()
+        .set_task_instance_id("effort_tracks_local")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_tracks_renamed,
+            timezone=timezone,
+            columns=["segment_start", "segment_end"],
+            **(params.get("effort_tracks_local") or {}),
+        )
+        .call()
+    )
+
+    effort_tracks_named = (
+        task(add_leg_names_to_tracks)
+        .validate()
+        .set_task_instance_id("effort_tracks_named")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_tracks_local,
+            legs=legs_named,
+            **(params.get("effort_tracks_named") or {}),
+        )
+        .call()
+    )
+
+    effort_tracks = (
+        task(decompose_datetime)
+        .validate()
+        .set_task_instance_id("effort_tracks")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_tracks_named,
+            datetime_column="segment_start",
+            components=["date"],
+            remove_source=False,
+            column_prefix=None,
+            **(params.get("effort_tracks") or {}),
+        )
+        .call()
+    )
+
+    effort_legs = (
+        task(fill_na)
+        .validate()
+        .set_task_instance_id("effort_legs")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=legs_local,
+            value=no_type_label,
+            columns=["patrol_type"],
+            **(params.get("effort_legs") or {}),
+        )
+        .call()
+    )
+
+    area_map_layer = (
+        task(effective_map_layer)
+        .validate()
+        .set_task_instance_id("area_map_layer")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            map_layer=effort_map_layer,
+            patrol_serial=patrol_serial,
+            **(params.get("area_map_layer") or {}),
+        )
+        .call()
+    )
+
+    area_grouper_list = (
+        task(area_groupers)
+        .validate()
+        .set_task_instance_id("area_grouper_list")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(map_layer=area_map_layer, **(params.get("area_grouper_list") or {}))
+        .call()
+    )
+
+    area_feature_groups = (
+        task(area_regions)
+        .validate()
+        .set_task_instance_id("area_feature_groups")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            client=er_client,
+            map_layer=area_map_layer,
+            **(params.get("area_feature_groups") or {}),
+        )
+        .call()
+    )
+
+    area_groupers_resolved = (
+        task(resolve_spatial_feature_groups_for_spatial_groupers)
+        .validate()
+        .set_task_instance_id("area_groupers_resolved")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            groupers=area_grouper_list,
+            spatial_feature_groups=area_feature_groups,
+            **(params.get("area_groupers_resolved") or {}),
+        )
+        .call()
+    )
+
+    effort_tracks_indexed = (
+        task(index_tracks_by_area)
+        .validate()
+        .set_task_instance_id("effort_tracks_indexed")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            gdf=effort_tracks,
+            groupers=area_groupers_resolved,
+            **(params.get("effort_tracks_indexed") or {}),
+        )
+        .call()
+    )
+
+    effort_legs_indexed = (
+        task(apportion_legs_by_spatial_index)
+        .validate()
+        .set_task_instance_id("effort_legs_indexed")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            legs=effort_legs,
+            indexed_traj=effort_tracks_indexed,
+            groupers=area_groupers_resolved,
+            drop_unplaced=False,
+            **(params.get("effort_legs_indexed") or {}),
+        )
+        .call()
+    )
+
+    effort_metrics = (
+        task(set_patrol_summary_metrics)
+        .validate()
+        .set_task_instance_id("effort_metrics")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(metrics=effort_metric_list, **(params.get("effort_metrics") or {}))
+        .call()
+    )
+
+    effort_track_metrics = (
+        task(select_track_metrics)
+        .validate()
+        .set_task_instance_id("effort_track_metrics")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            summary_params=effort_metrics, **(params.get("effort_track_metrics") or {})
+        )
+        .call()
+    )
+
+    effort_leg_metrics = (
+        task(select_leg_metrics)
+        .validate()
+        .set_task_instance_id("effort_leg_metrics")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            summary_params=effort_metrics, **(params.get("effort_leg_metrics") or {})
+        )
+        .call()
+    )
+
+    effort_by_tracks = (
+        task(summarize_df)
+        .validate()
+        .set_task_instance_id("effort_by_tracks")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_tracks_indexed,
+            summary_params=effort_track_metrics,
+            groupby_cols=[effort_grouper],
+            reset_index=True,
+            **(params.get("effort_by_tracks") or {}),
+        )
+        .call()
+    )
+
+    effort_by_legs = (
+        task(summarize_df)
+        .validate()
+        .set_task_instance_id("effort_by_legs")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_legs_indexed,
+            summary_params=effort_leg_metrics,
+            groupby_cols=[effort_grouper],
+            reset_index=True,
+            **(params.get("effort_by_legs") or {}),
+        )
+        .call()
+    )
+
+    effort_summary = (
+        task(join_summary_tables)
+        .validate()
+        .set_task_instance_id("effort_summary")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            tables=[effort_by_tracks, effort_by_legs],
+            **(params.get("effort_summary") or {}),
+        )
+        .call()
+    )
+
+    effort_tracks_total = (
+        task(summarize_df)
+        .validate()
+        .set_task_instance_id("effort_tracks_total")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_tracks,
+            summary_params=effort_track_metrics,
+            groupby_cols=None,
+            reset_index=False,
+            **(params.get("effort_tracks_total") or {}),
+        )
+        .call()
+    )
+
+    effort_legs_total = (
+        task(summarize_df)
+        .validate()
+        .set_task_instance_id("effort_legs_total")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_legs,
+            summary_params=effort_leg_metrics,
+            groupby_cols=None,
+            reset_index=False,
+            **(params.get("effort_legs_total") or {}),
+        )
+        .call()
+    )
+
+    effort_totals = (
+        task(join_summary_tables)
+        .validate()
+        .set_task_instance_id("effort_totals")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            tables=[effort_tracks_total, effort_legs_total],
+            **(params.get("effort_totals") or {}),
+        )
+        .call()
+    )
+
+    effort = (
+        task(format_effort_table)
+        .validate()
+        .set_task_instance_id("effort")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            summary=effort_summary,
+            totals=effort_totals,
+            patrols=patrol_teams,
+            legs=legs_local,
+            grouper=effort_grouper,
+            labels=labels,
+            **(params.get("effort") or {}),
+        )
+        .call()
+    )
+
+    no_team_label = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("no_team_label")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=labels, key="no_team", **(params.get("no_team_label") or {})
+        )
+        .call()
+    )
+
+    tracks_teamed = (
+        task(team_or_leader)
+        .validate()
+        .set_task_instance_id("tracks_teamed")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_tracks_named,
+            no_team=no_team_label,
+            **(params.get("tracks_teamed") or {}),
+        )
+        .call()
+    )
+
     tracks_colored = (
         task(apply_color_map)
         .validate()
@@ -1006,11 +2229,95 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=trajectory,
-            input_column_name="extra__patrol_type__display",
+            df=tracks_teamed,
+            input_column_name=patrol_grouping,
             colormap="tab10",
             output_column_name="patrol_color",
             **(params.get("tracks_colored") or {}),
+        )
+        .call()
+    )
+
+    td_legend_title = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("td_legend_title")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=labels,
+            key="time_density_legend",
+            **(params.get("td_legend_title") or {}),
+        )
+        .call()
+    )
+
+    ed_legend_title = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("ed_legend_title")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=labels,
+            key="event_density_legend",
+            **(params.get("ed_legend_title") or {}),
+        )
+        .call()
+    )
+
+    patrol_legend_title = (
+        task(grouping_label)
+        .validate()
+        .set_task_instance_id("patrol_legend_title")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            column=patrol_grouping,
+            labels=labels,
+            **(params.get("patrol_legend_title") or {}),
+        )
+        .call()
+    )
+
+    event_legend_title = (
+        task(grouping_label)
+        .validate()
+        .set_task_instance_id("event_legend_title")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            column=event_grouping,
+            labels=labels,
+            **(params.get("event_legend_title") or {}),
         )
         .call()
     )
@@ -1030,12 +2337,18 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         )
         .partial(
             data_url=None,
-            tooltip_columns=None,
+            tooltip_columns=[
+                "patrol_serial_number",
+                "patrol_type",
+                "patrol_team_name",
+                "patrol_subject",
+            ],
             geodataframe=tracks_colored,
             layer_style={"get_color": "patrol_color", "get_width": 2},
             legend={
-                "label_column": "extra__patrol_type__display",
+                "label_column": patrol_grouping,
                 "color_column": "patrol_color",
+                "title": patrol_legend_title,
             },
             **(params.get("tracks_layer") or {}),
         )
@@ -1133,9 +2446,31 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             data_url=None,
             geodataframe=events_colored,
             layer_style={"get_fill_color": "event_color", "get_radius": 5},
-            legend={"label_column": event_grouping, "color_column": "event_color"},
+            legend={
+                "label_column": event_grouping,
+                "color_column": "event_color",
+                "title": event_legend_title,
+            },
             tooltip_columns=["serial_number", "event_type_display"],
             **(params.get("events_layer") or {}),
+        )
+        .call()
+    )
+
+    tracks_layers = (
+        task(collect_map_layers)
+        .validate()
+        .set_task_instance_id("tracks_layers")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            layers=[tracks_layer, events_layer], **(params.get("tracks_layers") or {})
         )
         .call()
     )
@@ -1154,11 +2489,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            geo_layers=[tracks_layer, events_layer],
+            geo_layers=tracks_layers,
             width_px=650,
             height_px=400,
-            padding=0.15,
-            max_zoom=16,
+            padding=0.08,
+            max_zoom=18,
             **(params.get("tracks_view") or {}),
         )
         .call()
@@ -1178,11 +2513,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            geo_layers=[tracks_layer, events_layer],
+            geo_layers=tracks_layers,
             width_px=1280,
             height_px=720,
-            padding=0.15,
-            max_zoom=16,
+            padding=0.08,
+            max_zoom=18,
             **(params.get("tracks_view_static") or {}),
         )
         .call()
@@ -1204,7 +2539,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             output_type="html",
             max_zoom=20,
-            geo_layers=[tracks_layer, events_layer],
+            geo_layers=tracks_layers,
             tile_layers=base_maps,
             view_state=tracks_view,
             static=False,
@@ -1253,13 +2588,32 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             output_type="html",
             max_zoom=20,
-            geo_layers=[tracks_layer, events_layer],
+            geo_layers=tracks_layers,
             tile_layers=base_maps,
             view_state=tracks_view_static,
             static=True,
             title=None,
             legend_style={"placement": "bottom-right"},
             **(params.get("tracks_map_static_html") or {}),
+        )
+        .call()
+    )
+
+    tracks_map_static_clean = (
+        task(hide_save_image_button)
+        .validate()
+        .set_task_instance_id("tracks_map_static_clean")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            html=tracks_map_static_html, **(params.get("tracks_map_static_clean") or {})
         )
         .call()
     )
@@ -1278,7 +2632,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            text=tracks_map_static_html,
+            text=tracks_map_static_clean,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             filename_suffix="tracks_map_static",
             **(params.get("tracks_map_static") or {}),
@@ -1454,6 +2808,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                 "label_column": "percentile",
                 "label_suffix": " %",
                 "color_column": "percentile_colormap",
+                "title": td_legend_title,
             },
             **(params.get("td_layer") or {}),
         )
@@ -1477,8 +2832,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             geo_layers=[td_layer],
             width_px=650,
             height_px=400,
-            padding=0.15,
-            max_zoom=16,
+            padding=0.08,
+            max_zoom=18,
             **(params.get("td_view") or {}),
         )
         .call()
@@ -1501,8 +2856,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             geo_layers=[td_layer],
             width_px=1280,
             height_px=720,
-            padding=0.15,
-            max_zoom=16,
+            padding=0.08,
+            max_zoom=18,
             **(params.get("td_view_static") or {}),
         )
         .call()
@@ -1584,6 +2939,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    td_map_static_clean = (
+        task(hide_save_image_button)
+        .validate()
+        .set_task_instance_id("td_map_static_clean")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(html=td_map_static_html, **(params.get("td_map_static_clean") or {}))
+        .call()
+    )
+
     time_density_map_static = (
         task(persist_text)
         .validate()
@@ -1598,7 +2970,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            text=td_map_static_html,
+            text=td_map_static_clean,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             filename_suffix="time_density_map_static",
             **(params.get("time_density_map_static") or {}),
@@ -1800,7 +3172,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             tooltip_columns=None,
             geodataframe=ed_wgs84,
             layer_style={"get_fill_color": "density_colormap", "opacity": 0.6},
-            legend={"label_column": "density_bins", "color_column": "density_colormap"},
+            legend={
+                "label_column": "density_bins",
+                "color_column": "density_colormap",
+                "title": ed_legend_title,
+            },
             **(params.get("ed_layer") or {}),
         )
         .call()
@@ -1823,8 +3199,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             geo_layers=[ed_layer],
             width_px=650,
             height_px=400,
-            padding=0.15,
-            max_zoom=16,
+            padding=0.08,
+            max_zoom=18,
             **(params.get("ed_view") or {}),
         )
         .call()
@@ -1847,8 +3223,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             geo_layers=[ed_layer],
             width_px=1280,
             height_px=720,
-            padding=0.15,
-            max_zoom=16,
+            padding=0.08,
+            max_zoom=18,
             **(params.get("ed_view_static") or {}),
         )
         .call()
@@ -1930,6 +3306,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    ed_map_static_clean = (
+        task(hide_save_image_button)
+        .validate()
+        .set_task_instance_id("ed_map_static_clean")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(html=ed_map_static_html, **(params.get("ed_map_static_clean") or {}))
+        .call()
+    )
+
     event_density_map_static = (
         task(persist_text)
         .validate()
@@ -1944,7 +3337,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            text=ed_map_static_html,
+            text=ed_map_static_clean,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             filename_suffix="event_density_map_static",
             **(params.get("event_density_map_static") or {}),
@@ -2098,24 +3491,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(events=events, labels=labels, **(params.get("event_details") or {}))
-        .call()
-    )
-
-    detail_mode = (
-        task(set_string_var)
-        .validate()
-        .set_task_instance_id("detail_mode")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
+        .partial(
+            events=events,
+            labels=labels,
+            detail_fields=None,
+            max_fields=None,
+            **(params.get("event_details") or {}),
         )
-        .partial(**(params.get("detail_mode") or {}))
         .call()
     )
 
@@ -2133,73 +3515,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            detail_fields=event_detail_fields,
             fallback_n=3,
             events=events,
             labels=labels,
             **(params.get("event_detail_tables") or {}),
-        )
-        .call()
-    )
-
-    images_options = (
-        task(set_images_options)
-        .validate()
-        .set_task_instance_id("images_options")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(**(params.get("images_options") or {}))
-        .call()
-    )
-
-    images_list_only = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("images_list_only")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            default=False,
-            raise_on_missing=True,
-            collection=images_options,
-            key="list_only",
-            **(params.get("images_list_only") or {}),
-        )
-        .call()
-    )
-
-    images_max = (
-        task(get_collection_item)
-        .validate()
-        .set_task_instance_id("images_max")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            default=50,
-            raise_on_missing=True,
-            collection=images_options,
-            key="max_images",
-            **(params.get("images_max") or {}),
         )
         .call()
     )
@@ -2277,23 +3597,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    report_blocks = (
-        task(set_report_blocks)
-        .validate()
-        .set_task_instance_id("report_blocks")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(**(params.get("report_blocks") or {}))
-        .call()
-    )
-
     headline = (
         task(headline_stats)
         .validate()
@@ -2310,6 +3613,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             patrols=patrol_teams,
             trajectory=trajectory,
             events=events,
+            totals=effort_totals,
             **(params.get("headline") or {}),
         )
         .call()
@@ -2328,12 +3632,12 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(**(params.get("template_path") or {}))
+        .partial(template="standard", **(params.get("template_path") or {}))
         .call()
     )
 
     report_title = (
-        task(set_string_var)
+        task(pick_setting)
         .validate()
         .set_task_instance_id("report_title")
         .handle_errors()
@@ -2345,12 +3649,14 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(**(params.get("report_title") or {}))
+        .partial(
+            collection=report_text, key="title", **(params.get("report_title") or {})
+        )
         .call()
     )
 
     report_subtitle = (
-        task(set_string_var)
+        task(pick_setting)
         .validate()
         .set_task_instance_id("report_subtitle")
         .handle_errors()
@@ -2362,29 +3668,16 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(**(params.get("report_subtitle") or {}))
-        .call()
-    )
-
-    report_area = (
-        task(set_string_var)
-        .validate()
-        .set_task_instance_id("report_area")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
+        .partial(
+            collection=report_text,
+            key="subtitle",
+            **(params.get("report_subtitle") or {}),
         )
-        .partial(**(params.get("report_area") or {}))
         .call()
     )
 
     detail_intro = (
-        task(set_string_var)
+        task(pick_setting)
         .validate()
         .set_task_instance_id("detail_intro")
         .handle_errors()
@@ -2396,7 +3689,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(**(params.get("detail_intro") or {}))
+        .partial(
+            collection=report_text,
+            key="details_intro",
+            **(params.get("detail_intro") or {}),
+        )
         .call()
     )
 
@@ -2424,8 +3721,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                 "items": [
                     {"item_type": "text", "key": "title", "value": report_title},
                     {"item_type": "text", "key": "subtitle", "value": report_subtitle},
-                    {"item_type": "text", "key": "area", "value": report_area},
-                    {"item_type": "timerange", "key": "period", "value": time_range},
+                    {"item_type": "text", "key": "period", "value": report_period},
                     {"item_type": "text", "key": "generated_by", "value": generated_by},
                     {
                         "item_type": "text",
@@ -2461,18 +3757,21 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                         "key": "tracks_map",
                         "value": tracks_map_static,
                         "width_inches": 6.6,
+                        "screenshot_config": {"full_page": False},
                     },
                     {
                         "item_type": "image",
                         "key": "time_density_map",
                         "value": time_density_map_static,
                         "width_inches": 6.6,
+                        "screenshot_config": {"full_page": False},
                     },
                     {
                         "item_type": "image",
                         "key": "event_density_map",
                         "value": event_density_map_static,
                         "width_inches": 6.6,
+                        "screenshot_config": {"full_page": False},
                     },
                     {
                         "item_type": "image",
@@ -3057,6 +4356,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    report_files = (
+        task(create_files_single_view)
+        .validate()
+        .set_task_instance_id("report_files")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(files=[report], **(params.get("report_files") or {}))
+        .call()
+    )
+
     dashboard = (
         task(gather_dashboard)
         .validate()
@@ -3071,7 +4387,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         )
         .partial(
             details=workflow_details,
-            time_range=time_range,
+            time_range=report_range,
             widgets=[
                 kpi_patrols_widget,
                 kpi_km_widget,
@@ -3087,6 +4403,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                 event_records_widget,
                 legs_widget,
             ],
+            files=report_files,
             **(params.get("dashboard") or {}),
         )
         .call()

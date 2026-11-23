@@ -17,7 +17,6 @@ SECTIONS = {
     "event_state": "state_events",
     "event_details": "event_details_settings",
     "report": "report_text",
-    "report_sections": "report_blocks",
 }
 # (mock section, mock field) -> param name of the generic core task
 FIELDS = {
@@ -59,12 +58,15 @@ def _expected_field(section, name, field):
 def _mismatches():
     mock, compiled = json.loads(MOCK.read_text()), json.loads(COMPILED.read_text())
     sections, out = _mock_sections(mock), []
+    got_sections = _mock_sections(compiled)  # root rules added by dev/add_root_rules.py
+    if not (compiled.get("if") and compiled["else"].get("if")):
+        out.append("root show/hide rules missing (dev/add_root_rules.py)")
 
     # workflow_details (name/description, not in the mock) stays first
     order = ["workflow_details"] + [SECTIONS.get(k, k) for k in mock["uiSchema"]["ui:order"]]
     if compiled["uiSchema"].get("ui:order") != order:
         out.append(f"ui:order: {compiled['uiSchema'].get('ui:order')} != {order}")
-    extra = set(compiled["properties"]) - {SECTIONS.get(k, k) for k in sections} - {"workflow_details"}
+    extra = set(got_sections) - {SECTIONS.get(k, k) for k in sections} - {"workflow_details"}
     if extra:
         out.append(f"sections not in the mock: {sorted(extra)}")
 
@@ -72,7 +74,7 @@ def _mismatches():
         if key == "*":
             continue
         step, want = SECTIONS.get(key, key), sections[key]
-        got = compiled["properties"].get(step)
+        got = got_sections.get(step)
         if got is None:
             out.append(f"{step}: missing")
             continue
@@ -109,6 +111,6 @@ def test_old_param_keys_rejected():
     import pytest
 
     form = json.loads(COMPILED.read_text())
-    schema = {k: form[k] for k in ("properties", "$defs", "additionalProperties") if k in form}
+    schema = {k: form[k] for k in ("properties", "$defs", "additionalProperties", "if", "else") if k in form}
     with pytest.raises(jsonschema.ValidationError, match="Additional properties"):
         jsonschema.validate({"patrol_serial": {"var": "70"}}, schema)

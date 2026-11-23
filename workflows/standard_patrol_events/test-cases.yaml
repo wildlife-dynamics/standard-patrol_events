@@ -48,7 +48,6 @@ costaecuador:
       title: Reporte de patrullajes y eventos
       subtitle: Costa Ecuador
       details_intro: ''
-    report_blocks: {}
 
 apn:
   name: apn
@@ -98,8 +97,7 @@ apn:
       title: Reporte de patrullajes y eventos
       subtitle: Parque Nacional Los Alerces
       details_intro: ''
-    report_blocks:
-      personnel: true
+      sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
 
 mep:
   name: mep
@@ -149,8 +147,7 @@ mep:
       title: Patrol & Events Report
       subtitle: mep test site
       details_intro: ''
-    report_blocks:
-      personnel: true
+      sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
 
 empty_period:
   name: empty_period
@@ -200,7 +197,6 @@ empty_period:
       title: Reporte de patrullajes y eventos
       subtitle: Costa Ecuador
       details_intro: ''
-    report_blocks: {}
 
 belize:
   name: belize
@@ -250,8 +246,7 @@ belize:
       title: Patrol & Events Report
       subtitle: SACD Belize
       details_intro: ''
-    report_blocks:
-      personnel: true
+      sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
 
 apncentral:
   name: apncentral
@@ -301,8 +296,7 @@ apncentral:
       title: Reporte de patrullajes y eventos
       subtitle: APN Central
       details_intro: ''
-    report_blocks:
-      personnel: true
+      sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
 
 apncentral_patrol70:
   name: apncentral_patrol70
@@ -355,8 +349,7 @@ apncentral_patrol70:
       title: Reporte de patrullajes y eventos
       subtitle: APN Central
       details_intro: ''
-    report_blocks:
-      personnel: true
+      sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
 
 mep_team:
   name: mep_team
@@ -409,8 +402,7 @@ mep_team:
       title: Patrol & Events Report
       subtitle: mep test site
       details_intro: ''
-    report_blocks:
-      personnel: true
+      sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
 
 mep_area:
   name: mep_area
@@ -461,12 +453,11 @@ mep_area:
       title: Patrol & Events Report
       subtitle: mep test site
       details_intro: ''
-    report_blocks:
-      personnel: true
+      sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
 
 apn_leader:
   name: apn_leader
-  description: APN Los Alerces, Aug-Oct 2026, filtered to one team leader group.
+  description: APN Los Alerces, Aug-Oct 2026, filtered to one team leader (by name).
   params:
     workflow_details:
       name: Reporte de patrullajes y eventos
@@ -485,7 +476,7 @@ apn_leader:
     base_maps: {}
     patrol_filter:
       team_leader: true
-      team_leader_group: GUARDAPARQUES ZONA NORTE
+      leaders: [Fernando Corvalan]
     patrol_type:
       vars: []
     patrol_effort:
@@ -514,5 +505,4 @@ apn_leader:
       title: Reporte de patrullajes y eventos
       subtitle: Parque Nacional Los Alerces
       details_intro: ''
-    report_blocks:
-      personnel: true
+      sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]

@@ -8,15 +8,14 @@ def test_packaged_template_exists():
     assert path.is_file() and path.suffix == ".docx"
 
 
-def test_report_blocks_defaults_follow_mrd_core_optional_split():
+def test_report_blocks_all_on_by_default():
     b = set_report_blocks()
-    assert b["show_headline_stats"] == "true" and b["show_conclusions"] == "true"
-    assert b["show_personnel"] == "false" and b["show_category_priority"] == "false"
-    assert all(v in ("true", "false") for v in b.values()) and len(b) == 9 and b["show_images"] == "true"
+    assert all(v == "true" for v in b.values()) and len(b) == 9
 
 
 def test_report_blocks_override():
-    assert set_report_blocks(personnel=True)["show_personnel"] == "true"
+    b = set_report_blocks(sections=["personnel"])
+    assert b["show_personnel"] == "true" and b["show_headline_stats"] == "false"
 
 
 def test_images_options():

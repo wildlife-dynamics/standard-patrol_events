@@ -1,8 +1,11 @@
 from typing import Annotated, Any, Literal
 
+from ecoscope.platform.annotations import AdvancedField
 from pydantic import BaseModel, Field
 from wt_contracts import CodecRef
 from wt_registry import register
+
+from ._report import _BLOCKS, DEFAULT_BLOCKS
 
 # Plain-JSON returns: lets the wt step cache store them (an untyped return blocks every step downstream).
 _JSON = CodecRef("wt_task.cache:JSON")
@@ -24,9 +27,9 @@ def set_patrol_filter(
         list[str], Field(title=" ", description="Team names as set in EarthRanger's patrol configuration.")
     ] = [],  # noqa: B006
     team_leader: Annotated[bool, Field(title="Team Leader")] = False,
-    team_leader_group: Annotated[
-        str, Field(title=" ", description="Patrols led by someone in this subject group.")
-    ] = "",
+    leaders: Annotated[
+        list[str], Field(title=" ", description="Leader names as in EarthRanger.")
+    ] = [],  # noqa: B006
     single_patrol: Annotated[bool, Field(title="Single Patrol")] = False,
     patrol_id: Annotated[
         str,
@@ -36,10 +39,10 @@ def set_patrol_filter(
         ),
     ] = "",
 ) -> Annotated[
-    dict[str, str | list[str]], Field(description="patrol_serial, teams, leader_group (empty = no filter).")
+    dict[str, str | list[str]], Field(description="patrol_serial, teams, leaders (empty = no filter).")
 ]:
-    """Patrol Filter section. One filter applies: single patrol, else teams, else team leader group."""
-    out: dict[str, str | list[str]] = {"patrol_serial": "", "teams": [], "leader_group": ""}
+    """Patrol Filter section. One filter applies: single patrol, else teams, else team leaders."""
+    out: dict[str, str | list[str]] = {"patrol_serial": "", "teams": [], "leaders": []}
     if single_patrol:
         if not patrol_id.strip():
             raise ValueError("Patrol ID is required for a single patrol.")
@@ -47,7 +50,7 @@ def set_patrol_filter(
     elif team:
         out["teams"] = list(teams)
     elif team_leader:
-        out["leader_group"] = team_leader_group.strip()
+        out["leaders"] = list(leaders)
     return out
 
 
@@ -148,15 +151,31 @@ def effective_event_types(
 
 @register()
 def set_report_text(
-    language: Annotated[Literal["en", "es", "pt"], Field(title="Language")] = "en",
-    title: Annotated[str, Field(title="Title")] = "Patrol & Events Report",
-    subtitle: Annotated[str, Field(title="Subtitle")] = "",
-    details_intro: Annotated[
-        str, Field(title="Event Details Introduction", description="Text shown above the event details.")
+    language: Annotated[
+        Literal["en", "es", "pt"],
+        Field(title="Language", description="Choose the language for the report's headings and labels."),
+    ] = "en",
+    title: Annotated[str, Field(title="Title", description="Enter the main heading for the first page.")] = (
+        "Patrol & Events Report"
+    ),
+    subtitle: Annotated[
+        str, Field(title="Subtitle", description="Add an optional line under the title, e.g. the protected area.")
     ] = "",
-) -> Annotated[dict[str, str], Field(description="language, title, subtitle, details_intro.")]:
-    """Report Text section."""
-    return {"language": language, "title": title, "subtitle": subtitle, "details_intro": details_intro}
+    details_intro: Annotated[
+        str,
+        AdvancedField(
+            default="",
+            title="Event Details Introduction",
+            description="Add optional text to show before the event details.",
+        ),
+    ] = "",
+    sections: Annotated[
+        list[_BLOCKS],
+        Field(title="Report Sections", description="Remove any sections you don't need. All are included by default."),
+    ] = list(DEFAULT_BLOCKS),
+) -> Annotated[dict, _JSON, Field(description="language, title, subtitle, details_intro, sections.")]:
+    """Report section."""
+    return {"language": language, "title": title, "subtitle": subtitle, "details_intro": details_intro, "sections": sections}
 
 
 class EventTypeFields(BaseModel):
@@ -196,3 +215,21 @@ def set_event_details(
         "mode": "general" if all_details else "per_type",
         "detail_fields": {t.event_type: list(t.fields) for t in tables},
     }
+
+
+# grouping column (Patrol Grouping / Event Grouping value) -> report label key
+_GROUPING_LABELS = {
+    "patrol_type": "patrol_type",
+    "patrol_team_name": "team",
+    "event_type_display": "event_type",
+    "event_category_display": "category",
+}
+
+
+@register()
+def grouping_label(
+    column: Annotated[str, Field(description="The chosen grouping column.")],
+    labels: Annotated[dict, Field(description="Report labels (get_report_labels).")],
+) -> Annotated[str, Field(description="The grouping's name in the report language, for legend titles.")]:
+    """Legend title for a map coloured by `column`."""
+    return labels.get(_GROUPING_LABELS.get(column, ""), column)

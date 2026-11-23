@@ -24,7 +24,6 @@ requirements:
 # grouping option values stay the column names the workflow reads (patrol_team_name, *_display).
 rjsf-overrides:
   properties:
-    base_maps.properties.base_maps.ecoscope:advanced: false
     patrol_filter.description: 'Optional: limit the patrols to one team, team leader or patrol. Leave unticked to
       include all patrols.'
     patrol_filter.additionalProperties: true
@@ -121,15 +120,13 @@ rjsf-overrides:
         - team_leader
       then:
         properties:
-          team_leader_group:
+          leaders:
             title: ' '
-            type: string
-            description: Patrols led by someone in this subject group.
-            ecoscope:transform:
-            - transformer: EarthRangerEnumResolver
-              transformer_kws:
-                type: subject_group_name
-                depends_on: properties.er_client.properties.data_source.properties.name
+            type: array
+            minItems: 1
+            items:
+              type: string
+            description: Leader names as in EarthRanger.
     patrol_type.properties.vars:
       title: ' '
       type: array
@@ -302,9 +299,10 @@ rjsf-overrides:
                 description: Field names as on the event form, one per line.
             required:
             - event_type
-    report_text.description: Language and titles of the Word report.
+    report_text.description: Name the report, choose its language and pick what it includes.
     report_text.properties.language:
       title: Language
+      description: Choose the language for the report's headings and labels.
       type: string
       default: en
       oneOf:
@@ -314,7 +312,26 @@ rjsf-overrides:
         title: Español
       - const: pt
         title: Português
-    report_blocks.description: Choose the optional sections to include.
+    report_text.properties.sections.uniqueItems: true
+    report_text.properties.sections.items:
+      type: string
+      oneOf:
+      - const: headline_stats
+        title: Headline Figures
+      - const: personnel
+        title: Personnel
+      - const: time_density
+        title: Patrol Time Density Map
+      - const: event_density
+        title: Event Density Map
+      - const: events_chart
+        title: Events Chart
+      - const: monthly_chart
+        title: Events by Month
+      - const: category_priority
+        title: Events by Category and Priority
+      - const: conclusions
+        title: Conclusions Box
   uiSchema:
     ui:order:
     - workflow_details
@@ -330,9 +347,8 @@ rjsf-overrides:
     - state_events
     - event_grouping
     - event_details_settings
-    - download_attachments
     - report_text
-    - report_blocks
+    - download_attachments
     - '*'
     patrol_grouping.var:
       ui:options:
@@ -344,12 +360,28 @@ rjsf-overrides:
       items:
         ui:options:
           label: false
-    report_text.details_intro:
-      ui:widget: textarea
+    report_text:
+      ui:order: [title, subtitle, language, sections, details_intro]
+      title:
+        ui:placeholder: Patrol & Events Report
+      subtitle:
+        ui:placeholder: e.g. Parque Nacional Los Alerces
+      details_intro:
+        ui:widget: textarea
+        ui:placeholder: e.g. Events recorded by rangers during the period.
+    # additionalProperties is true there for the if/then fields: hide RJSF's "+" button, and the
+    # values a hidden field leaves behind (else RJSF shows them as editable "<name> Key" rows)
+    patrol_filter.ui:options.expandable: false
+    patrol_filter.additionalProperties.ui:widget: hidden
+    patrol_effort.ui:options.expandable: false
+    patrol_effort.additionalProperties.ui:widget: hidden
+    event_details_settings.ui:options.expandable: false
+    event_details_settings.additionalProperties.ui:widget: hidden
 
   # Form-root show/hide (design §3, §5): Patrol Type, Patrol Effort, Events and Event Type disappear for a
   # Single Patrol. Nested on purpose: RJSF ignores sibling root rules and rules inside a root allOf.
-  # needs wt-compiler >= <release with root rules>  (docs/superpowers/specs/2026-11-19-wt-compiler-root-rules.md)
+  # Applied after every compile by dev/add_root_rules.py until wt-compiler emits root rules
+  # (docs/superpowers/specs/2026-11-19-wt-compiler-root-rules.md); then uncomment this and delete the script.
   # remove:
   # - patrol_type
   # - patrol_effort
@@ -538,11 +570,11 @@ workflow:
       collection: ${{ workflow.patrol_filter.return }}
       key: teams
 
-  - id: leader_group_name
+  - id: leader_names
     task: pick_setting
     partial:
       collection: ${{ workflow.patrol_filter.return }}
-      key: leader_group
+      key: leaders
 
   - name: Patrol Type
     id: patrol_type
@@ -707,20 +739,13 @@ workflow:
       teams: ${{ workflow.teams.return }}
       id_column: patrol_id
 
-  # Leader filter: patrols with a leg led by a person in the chosen subject group (one of
-  # the patrol configuration's member groups, where ER takes leaders from), by subject id
-  - id: leader_group
-    task: get_leader_group_ids
-    partial:
-      client: ${{ workflow.er_client.return }}
-      group: ${{ workflow.leader_group_name.return }}
-
+  # Leader filter: patrols with a leg led by one of the typed leader names
   - id: patrols
     task: filter_by_leaders
     partial:
       df: ${{ workflow.patrols_team.return }}
       patrols_df: ${{ workflow.patrols_team.return }}
-      leader_ids: ${{ workflow.leader_group.return }}
+      leaders: ${{ workflow.leader_names.return }}
       id_column: id
 
   - id: legs_led
@@ -728,7 +753,7 @@ workflow:
     partial:
       df: ${{ workflow.legs_teamed.return }}
       patrols_df: ${{ workflow.patrols_team.return }}
-      leader_ids: ${{ workflow.leader_group.return }}
+      leaders: ${{ workflow.leader_names.return }}
       id_column: patrol_id
 
   - id: legs_roster_names
@@ -917,7 +942,7 @@ workflow:
       key: max_images
 
   # ── 11 · Report text, language and labels; report sections ──────────────────────
-  - name: Report
+  - name: Report Settings
     id: report_text
     task: set_report_text
 
@@ -944,9 +969,16 @@ workflow:
       time_range: ${{ workflow.report_range.return }}
       labels: ${{ workflow.labels.return }}
 
-  - name: Report Sections
-    id: report_blocks
+  - id: report_sections
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.report_text.return }}
+      key: sections
+
+  - id: report_blocks
     task: set_report_blocks
+    partial:
+      sections: ${{ workflow.report_sections.return }}
 
   # Who went on patrol (MRD personnel block): one row per leg — patrol number and date,
   # patrol type, time, leader, members.
@@ -1151,22 +1183,38 @@ workflow:
       df: ${{ workflow.effort_tracks_named.return }}
       no_team: ${{ workflow.no_team_label.return }}
 
-  # one simplified line per leg: a year of raw track segments made 200 MB map files
-  - id: tracks_lines
-    task: simplify_tracks
-    partial:
-      df: ${{ workflow.tracks_teamed.return }}
-      by: [patrol_segment_id, patrol_serial_number, patrol_type, patrol_team_name, patrol_subject]
-      tolerance_m: 10
-      time_column: segment_start  # fixed: keeps a leftover section out of the form
-
   - id: tracks_colored
     task: apply_color_map
     partial:
-      df: ${{ workflow.tracks_lines.return }}
+      df: ${{ workflow.tracks_teamed.return }}
       input_column_name: ${{ workflow.patrol_grouping.return }}
       colormap: tab10
       output_column_name: patrol_color
+
+  - id: td_legend_title
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.labels.return }}
+      key: time_density_legend
+
+  - id: ed_legend_title
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.labels.return }}
+      key: event_density_legend
+
+  # legend titles follow the chosen grouping, in the report language
+  - id: patrol_legend_title
+    task: grouping_label
+    partial:
+      column: ${{ workflow.patrol_grouping.return }}
+      labels: ${{ workflow.labels.return }}
+
+  - id: event_legend_title
+    task: grouping_label
+    partial:
+      column: ${{ workflow.event_grouping.return }}
+      labels: ${{ workflow.labels.return }}
 
   - id: tracks_layer
     task: create_path_layer
@@ -1175,7 +1223,10 @@ workflow:
       tooltip_columns: [patrol_serial_number, patrol_type, patrol_team_name, patrol_subject]
       geodataframe: ${{ workflow.tracks_colored.return }}
       layer_style: {get_color: patrol_color, get_width: 2}
-      legend: {label_column: "${{ workflow.patrol_grouping.return }}", color_column: patrol_color}
+      legend:
+        label_column: ${{ workflow.patrol_grouping.return }}
+        color_column: patrol_color
+        title: ${{ workflow.patrol_legend_title.return }}
 
   - id: events_with_geometry
     task: ecoscope.platform.tasks.transformation.drop_null_geometry
@@ -1211,7 +1262,10 @@ workflow:
       data_url: null
       geodataframe: ${{ workflow.events_colored.return }}
       layer_style: {get_fill_color: event_color, get_radius: 5}
-      legend: {label_column: "${{ workflow.event_grouping.return }}", color_column: event_color}
+      legend:
+        label_column: ${{ workflow.event_grouping.return }}
+        color_column: event_color
+        title: ${{ workflow.event_legend_title.return }}
       tooltip_columns: [serial_number, event_type_display]
 
   # A period with no events skips the events layer; keep the tracks map anyway.
@@ -1229,8 +1283,8 @@ workflow:
       geo_layers: ${{ workflow.tracks_layers.return }}
       width_px: 650
       height_px: 400
-      padding: 0.15
-      max_zoom: 16
+      padding: 0.08
+      max_zoom: 18  # a few-metre track (e.g. a test patrol) still shows as a line
 
   - id: tracks_view_static  # report map (1280x720 px)
     task: fit_view_state
@@ -1238,8 +1292,8 @@ workflow:
       geo_layers: ${{ workflow.tracks_layers.return }}
       width_px: 1280
       height_px: 720
-      padding: 0.15
-      max_zoom: 16
+      padding: 0.08
+      max_zoom: 18  # a few-metre track (e.g. a test patrol) still shows as a line
 
   - id: tracks_map_html
     task: draw_map
@@ -1340,7 +1394,11 @@ workflow:
       tooltip_columns: null
       geodataframe: ${{ workflow.td_wgs84.return }}
       layer_style: {get_fill_color: percentile_colormap, opacity: 0.6}
-      legend: {label_column: percentile, label_suffix: " %", color_column: percentile_colormap}
+      legend:
+        label_column: percentile
+        label_suffix: " %"
+        color_column: percentile_colormap
+        title: ${{ workflow.td_legend_title.return }}
 
   - id: td_view  # dashboard widget (~650x400 px)
     task: fit_view_state
@@ -1348,8 +1406,8 @@ workflow:
       geo_layers: ["${{ workflow.td_layer.return }}"]
       width_px: 650
       height_px: 400
-      padding: 0.15
-      max_zoom: 16
+      padding: 0.08
+      max_zoom: 18  # a few-metre track (e.g. a test patrol) still shows as a line
 
   - id: td_view_static  # report map (1280x720 px)
     task: fit_view_state
@@ -1357,8 +1415,8 @@ workflow:
       geo_layers: ["${{ workflow.td_layer.return }}"]
       width_px: 1280
       height_px: 720
-      padding: 0.15
-      max_zoom: 16
+      padding: 0.08
+      max_zoom: 18  # a few-metre track (e.g. a test patrol) still shows as a line
 
   - id: td_map_html
     task: draw_map
@@ -1482,7 +1540,10 @@ workflow:
       tooltip_columns: null
       geodataframe: ${{ workflow.ed_wgs84.return }}
       layer_style: {get_fill_color: density_colormap, opacity: 0.6}
-      legend: {label_column: density_bins, color_column: density_colormap}
+      legend:
+        label_column: density_bins
+        color_column: density_colormap
+        title: ${{ workflow.ed_legend_title.return }}
 
   - id: ed_view  # dashboard widget (~650x400 px)
     task: fit_view_state
@@ -1490,8 +1551,8 @@ workflow:
       geo_layers: ["${{ workflow.ed_layer.return }}"]
       width_px: 650
       height_px: 400
-      padding: 0.15
-      max_zoom: 16
+      padding: 0.08
+      max_zoom: 18  # a few-metre track (e.g. a test patrol) still shows as a line
 
   - id: ed_view_static  # report map (1280x720 px)
     task: fit_view_state
@@ -1499,8 +1560,8 @@ workflow:
       geo_layers: ["${{ workflow.ed_layer.return }}"]
       width_px: 1280
       height_px: 720
-      padding: 0.15
-      max_zoom: 16
+      padding: 0.08
+      max_zoom: 18  # a few-metre track (e.g. a test patrol) still shows as a line
 
   - id: ed_map_html
     task: draw_map
@@ -1929,6 +1990,13 @@ workflow:
       title: Event records
       data: ${{ workflow.event_records_table.return }}
 
+  # the Word report as a dashboard download (as bl-crop-raid-report / bl-pcf-report)
+  - id: report_files
+    task: create_files_single_view
+    partial:
+      files:
+        - ${{ workflow.report.return }}
+
   - id: dashboard
     task: gather_dashboard
     skipif:
@@ -1951,3 +2019,4 @@ workflow:
         - ${{ workflow.event_summary_widget.return }}
         - ${{ workflow.event_records_widget.return }}
         - ${{ workflow.legs_widget.return }}
+      files: ${{ workflow.report_files.return }}
