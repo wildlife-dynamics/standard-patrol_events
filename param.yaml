@@ -1,0 +1,45 @@
+# Costa Ecuador defaults; per-site presets live in test-cases.yaml.
+workflow_details:
+  name: Reporte de patrullajes y eventos
+  description: Costa Ecuador
+er_client:
+  data_source:
+    name: costaecuador
+time_range:
+  since: '2026-08-01T00:00:00'
+  until: '2026-11-01T00:00:00'
+  timezone:
+    label: America/Guayaquil
+    tzCode: America/Guayaquil
+    name: (UTC-05:00) America/Guayaquil
+    utc: -05:00
+base_maps: {}
+patrol_filter: {}
+patrol_type:
+  vars: []
+patrol_effort:
+  group_by: team
+  columns:
+  - patrol_count
+  - total_distance
+  - total_duration
+patrol_grouping:
+  var: patrol_type
+event_scope:
+  linked_only: false
+event_type:
+  vars: []
+state_events:
+  states: []
+event_grouping:
+  var: event_type_display
+event_details_settings:
+  all_details: true
+download_attachments:
+  skip_download: false
+  max_images: 12
+report_text:
+  language: es
+  title: Reporte de patrullajes y eventos
+  subtitle: Costa Ecuador
+  details_intro: ''

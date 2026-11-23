@@ -1,0 +1,62 @@
+[workspace]
+name = "standard-patrol-events"
+channels = [
+    'https://repo.prefix.dev/ecoscope-workflows/',
+    'conda-forge',
+    'https://repo.prefix.dev/ecoscope-workflows-custom/',
+]
+platforms = ['linux-64', 'osx-arm64', 'win-64']
+
+[dependencies]
+yq = "*"
+pip = "*"
+wt-compiler = "==0.10.2"
+graphviz = "*"
+
+[feature.compile.dependencies]
+ecoscope-workflows-ext-standard-patrol-events = "*"
+graphviz = "*"
+wt-compiler = "==0.10.2"
+
+# `make dev`: one env that compiles (wt-compiler --from-env) and runs the workflow, with the
+# step cache (--with-caching). The task package is pip-linked editable into it.
+[feature.dev.dependencies]
+wt-compiler = "==0.11.2"
+wt-registry = ">=0.3.0"
+wt-task = ">=0.3.0"
+ecoscope-platform = "==2.39.1"
+ecoscope-workflows-ext-standard-patrol-events = "*"
+pydeck = "==0.9.2"
+python-docx = "*"
+docxtpl = ">=0.19.0,<0.21.0"
+docxcompose = "*"
+pillow = "*"
+pyarrow = "*"
+playwright = "*"
+click = ">=8.0.0,<9.0.0"
+obstore = ">=0.6.0,<0.7.0"
+pydantic = ">=2.0.0,<3.0.0"
+"ruamel.yaml" = ">=0.18.0,<0.19.0"
+opentelemetry-api = ">=1.20.0,<2.0.0"
+ruff = "*"
+pip = "*"
+graphviz = "*"
+
+[environments]
+compile = { features = [
+    "compile",
+], solve-group = "compile", no-default-feature = true }
+dev = { features = ["dev"], solve-group = "dev", no-default-feature = true }
+
+[tasks]
+[tasks.build-release]
+cmd = './publish/build.sh'
+
+[tasks.pytest-310]
+cmd = './dev/pytest-task.sh 310'
+
+[tasks.pytest-311]
+cmd = './dev/pytest-task.sh 311'
+
+[tasks.pytest-312]
+cmd = './dev/pytest-task.sh 312'
