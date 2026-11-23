@@ -22,6 +22,10 @@ CI runs every test case; it needs the repo secrets `APN_*`, `APNCENTRAL_*`, `BEL
 
 With a wd-partner-tasks checkout next to this repo (or `PARTNER_TASKS=<path>`): `make dev` compiles against the editable task package, `make run-dev PARTNER=<case>` runs a test case with the step cache, `make test` runs the spec checks. `make dev` rewrites the compiled package, so run `make recompile` before committing.
 
+## README diagrams
+
+`docs/images/*.svg` are exported from the matching `*.excalidraw` files. To change one, open the `.excalidraw` file at [excalidraw.com](https://excalidraw.com), edit it, and export it as SVG with "Embed scene" off.
+
 ## Releasing a task change
 
 1. Merge the change in wd-partner-tasks and tag `standard-patrol-events-v<next>`.

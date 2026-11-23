@@ -4,6 +4,10 @@ This Ecoscope workflow creates a report on patrols and events recorded in EarthR
 
 The report brings together where the patrols went and how much effort they put in, who went, what they found along the way, and maps of where effort and events cluster. It works for any EarthRanger site: every difference between sites is a setting on the config page.
 
+<p align="center">
+  <img src="docs/images/how-it-works.svg" alt="How the report is made: set up the workflow in Ecoscope, it reads the patrols and events from EarthRanger, and produces a dashboard and a Word report" width="100%">
+</p>
+
 ---
 
 ## How to run it
@@ -39,6 +43,10 @@ The report can only show what was recorded: a patrol without a GPS route has no 
 
 ## The dashboard
 
+<p align="center">
+  <img src="docs/images/dashboard.svg" alt="The dashboard: four headline numbers, the tracks and events map, the effort and legs tables, density maps, event charts and event tables" width="100%">
+</p>
+
 The four numbers at the top give the period at a glance. Below them, the map shows where patrols went and where events were recorded, the tables show effort and legs, and the density maps and charts show where and when things happened. The Word report is in the dashboard's files, ready to download.
 
 | On the dashboard | What it shows |
@@ -60,6 +68,10 @@ The four numbers at the top give the period at a glance. Below them, the map sho
 ---
 
 ## The Word report
+
+<p align="center">
+  <img src="docs/images/word-report.svg" alt="The Word report page by page: cover and personnel, patrol effort, maps, event summary, event details, photos and conclusions" width="100%">
+</p>
 
 The report follows the order a technician would write it in, with numbered sections. A section you switch off in **Report Settings** disappears and the numbering closes up.
 
