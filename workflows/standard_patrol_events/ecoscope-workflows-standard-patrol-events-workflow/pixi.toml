@@ -3,7 +3,6 @@
 [workspace]
 name = "ecoscope-workflows-standard-patrol-events-workflow"
 channels = [
-    "file:///tmp/ecoscope-workflows-custom/release/artifacts/",
     "https://repo.prefix.dev/ecoscope-workflows-custom/",
     "https://repo.prefix.dev/ecoscope-workflows/",
     "conda-forge",
@@ -21,12 +20,8 @@ platforms = [
 version = ">=2.18.4,<3.0.0"
 channel = "https://repo.prefix.dev/ecoscope-workflows/"
 
-[dependencies.ecoscope-workflows-ext-custom]
-version = "*"
-channel = "file:///tmp/ecoscope-workflows-custom/release/artifacts/"
-
 [dependencies.ecoscope-workflows-ext-standard-patrol-events]
-version = "==0.0.1"
+version = "==0.0.3"
 channel = "https://repo.prefix.dev/ecoscope-workflows-custom/"
 
 [dependencies.pydeck]
@@ -151,5 +146,5 @@ solve-group = "test"
 no-default-feature = true
 
 [tasks]
-docker-build = "mkdir -p .tmp/ecoscope-workflows/release/artifacts/ &&\ncp -r /tmp/ecoscope-workflows/release/artifacts/* .tmp/ecoscope-workflows/release/artifacts/ &&\ndocker buildx build -t ecoscope-workflows-standard-patrol-events-workflow .\n"
+docker-build = "docker buildx build -t ecoscope-workflows-standard-patrol-events-workflow ."
 ecoscope-workflows-standard-patrol-events-workflow = "python -m ecoscope_workflows_standard_patrol_events_workflow.cli"
