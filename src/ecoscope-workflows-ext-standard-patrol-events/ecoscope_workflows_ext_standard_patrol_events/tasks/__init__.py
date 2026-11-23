@@ -7,6 +7,7 @@ from ._settings import effective_event_types as effective_event_types
 from ._settings import effective_map_layer as effective_map_layer
 from ._settings import effective_patrol_types as effective_patrol_types
 from ._settings import effort_grouper_for as effort_grouper_for
+from ._settings import grouping_label as grouping_label
 from ._settings import EventTypeFields as EventTypeFields
 from ._settings import pick_setting as pick_setting
 from ._settings import set_event_details as set_event_details
@@ -32,4 +33,5 @@ __all__ = [
     "set_patrol_filter",
     "set_report_blocks",
     "set_report_text",
+    "grouping_label",
 ]

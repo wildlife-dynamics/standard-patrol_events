@@ -15,3 +15,6 @@ pixi run --manifest-path pixi.toml -e compile \
     --pkg-name-prefix=ecoscope-workflows \
     --results-env-var=ECOSCOPE_WORKFLOWS_RESULTS \
     --clobber ${flags}
+
+# shortcut: until wt-compiler emits root rules (see the script)
+python3 dev/add_root_rules.py workflows/${workflow}/ecoscope-workflows-${workflow//_/-}-workflow/ecoscope_workflows_${workflow}_workflow/rjsf.json

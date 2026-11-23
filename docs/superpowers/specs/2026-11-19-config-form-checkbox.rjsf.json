@@ -216,19 +216,14 @@
           },
           "then": {
             "properties": {
-              "team_leader_group": {
+              "leaders": {
                 "title": " ",
-                "type": "string",
-                "description": "Patrols led by someone in this subject group.",
-                "ecoscope:transform": [
-                  {
-                    "transformer": "EarthRangerEnumResolver",
-                    "transformer_kws": {
-                      "type": "subject_group_name",
-                      "depends_on": "properties.er_client.properties.data_source.properties.name"
-                    }
-                  }
-                ]
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                },
+                "description": "Leader names as in EarthRanger."
               }
             }
           }
@@ -364,10 +359,10 @@
       "additionalProperties": false,
       "properties": {
         "skip_download": {
-          "title": "Skip Photo Attachments",
-          "type": "boolean",
           "default": false,
-          "description": "Event photos are included in the report. Tick to leave them out."
+          "description": "Event photos are included in the report. Tick to leave them out.",
+          "title": "Leave Out Event Photos",
+          "type": "boolean"
         },
         "max_images": {
           "title": "Maximum Images",
@@ -381,9 +376,9 @@
     },
     "report": {
       "type": "object",
-      "title": "Report",
+      "title": "Report Settings",
       "additionalProperties": false,
-      "description": "Language and titles of the Word report.",
+      "description": "Name the report, choose its language and pick what it includes.",
       "properties": {
         "language": {
           "title": "Language",
@@ -396,77 +391,86 @@
             },
             {
               "const": "es",
-              "title": "Español"
+              "title": "Espa\u00f1ol"
             },
             {
               "const": "pt",
-              "title": "Português"
+              "title": "Portugu\u00eas"
             }
-          ]
+          ],
+          "description": "Choose the language for the report's headings and labels."
         },
         "title": {
           "title": "Title",
           "type": "string",
-          "default": "Patrol & Events Report"
+          "default": "Patrol & Events Report",
+          "description": "Enter the main heading for the first page."
         },
         "subtitle": {
           "title": "Subtitle",
           "type": "string",
-          "default": ""
+          "default": "",
+          "description": "Add an optional line under the title, e.g. the protected area."
         },
         "details_intro": {
           "title": "Event Details Introduction",
           "type": "string",
           "default": "",
-          "description": "Text shown above the event details."
-        }
-      }
-    },
-    "report_sections": {
-      "type": "object",
-      "title": "Report Sections",
-      "additionalProperties": false,
-      "description": "Choose the optional sections to include.",
-      "properties": {
-        "headline_stats": {
-          "title": "Headline Figures",
-          "type": "boolean",
-          "default": true
+          "description": "Add optional text to show before the event details.",
+          "ecoscope:advanced": true
         },
-        "personnel": {
-          "title": "Personnel",
-          "type": "boolean",
-          "default": false
-        },
-        "time_density": {
-          "title": "Patrol Time Density Map",
-          "type": "boolean",
-          "default": true
-        },
-        "event_density": {
-          "title": "Event Density Map",
-          "type": "boolean",
-          "default": true
-        },
-        "events_chart": {
-          "title": "Events Chart",
-          "type": "boolean",
-          "default": true
-        },
-        "monthly_chart": {
-          "title": "Events by Month",
-          "type": "boolean",
-          "default": false
-        },
-        "category_priority": {
-          "title": "Events by Category and Priority",
-          "type": "boolean",
-          "default": false
-        },
-        "conclusions": {
-          "title": "Conclusions Box",
-          "type": "boolean",
-          "default": true
+        "sections": {
+          "title": "Report Sections",
+          "type": "array",
+          "uniqueItems": true,
+          "description": "Remove any sections you don't need. All are included by default.",
+          "default": [
+            "headline_stats",
+            "personnel",
+            "time_density",
+            "event_density",
+            "events_chart",
+            "monthly_chart",
+            "category_priority",
+            "conclusions"
+          ],
+          "items": {
+            "type": "string",
+            "oneOf": [
+              {
+                "const": "headline_stats",
+                "title": "Headline Figures"
+              },
+              {
+                "const": "personnel",
+                "title": "Personnel"
+              },
+              {
+                "const": "time_density",
+                "title": "Patrol Time Density Map"
+              },
+              {
+                "const": "event_density",
+                "title": "Event Density Map"
+              },
+              {
+                "const": "events_chart",
+                "title": "Events Chart"
+              },
+              {
+                "const": "monthly_chart",
+                "title": "Events by Month"
+              },
+              {
+                "const": "category_priority",
+                "title": "Events by Category and Priority"
+              },
+              {
+                "const": "conclusions",
+                "title": "Conclusions Box"
+              }
+            ]
+          }
         }
       }
     },
@@ -657,7 +661,8 @@
             "title": "Base Layer"
           },
           "title": " ",
-          "type": "array"
+          "type": "array",
+          "ecoscope:advanced": true
         }
       }
     },
@@ -802,7 +807,7 @@
                 },
                 {
                   "const": "area_covered_merged",
-                  "title": "Area Covered (km²)"
+                  "title": "Area Covered (km\u00b2)"
                 }
               ]
             }
@@ -963,9 +968,8 @@
       "event_state",
       "event_grouping",
       "event_details",
-      "download_attachments",
       "report",
-      "report_sections",
+      "download_attachments",
       "*"
     ],
     "patrols": {
@@ -973,7 +977,7 @@
         "team",
         "teams",
         "team_leader",
-        "team_leader_group",
+        "leaders",
         "single_patrol",
         "patrol_id"
       ]
@@ -1013,13 +1017,21 @@
     },
     "report": {
       "ui:order": [
-        "language",
         "title",
         "subtitle",
+        "language",
+        "sections",
         "details_intro"
       ],
+      "title": {
+        "ui:placeholder": "Patrol & Events Report"
+      },
+      "subtitle": {
+        "ui:placeholder": "e.g. Parque Nacional Los Alerces"
+      },
       "details_intro": {
-        "ui:widget": "textarea"
+        "ui:widget": "textarea",
+        "ui:placeholder": "e.g. Events recorded by rangers during the period."
       }
     },
     "patrol_grouping": {

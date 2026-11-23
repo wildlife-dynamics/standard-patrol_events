@@ -40,6 +40,7 @@ dev:
 	$(DEV_ENV)/bin/wt-compiler compile --spec workflows/$(WORKFLOW)/spec.yaml \
 		--pkg-name-prefix=ecoscope-workflows --results-env-var=ECOSCOPE_WORKFLOWS_RESULTS \
 		--from-env --with-caching --clobber --update
+	python3 dev/add_root_rules.py $(PKG_DIR)/ecoscope_workflows_$(WORKFLOW)_workflow/rjsf.json
 
 # Reruns only recompute steps whose code or inputs changed (cache-report.json per run).
 # EarthRanger fetches are reused for 12 h; `make clear-cache` to refetch.

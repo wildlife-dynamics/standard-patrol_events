@@ -257,62 +257,58 @@
       "required": [],
       "title": "Base Maps"
     },
-    "area_scope": {
+    "patrol_filter": {
       "additionalProperties": false,
       "properties": {
-        "level": {
-          "description": "Reporting level.",
-          "enum": [
-            "site",
-            "national",
-            "region",
-            "protected_area"
-          ],
-          "title": "Level",
-          "type": "string"
+        "team": {
+          "default": false,
+          "title": "Team",
+          "type": "boolean"
         },
-        "unit": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Name of the area within the level's `report:<level>` feature group.",
-          "title": "Unit"
-        }
-      },
-      "required": [
-        "level"
-      ],
-      "type": "object",
-      "title": "Spatial Scope"
-    },
-    "patrol_params": {
-      "additionalProperties": false,
-      "properties": {
-        "patrol_types": {
-          "description": "Specify the patrol type(s) to analyze (optional). Leave empty to analyze all patrol types.",
+        "teams": {
+          "default": [],
+          "description": "Team names as set in EarthRanger's patrol configuration.",
           "items": {
             "type": "string"
           },
-          "title": "Patrol Types",
+          "title": " ",
           "type": "array"
+        },
+        "team_leader": {
+          "default": false,
+          "title": "Team Leader",
+          "type": "boolean"
+        },
+        "leaders": {
+          "default": [],
+          "description": "Leader names as in EarthRanger.",
+          "items": {
+            "type": "string"
+          },
+          "title": " ",
+          "type": "array"
+        },
+        "single_patrol": {
+          "default": false,
+          "title": "Single Patrol",
+          "type": "boolean"
+        },
+        "patrol_id": {
+          "default": "",
+          "description": "The patrol to analyze, matched against its serial number (the ID shown in EarthRanger).",
+          "title": "Patrol ID",
+          "type": "string"
         }
       },
-      "required": [
-        "patrol_types"
-      ],
       "type": "object",
-      "title": "Patrols"
+      "required": [],
+      "title": "Patrol Filter"
     },
-    "team_groups": {
+    "patrol_type": {
       "additionalProperties": false,
       "properties": {
         "vars": {
+          "default": [],
           "items": {
             "type": "string"
           },
@@ -320,13 +316,59 @@
           "type": "array"
         }
       },
-      "required": [
-        "vars"
-      ],
       "type": "object",
-      "title": "Team Subject Groups"
+      "required": [],
+      "title": "Patrol Type"
     },
-    "effort_grouper": {
+    "patrol_effort": {
+      "additionalProperties": false,
+      "properties": {
+        "group_by": {
+          "default": "patrol_type",
+          "enum": [
+            "patrol_type",
+            "team",
+            "leader",
+            "patrol",
+            "area"
+          ],
+          "title": "Group By",
+          "type": "string"
+        },
+        "map_layer": {
+          "default": "",
+          "description": "Spatial feature group whose areas (e.g. regions, sectors) become the rows of the table.",
+          "title": "Map Layer",
+          "type": "string"
+        },
+        "columns": {
+          "default": [
+            "patrol_count",
+            "total_distance",
+            "total_duration"
+          ],
+          "description": "Columns of the patrol effort table.",
+          "items": {
+            "enum": [
+              "patrol_count",
+              "total_distance",
+              "total_duration",
+              "patrol_days",
+              "leg_count",
+              "member_days",
+              "area_covered_merged"
+            ],
+            "type": "string"
+          },
+          "title": "Columns",
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [],
+      "title": "Patrol Effort"
+    },
+    "patrol_grouping": {
       "additionalProperties": false,
       "properties": {
         "var": {
@@ -338,77 +380,54 @@
         "var"
       ],
       "type": "object",
-      "title": "Patrol Effort"
+      "title": "Patrol Grouping"
     },
-    "labels": {
+    "event_scope": {
       "additionalProperties": false,
       "properties": {
-        "language": {
-          "default": "en",
-          "description": "Report language: 'en', 'es' or 'pt'.",
-          "enum": [
-            "en",
-            "es",
-            "pt"
-          ],
-          "title": "Language",
-          "type": "string"
+        "linked_only": {
+          "default": false,
+          "title": "Only events linked to the patrols",
+          "type": "boolean"
         }
       },
       "type": "object",
-      "description": "Column and label strings for patrol & events reports in en, es or pt.",
       "required": [],
-      "title": "Report Language"
+      "title": "Events"
     },
-    "period_events": {
+    "event_type": {
       "additionalProperties": false,
       "properties": {
-        "event_types": {
-          "description": "Specify the event type(s) to analyze (optional). Leave this section empty to analyze all event types.",
+        "vars": {
+          "default": [],
           "items": {
             "type": "string"
           },
-          "title": "Event Types",
+          "title": "",
           "type": "array"
         }
       },
-      "required": [
-        "event_types"
-      ],
       "type": "object",
-      "title": "Event Types"
-    },
-    "retrieved_events": {
-      "additionalProperties": false,
-      "properties": {
-        "retrieval": {
-          "default": "all_in_period",
-          "description": "Patrols plus all events in the period, or only the events linked to those patrols.",
-          "enum": [
-            "all_in_period",
-            "linked_only"
-          ],
-          "title": "Event retrieval",
-          "type": "string"
-        }
-      },
       "required": [],
-      "type": "object",
-      "title": "Event Retrieval"
+      "title": "Event Type"
     },
     "state_events": {
       "additionalProperties": false,
       "properties": {
-        "state": {
-          "default": "all",
-          "description": "All events, resolved only, or active (new + active) only. Only useful where the site uses event state for data QA.",
-          "enum": [
-            "all",
-            "resolved",
-            "active"
-          ],
-          "title": "Event state",
-          "type": "string"
+        "states": {
+          "default": [],
+          "description": "Choose to analyze events with a certain state. If left empty, events of all states will be analyzed",
+          "items": {
+            "enum": [
+              "new",
+              "active",
+              "resolved",
+              "review"
+            ],
+            "type": "string"
+          },
+          "title": " ",
+          "type": "array"
         }
       },
       "required": [],
@@ -429,222 +448,116 @@
       "type": "object",
       "title": "Event Grouping"
     },
-    "event_details": {
+    "event_details_settings": {
       "additionalProperties": false,
       "properties": {
-        "detail_fields": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Detail keys to show per event type (type value, display name or '*').",
-          "title": "Detail Fields"
+        "all_details": {
+          "default": true,
+          "description": "When ticked, every event is shown with all its details. Untick to choose the fields for each event type.",
+          "title": "Show all fields",
+          "type": "boolean"
         },
-        "max_fields": {
-          "default": 6,
-          "description": "Most details shown per event; the rest become '+N more'.",
-          "title": "Max Fields",
-          "type": "integer"
+        "tables": {
+          "default": [],
+          "description": "Add an event type and choose the fields to show for it. Event types you don't add show their first 3 fields.",
+          "items": {
+            "$ref": "#/$defs/EventTypeFields"
+          },
+          "title": " ",
+          "type": "array"
         }
       },
+      "type": "object",
       "required": [],
-      "type": "object",
-      "title": ""
-    },
-    "detail_mode": {
-      "additionalProperties": false,
-      "properties": {
-        "var": {
-          "title": "",
-          "type": "string"
-        }
-      },
-      "required": [
-        "var"
-      ],
-      "type": "object",
       "title": "Event Details"
     },
-    "event_detail_tables": {
+    "download_attachments": {
       "additionalProperties": false,
       "properties": {
-        "detail_fields": {
-          "additionalProperties": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "description": "Detail keys to show per event type (type value or display name).",
-          "title": "Detail Fields",
-          "type": "object"
-        }
-      },
-      "required": [
-        "detail_fields"
-      ],
-      "type": "object",
-      "title": "Event Fields Shown"
-    },
-    "images_options": {
-      "additionalProperties": false,
-      "properties": {
-        "mode": {
-          "default": "attachments",
-          "description": "Fill from event attachments, or leave the photo cells blank to add by hand.",
-          "enum": [
-            "attachments",
-            "blank"
-          ],
-          "title": "Images",
-          "type": "string"
+        "skip_download": {
+          "default": false,
+          "description": "Event photos are included in the report. Tick to leave them out.",
+          "title": "Leave Out Event Photos",
+          "type": "boolean"
         },
         "max_images": {
           "default": 50,
+          "description": "Used when photos are included.",
+          "ecoscope:advanced": true,
           "minimum": 0,
-          "title": "Maximum number of images",
+          "title": "Maximum Images",
           "type": "integer"
         }
       },
       "type": "object",
       "required": [],
-      "title": "Images"
+      "title": "Download Event Attachments"
     },
-    "report_blocks": {
+    "report_text": {
       "additionalProperties": false,
       "properties": {
-        "personnel": {
-          "default": false,
-          "description": "Patrol personnel (sites with patrol attributes).",
-          "title": "Personnel",
-          "type": "boolean"
+        "language": {
+          "default": "en",
+          "description": "Choose the language for the report's headings and labels.",
+          "enum": [
+            "en",
+            "es",
+            "pt"
+          ],
+          "title": "Language",
+          "type": "string"
         },
-        "headline_stats": {
-          "default": true,
-          "title": "Headline stats",
-          "type": "boolean"
+        "title": {
+          "default": "Patrol & Events Report",
+          "description": "Enter the main heading for the first page.",
+          "title": "Title",
+          "type": "string"
         },
-        "time_density": {
-          "default": true,
-          "title": "Patrol time density map",
-          "type": "boolean"
+        "subtitle": {
+          "default": "",
+          "description": "Add an optional line under the title, e.g. the protected area.",
+          "title": "Subtitle",
+          "type": "string"
         },
-        "event_density": {
-          "default": true,
-          "title": "Event density map",
-          "type": "boolean"
+        "details_intro": {
+          "default": "",
+          "description": "Add optional text to show before the event details.",
+          "ecoscope:advanced": true,
+          "title": "Event Details Introduction",
+          "type": "string"
         },
-        "events_chart": {
-          "default": true,
-          "title": "Events chart",
-          "type": "boolean"
-        },
-        "monthly_chart": {
-          "default": false,
-          "title": "Events by month chart",
-          "type": "boolean"
-        },
-        "category_priority": {
-          "default": false,
-          "title": "Events by category and priority",
-          "type": "boolean"
-        },
-        "images": {
-          "default": true,
-          "title": "Images",
-          "type": "boolean"
-        },
-        "conclusions": {
-          "default": true,
-          "title": "Conclusions box",
-          "type": "boolean"
+        "sections": {
+          "default": [
+            "headline_stats",
+            "personnel",
+            "time_density",
+            "event_density",
+            "events_chart",
+            "monthly_chart",
+            "category_priority",
+            "conclusions"
+          ],
+          "description": "Remove any sections you don't need. All are included by default.",
+          "items": {
+            "enum": [
+              "headline_stats",
+              "personnel",
+              "time_density",
+              "event_density",
+              "events_chart",
+              "monthly_chart",
+              "category_priority",
+              "conclusions"
+            ],
+            "type": "string"
+          },
+          "title": "Report Sections",
+          "type": "array"
         }
       },
       "type": "object",
       "required": [],
-      "title": "Report Blocks"
-    },
-    "template_path": {
-      "additionalProperties": false,
-      "properties": {
-        "template": {
-          "const": "standard",
-          "default": "standard",
-          "description": "Report layout.",
-          "title": "Report template",
-          "type": "string"
-        }
-      },
-      "type": "object",
-      "required": [],
-      "title": "Report Template"
-    },
-    "report_title": {
-      "additionalProperties": false,
-      "properties": {
-        "var": {
-          "title": "",
-          "type": "string"
-        }
-      },
-      "required": [
-        "var"
-      ],
-      "type": "object",
-      "title": "Report Title"
-    },
-    "report_subtitle": {
-      "additionalProperties": false,
-      "properties": {
-        "var": {
-          "title": "",
-          "type": "string"
-        }
-      },
-      "required": [
-        "var"
-      ],
-      "type": "object",
-      "title": "Report Subtitle"
-    },
-    "report_area": {
-      "additionalProperties": false,
-      "properties": {
-        "var": {
-          "title": "",
-          "type": "string"
-        }
-      },
-      "required": [
-        "var"
-      ],
-      "type": "object",
-      "title": "Area Name"
-    },
-    "detail_intro": {
-      "additionalProperties": false,
-      "properties": {
-        "var": {
-          "title": "",
-          "type": "string"
-        }
-      },
-      "required": [
-        "var"
-      ],
-      "type": "object",
-      "title": "Event Details Introduction"
+      "title": "Report Settings"
     }
   },
   "$defs": {
@@ -688,6 +601,28 @@
       ],
       "title": "TimezoneInfo",
       "type": "object"
+    },
+    "EventTypeFields": {
+      "properties": {
+        "event_type": {
+          "title": "Event Type",
+          "type": "string"
+        },
+        "fields": {
+          "default": [],
+          "description": "Field names as on the event form, one per line.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Fields",
+          "type": "array"
+        }
+      },
+      "required": [
+        "event_type"
+      ],
+      "title": "EventTypeFields",
+      "type": "object"
     }
   },
   "uiSchema": {
@@ -704,35 +639,42 @@
         "timezone"
       ]
     },
-    "area_scope": {
+    "patrol_filter": {
       "ui:order": [
-        "level",
-        "unit"
+        "team",
+        "teams",
+        "team_leader",
+        "leaders",
+        "single_patrol",
+        "patrol_id"
       ]
     },
-    "event_details": {
+    "patrol_effort": {
       "ui:order": [
-        "detail_fields",
-        "max_fields"
+        "group_by",
+        "map_layer",
+        "columns"
       ]
     },
-    "images_options": {
+    "event_details_settings": {
       "ui:order": [
-        "mode",
+        "all_details",
+        "tables"
+      ]
+    },
+    "download_attachments": {
+      "ui:order": [
+        "skip_download",
         "max_images"
       ]
     },
-    "report_blocks": {
+    "report_text": {
       "ui:order": [
-        "personnel",
-        "headline_stats",
-        "time_density",
-        "event_density",
-        "events_chart",
-        "monthly_chart",
-        "category_priority",
-        "images",
-        "conclusions"
+        "language",
+        "title",
+        "subtitle",
+        "details_intro",
+        "sections"
       ]
     },
     "ui:order": [
@@ -740,25 +682,17 @@
       "er_client",
       "time_range",
       "base_maps",
-      "area_scope",
-      "patrol_params",
-      "team_groups",
-      "effort_grouper",
-      "labels",
-      "period_events",
-      "retrieved_events",
+      "patrol_filter",
+      "patrol_type",
+      "patrol_effort",
+      "patrol_grouping",
+      "event_scope",
+      "event_type",
       "state_events",
       "event_grouping",
-      "event_details",
-      "detail_mode",
-      "event_detail_tables",
-      "images_options",
-      "report_blocks",
-      "template_path",
-      "report_title",
-      "report_subtitle",
-      "report_area",
-      "detail_intro"
+      "event_details_settings",
+      "download_attachments",
+      "report_text"
     ]
   },
   "additionalProperties": false

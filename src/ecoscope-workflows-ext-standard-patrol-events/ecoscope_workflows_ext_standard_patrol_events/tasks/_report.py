@@ -1,6 +1,6 @@
 from importlib.resources import as_file, files
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Literal, get_args
 
 from ecoscope.platform.annotations import AdvancedField
 from pydantic import Field
@@ -27,20 +27,28 @@ def load_report_template(
     return str(local.resolve())
 
 
+_BLOCKS = Literal[
+    "headline_stats",
+    "personnel",
+    "time_density",
+    "event_density",
+    "events_chart",
+    "monthly_chart",
+    "category_priority",
+    "conclusions",
+]
+
+
+DEFAULT_BLOCKS = get_args(_BLOCKS)
+
+
 @register()
 def set_report_blocks(
-    headline_stats: Annotated[bool, Field(title="Headline Figures")] = True,
-    personnel: Annotated[bool, Field(title="Personnel")] = False,
-    time_density: Annotated[bool, Field(title="Patrol Time Density Map")] = True,
-    event_density: Annotated[bool, Field(title="Event Density Map")] = True,
-    events_chart: Annotated[bool, Field(title="Events Chart")] = True,
-    monthly_chart: Annotated[bool, Field(title="Events by Month")] = False,
-    category_priority: Annotated[bool, Field(title="Events by Category and Priority")] = False,
-    conclusions: Annotated[bool, Field(title="Conclusions Box")] = True,
+    sections: Annotated[list[_BLOCKS], Field(title="Report Sections")] = list(DEFAULT_BLOCKS),
 ) -> Annotated[dict[str, str], Field(description="show_<block> template switches as 'true'/'false'.")]:
     """Optional report blocks, as template switches (docx context values are strings)."""
-    switches = {f"show_{k}": str(v).lower() for k, v in locals().items()}
-    # Photos are switched off by Skip Photo Attachments (captions stay), not here.
+    switches = {f"show_{b}": str(b in sections).lower() for b in get_args(_BLOCKS)}
+    # Photos are switched off by Leave Out Event Photos (captions stay), not here.
     return {**switches, "show_images": "true"}
 
 
@@ -49,7 +57,7 @@ def set_images_options(
     skip_download: Annotated[
         bool,
         Field(
-            title="Skip Photo Attachments",
+            title="Leave Out Event Photos",
             description="Event photos are included in the report. Tick to leave them out.",
         ),
     ] = False,

@@ -17,6 +17,10 @@ from ecoscope_workflows_ext_custom.tasks.results import (  # noqa: E402
 from PIL import Image  # noqa: E402
 
 from ecoscope_workflows_ext_standard_patrol_events.tasks import set_report_blocks  # noqa: E402
+from ecoscope_workflows_ext_standard_patrol_events.tasks._report import _BLOCKS  # noqa: E402
+from typing import get_args  # noqa: E402
+
+ALL_BLOCKS = get_args(_BLOCKS)
 
 TEMPLATE = Path(__file__).parent.parent / "ecoscope_workflows_ext_standard_patrol_events/data/standard_patrol_events.docx"
 L = get_report_labels("es")
@@ -50,8 +54,7 @@ def _render(tmp_path, *, blocks=None, effort=None, detail_mode="general", photo=
         ImageListContextItem(key="logos", value=pd.DataFrame({"caption": [""] if logos else [], "image_path": [str(png)] if logos else []}), width_inches=1),
     ]
     out = create_docx(template_path=str(TEMPLATE), context=TemplateContext(items=items), output_dir=str(tmp_path),
-                      extra_text=[L, set_report_blocks(personnel=True, monthly_chart=True, category_priority=True,
-                                                       **(blocks or {}))])
+                      extra_text=[L, set_report_blocks(sections=[b for b in ALL_BLOCKS if b not in (blocks or ())])])
     return Document(out)
 
 
@@ -68,7 +71,7 @@ def test_full_render_uses_language_labels_and_leaves_no_tags(tmp_path):
 
 
 def test_blocks_off_and_empty_table(tmp_path):
-    doc = _render(tmp_path, blocks={"time_density": False, "conclusions": False}, effort=pd.DataFrame())
+    doc = _render(tmp_path, blocks={"time_density", "conclusions"}, effort=pd.DataFrame())
     text = _text(doc)
     assert L["L_fig_time_density"] not in text and L["L_conclusions"] not in text
     assert L["no_data"] in text  # empty effort table

@@ -1,0 +1,92 @@
+{
+  "ui:order": [
+    "workflow_details",
+    "er_client",
+    "time_range",
+    "Patrols",
+    "Events",
+    "Event Details",
+    "images",
+    "Report",
+    "Map Style"
+  ],
+  "Patrols": {
+    "ui:order": [
+      "patrol_scope"
+    ],
+    "patrol_scope": {
+      "scope": {
+        "mode": {
+          "ui:widget": "hidden"
+        },
+        "patrols_by": {
+          "by": {
+            "ui:widget": "hidden"
+          }
+        },
+        "group_effort_by": {
+          "by": {
+            "ui:widget": "hidden"
+          }
+        },
+        "events_to_include": {
+          "ui:widget": "radio"
+        }
+      }
+    }
+  },
+  "Events": {
+    "ui:order": [
+      "event_types",
+      "state_events",
+      "event_grouping"
+    ]
+  },
+  "Event Details": {
+    "ui:order": [
+      "detail_layout",
+      "detail_intro"
+    ],
+    "detail_layout": {
+      "layout": {
+        "layout": {
+          "ui:widget": "hidden"
+        }
+      }
+    }
+  },
+  "Report": {
+    "ui:order": [
+      "labels",
+      "report_title",
+      "report_subtitle",
+      "report_blocks"
+    ]
+  },
+  "Map Style": {
+    "ui:order": [
+      "base_maps",
+      "tracks_color_by"
+    ]
+  },
+  "workflow_details": {
+    "ui:order": [
+      "name",
+      "description"
+    ]
+  },
+  "time_range": {
+    "ui:order": [
+      "since",
+      "until",
+      "timezone"
+    ]
+  },
+  "images": {
+    "source": {
+      "source": {
+        "ui:widget": "hidden"
+      }
+    }
+  }
+}

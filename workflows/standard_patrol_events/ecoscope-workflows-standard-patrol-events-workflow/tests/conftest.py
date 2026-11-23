@@ -43,15 +43,17 @@ TEST_CASES_YAML = ARTIFACTS.parent / "test-cases.yaml"
 MATCHSPEC_OVERRIDE = "ecoscope-workflows-standard-patrol-events-workflow"
 RESULTS_ENV_VAR = "ECOSCOPE_WORKFLOWS_RESULTS"
 IO_TASKS_IMPORTABLE_REFERENCES = [
+    "ecoscope_workflows_ext_custom.tasks.io.report_time_range",
     "ecoscope_workflows_ext_custom.tasks.io.get_current_user",
-    "ecoscope_workflows_ext_custom.tasks.spatial_ops.get_area_scope",
-    "ecoscope.platform.tasks.io.get_patrols_from_combined_params",
+    "ecoscope.platform.tasks.io.get_patrol_segments_from_patrols_df",
+    "ecoscope.platform.tasks.io.add_patrol_team_names",
+    "ecoscope.platform.tasks.io.add_patrol_roster_names",
+    "ecoscope.platform.tasks.io.add_patrol_type_display_names",
     "ecoscope.platform.tasks.io.get_patrol_observations_from_patrols_df_and_combined_params",
-    "ecoscope_workflows_ext_custom.tasks.io.get_patrol_team_sources",
-    "ecoscope_workflows_ext_custom.tasks.io.get_patrol_type_display",
     "ecoscope.platform.tasks.io.get_events",
     "ecoscope.platform.tasks.io.process_events_details",
     "ecoscope_workflows_ext_custom.tasks.io.get_event_type_lookup",
+    "ecoscope_workflows_ext_custom.tasks.transformation.area_regions",
     "ecoscope_workflows_ext_custom.tasks.io.download_event_attachments",
     "ecoscope_workflows_ext_custom.tasks.io.sanitize_attachments",
 ]
