@@ -3,7 +3,7 @@ PARTNER ?= costaecuador
 PKG_DIR := workflows/$(WORKFLOW)/ecoscope-workflows-$(subst _,-,$(WORKFLOW))-workflow
 OUTPUT_DIR ?= /tmp/$(WORKFLOW)/$(PARTNER)
 
-.PHONY: build compile recompile run dev run-dev clear-cache link
+.PHONY: build compile recompile run dev run-dev clear-cache link test
 
 # Dev loop: one pixi env (`dev` in pixi.toml) compiles the workflow with wt-compiler
 # --from-env (tasks read from the installed env: no throwaway env, no downloads) and runs
@@ -13,13 +13,16 @@ OUTPUT_DIR ?= /tmp/$(WORKFLOW)/$(PARTNER)
 # committing the package. Paths resolve per checkout (main or worktree).
 W_DYNAMICS ?= $(abspath $(shell git rev-parse --path-format=absolute --git-common-dir)/../..)
 EXT_CUSTOM ?= $(W_DYNAMICS)/ecoscope-workflow-task-library-spe/src/ecoscope-workflows-ext-custom
+# The data package lives in wd-partner-tasks.
+PARTNER_TASKS ?= $(W_DYNAMICS)/wd-partner-tasks-standard-patrol-events
+EXT_SPE := $(PARTNER_TASKS)/src/ecoscope-workflows-ext-standard-patrol-events
 DEV_ENV := .pixi/envs/dev
 CACHE_DIR ?= /tmp/$(WORKFLOW)/wt-cache
 PARAMS ?=
 
 build:
 	# pixi exec, not pixi run: the workspace's compile env needs this package, which doesn't exist before the first build.
-	pixi exec -s rattler-build -s hatch -s hatch-vcs -s pip ./publish/build.sh
+	PARTNER_TASKS=$(PARTNER_TASKS) pixi exec -s rattler-build -s hatch -s hatch-vcs -s pip ./publish/build.sh
 
 compile: build
 	./dev/recompile.sh $(WORKFLOW) --install
@@ -51,9 +54,12 @@ run-dev:
 	else pixi run yq -y '."$(PARTNER)".params' workflows/$(WORKFLOW)/test-cases.yaml > $(OUTPUT_DIR)/params.yaml; fi
 	cd $(PKG_DIR) && ECOSCOPE_WORKFLOWS_RESULTS="file://$(OUTPUT_DIR)" \
 		WT_CACHE__STORE=$(CACHE_DIR) WT_CACHE__SCOPE=local-dev WT_CACHE__IO_TTL=12h WT_CACHE__LAZY=true \
-		WT_CACHE__EPOCH=$$($(CURDIR)/dev/epoch.sh $(EXT_CUSTOM) $(CURDIR)/src/ecoscope-workflows-ext-standard-patrol-events) \
+		WT_CACHE__EPOCH=$$($(CURDIR)/dev/epoch.sh $(EXT_CUSTOM) $(EXT_SPE)) \
 		$(CURDIR)/$(DEV_ENV)/bin/python -m ecoscope_workflows_$(WORKFLOW)_workflow.cli run \
 		--config-file $(OUTPUT_DIR)/params.yaml --execution-mode sequential --no-mock-io
+
+test:
+	$(DEV_ENV)/bin/python -m pytest workflows/$(WORKFLOW)/tests -q
 
 clear-cache:
 	rm -rf /tmp/$(WORKFLOW)/wt-cache
@@ -67,7 +73,7 @@ link:
 		if [ -d $$d ] && [ ! -f $$d/METADATA ]; then rm -f $$d/top_level.txt && rmdir $$d; fi; \
 	done; done
 	$(DEV_ENV)/bin/python -m pip install -q --no-deps \
-		-e $(EXT_CUSTOM) -e $(CURDIR)/src/ecoscope-workflows-ext-standard-patrol-events
+		-e $(EXT_CUSTOM) -e $(EXT_SPE)
 	# Listed in RECORD, so pip removes it with the package on the next reinstall (no stub).
 	for pkg in $(LINKED); do for d in $(DEV_ENV)/lib/python3*/site-packages/$${pkg}-*.dist-info; do \
 		if [ -f $$d/METADATA ]; then echo $$pkg > $$d/top_level.txt; \

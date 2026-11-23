@@ -7,8 +7,10 @@ Writes .scripts/output/report_<conn>/report.docx (+ report.pdf)
 """
 
 import datetime as dt
+import os
 import subprocess
 import sys
+from pathlib import Path
 
 import pandas as pd
 from _data import OUT, build
@@ -23,7 +25,10 @@ CONN = sys.argv[1] if len(sys.argv) > 1 else "costaecuador"
 TEAM_GROUPS = {"costaecuador": ["PONGALILLO", "BELLAVISTA", "COSTA RICA", "EL CONCHAL", "PUERTO ROMA"]}
 MAX_IMAGES, DETAIL_ROWS = 6, 40
 DIR = OUT / f"report_{CONN}"
-TEMPLATE = OUT.parent.parent / "src/ecoscope-workflows-ext-standard-patrol-events/ecoscope_workflows_ext_standard_patrol_events/data/standard_patrol_events.docx"
+# The data package lives in a wd-partner-tasks checkout next to this repo (or $PARTNER_TASKS).
+_W = Path(subprocess.check_output(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], text=True).strip()).parents[1]
+PARTNER_PKG = Path(os.environ.get("PARTNER_TASKS", _W / "wd-partner-tasks-standard-patrol-events")) / "src/ecoscope-workflows-ext-standard-patrol-events"
+TEMPLATE = PARTNER_PKG / "ecoscope_workflows_ext_standard_patrol_events/data/standard_patrol_events.docx"
 
 # headings/captions per language — becomes part of get_report_labels in the real workflow
 L = {
