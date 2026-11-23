@@ -2,6 +2,7 @@
 
 costaecuador:
   name: costaecuador
+  mock_io: false
   description: Costa Ecuador, Aug-Oct 2026, grouped by team (community).
   params:
     workflow_details:
@@ -51,6 +52,7 @@ costaecuador:
 
 apn:
   name: apn
+  mock_io: false
   description: APN Los Alerces, Aug-Oct 2026, individual patrols (new patrol model site).
   params:
     workflow_details:
@@ -101,6 +103,7 @@ apn:
 
 mep:
   name: mep
+  mock_io: false
   description: mep test site (new patrol model with teams), Aug-Oct 2026, English.
   params:
     workflow_details:
@@ -151,6 +154,7 @@ mep:
 
 empty_period:
   name: empty_period
+  mock_io: false
   description: 'Costa Ecuador, a period with no data: every block must render ''no data''.'
   params:
     workflow_details:
@@ -200,6 +204,7 @@ empty_period:
 
 belize:
   name: belize
+  mock_io: false
   description: SACD Belize (same connection as belize-patrol_report), Aug-Oct 2026, English.
   params:
     workflow_details:
@@ -250,6 +255,7 @@ belize:
 
 apncentral:
   name: apncentral
+  mock_io: false
   description: 'APN Central, new patrol schema with multi-leg test patrols #66-70 (Nov 5-12 2026), Spanish.'
   params:
     workflow_details:
@@ -300,6 +306,7 @@ apncentral:
 
 apncentral_patrol70:
   name: apncentral_patrol70
+  mock_io: false
   description: 'Single-patrol report for APN Central #70 (two legs, 11 Nov), form dates deliberately in January; new patrol
     schema with multi-leg test patrols #66-70 (Nov 5-12 2026), Spanish.'
   params:
@@ -353,6 +360,7 @@ apncentral_patrol70:
 
 mep_team:
   name: mep_team
+  mock_io: false
   description: Team filter (Hurricane Ridge District). mep test site (new patrol model with teams), Aug-Oct 2026, English.
   params:
     workflow_details:
@@ -406,6 +414,7 @@ mep_team:
 
 mep_area:
   name: mep_area
+  mock_io: false
   description: Area grouping against a mep map layer, Aug-Oct 2026, English.
   params:
     workflow_details:
@@ -457,6 +466,7 @@ mep_area:
 
 apn_leader:
   name: apn_leader
+  mock_io: false
   description: APN Los Alerces, Aug-Oct 2026, filtered to one team leader (by name).
   params:
     workflow_details:

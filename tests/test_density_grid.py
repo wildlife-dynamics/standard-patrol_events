@@ -14,7 +14,7 @@ from ecoscope.platform.tasks.analysis import create_meshgrid  # noqa: E402
 from wt_task import task  # noqa: E402
 from shapely.geometry import Point  # noqa: E402
 
-SPEC = Path(__file__).parents[3] / "workflows/standard_patrol_events/spec.yaml"
+SPEC = Path(__file__).parents[1] / "spec.yaml"
 
 
 def test_spec_meshgrids_auto_scale():

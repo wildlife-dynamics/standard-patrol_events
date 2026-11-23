@@ -3,10 +3,10 @@
 import json
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[1]
 MOCK = ROOT / "docs/superpowers/specs/2026-11-19-config-form-checkbox.rjsf.json"
 COMPILED = (
-    ROOT / "workflows/standard_patrol_events/ecoscope-workflows-standard-patrol-events-workflow"
+    ROOT / "ecoscope-workflows-standard-patrol-events-workflow"
     "/ecoscope_workflows_standard_patrol_events_workflow/rjsf.json"
 )
 

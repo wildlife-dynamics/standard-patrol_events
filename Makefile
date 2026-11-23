@@ -1,45 +1,42 @@
 WORKFLOW ?= standard_patrol_events
 PARTNER ?= costaecuador
-PKG_DIR := workflows/$(WORKFLOW)/ecoscope-workflows-$(subst _,-,$(WORKFLOW))-workflow
+PKG_DIR := ecoscope-workflows-$(subst _,-,$(WORKFLOW))-workflow
 OUTPUT_DIR ?= /tmp/$(WORKFLOW)/$(PARTNER)
 
-.PHONY: build compile recompile run dev run-dev clear-cache link test
+.PHONY: compile recompile run dev run-dev clear-cache link test
 
 # Dev loop: one pixi env (`dev` in pixi.toml) compiles the workflow with wt-compiler
 # --from-env (tasks read from the installed env: no throwaway env, no downloads) and runs
 # it with the step cache (--with-caching). the task package (wd-partner-tasks) is linked
-# editable, so their edits apply on the next run. The compiled package is bound to the
+# editable, so its edits apply on the next run. The compiled package is bound to the
 # dev env's exact versions: run it with `make run-dev`, and `make recompile` before
 # committing the package. Paths resolve per checkout (main or worktree).
 W_DYNAMICS ?= $(abspath $(shell git rev-parse --path-format=absolute --git-common-dir)/../..)
 # The task package lives in wd-partner-tasks.
 PARTNER_TASKS ?= $(W_DYNAMICS)/wd-partner-tasks-standard-patrol-events
 EXT_SPE := $(PARTNER_TASKS)/src/ecoscope-workflows-ext-standard-patrol-events
+SPE_VERSION := $(shell grep -A1 "name: ecoscope-workflows-ext-standard-patrol-events" spec.yaml | sed -n 's/.*version: "==\(.*\)"/\1/p')
 DEV_ENV := .pixi/envs/dev
 CACHE_DIR ?= /tmp/$(WORKFLOW)/wt-cache
 PARAMS ?=
 
-build:
-	# pixi exec, not pixi run: the workspace's compile env needs this package, which doesn't exist before the first build.
-	PARTNER_TASKS=$(PARTNER_TASKS) pixi exec -s rattler-build -s hatch -s hatch-vcs -s pip ./publish/build.sh
+compile:
+	./dev/recompile.sh --install
 
-compile: build
-	./dev/recompile.sh $(WORKFLOW) --install
-
-recompile: build
-	./dev/recompile.sh $(WORKFLOW) --update
+recompile:
+	./dev/recompile.sh --update
 
 # Real data (no mock IO): the PARTNER case's params from test-cases.yaml.
 run:
 	mkdir -p $(OUTPUT_DIR)
-	pixi run yq -y '."$(PARTNER)".params' workflows/$(WORKFLOW)/test-cases.yaml > $(OUTPUT_DIR)/params.yaml
+	pixi run yq -y '."$(PARTNER)".params' test-cases.yaml > $(OUTPUT_DIR)/params.yaml
 	cd $(PKG_DIR) && ECOSCOPE_WORKFLOWS_RESULTS="file://$(OUTPUT_DIR)" \
 		pixi run ecoscope-workflows-$(subst _,-,$(WORKFLOW))-workflow run \
 		--config-file $(OUTPUT_DIR)/params.yaml --execution-mode sequential --no-mock-io
 
 dev:
 	$(MAKE) link
-	$(DEV_ENV)/bin/wt-compiler compile --spec workflows/$(WORKFLOW)/spec.yaml \
+	$(DEV_ENV)/bin/wt-compiler compile --spec spec.yaml \
 		--pkg-name-prefix=ecoscope-workflows --results-env-var=ECOSCOPE_WORKFLOWS_RESULTS \
 		--from-env --with-caching --clobber --update
 	python3 dev/add_root_rules.py $(PKG_DIR)/ecoscope_workflows_$(WORKFLOW)_workflow/rjsf.json
@@ -50,7 +47,7 @@ dev:
 run-dev:
 	mkdir -p $(OUTPUT_DIR)
 	if [ -n "$(PARAMS)" ]; then cp $(PARAMS) $(OUTPUT_DIR)/params.yaml; \
-	else pixi run yq -y '."$(PARTNER)".params' workflows/$(WORKFLOW)/test-cases.yaml > $(OUTPUT_DIR)/params.yaml; fi
+	else pixi run yq -y '."$(PARTNER)".params' test-cases.yaml > $(OUTPUT_DIR)/params.yaml; fi
 	cd $(PKG_DIR) && ECOSCOPE_WORKFLOWS_RESULTS="file://$(OUTPUT_DIR)" \
 		WT_CACHE__STORE=$(CACHE_DIR) WT_CACHE__SCOPE=local-dev WT_CACHE__IO_TTL=12h WT_CACHE__LAZY=true \
 		WT_CACHE__EPOCH=$$($(CURDIR)/dev/epoch.sh $(EXT_SPE)) \
@@ -58,7 +55,7 @@ run-dev:
 		--config-file $(OUTPUT_DIR)/params.yaml --execution-mode sequential --no-mock-io
 
 test:
-	$(DEV_ENV)/bin/python -m pytest workflows/$(WORKFLOW)/tests -q
+	$(DEV_ENV)/bin/python -m pytest tests -q
 
 clear-cache:
 	rm -rf /tmp/$(WORKFLOW)/wt-cache
@@ -71,7 +68,9 @@ link:
 	for pkg in $(LINKED); do for d in $(DEV_ENV)/lib/python3*/site-packages/$${pkg}-*.dist-info; do \
 		if [ -d $$d ] && [ ! -f $$d/METADATA ]; then rm -f $$d/top_level.txt && rmdir $$d; fi; \
 	done; done
-	$(DEV_ENV)/bin/python -m pip install -q --no-deps \
+	# Report the version spec.yaml pins, so wt-compiler --from-env accepts the editable install.
+	SETUPTOOLS_SCM_PRETEND_VERSION_FOR_ECOSCOPE_WORKFLOWS_EXT_STANDARD_PATROL_EVENTS=$(SPE_VERSION) \
+		$(DEV_ENV)/bin/python -m pip install -q --no-deps \
 		-e $(EXT_SPE)
 	# Listed in RECORD, so pip removes it with the package on the next reinstall (no stub).
 	for pkg in $(LINKED); do for d in $(DEV_ENV)/lib/python3*/site-packages/$${pkg}-*.dist-info; do \

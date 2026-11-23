@@ -1,0 +1,9 @@
+name: standard-patrol-events
+author:
+- name: Zak Husayn
+  organization: Wildlife Dynamics
+description: >-
+  Turns an EarthRanger site's patrols and events for a chosen period into a dashboard and a
+  Word report (English, Spanish or Portuguese): patrol effort, tracks and density maps, event
+  summaries and details, and event photos.
+citation: []

@@ -23,7 +23,7 @@ result = json.loads((OUTPUT / "result.json").read_text())
 if result.get("error"):
     sys.exit(f"Workflow failed: {result['error']}")
 dash = result["result"]
-layout = {item["widget_id"]: item for item in json.loads((REPO / "workflows/standard_patrol_events/layout.json").read_text())}
+layout = {item["widget_id"]: item for item in json.loads((REPO / "layout.json").read_text())}
 
 
 def view_label(key: str) -> str:
