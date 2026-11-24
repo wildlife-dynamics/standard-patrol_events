@@ -4095,6 +4095,12 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             metric="nunique",
             value_column="patrol_id",
             time_range=report_range,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            decimal_places=None,
+            scale=1.0,
+            unit="",
             **(params.get("kpi_patrols_html") or {}),
         )
         .call()
@@ -4162,6 +4168,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             scale=0.001,
             unit="km",
             time_range=report_range,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            decimal_places=None,
             **(params.get("kpi_km_html") or {}),
         )
         .call()
@@ -4227,6 +4237,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             scale=0.000277777778,
             unit="h",
             time_range=report_range,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            decimal_places=None,
             **(params.get("kpi_hours_html") or {}),
         )
         .call()
@@ -4291,6 +4305,13 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             time_column="time",
             metric="count",
             time_range=report_range,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            decimal_places=None,
+            scale=1.0,
+            unit="",
+            value_column=None,
             **(params.get("kpi_events_html") or {}),
         )
         .call()
@@ -4382,6 +4403,9 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             effort_scale=0.001,
             time_range=report_range,
             decimal_places=2,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
             **(params.get("kpi_enc_html") or {}),
         )
         .call()
