@@ -272,7 +272,7 @@ def details():
     tag("{%p endfor %}")
     tag("{%p else %}")
     # landscape: 25.7 cm of text width, most of it for the details (every field, ' | ' between)
-    table_block("event_details", widths_cm=[1.6, 4.0, 4.2, 15.9])  # ID, type, when/where, details
+    table_block("event_details", widths_cm=[1.6, 3.6, 3.0, 3.6, 13.9])  # ID, type, date and time, coordinates, details
     tag("{%p endif %}")
 
 
