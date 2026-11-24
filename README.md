@@ -69,7 +69,7 @@ The five numbers at the top give the period at a glance, each with a line showin
 | Event records | One row per event, with the chosen details |
 | Incident storyboards | Each incident's events in time order, with the time between them |
 
-Each event type keeps one colour on the map, the sunburst, the chart over time and the storyboards, from a set of eight that stay distinct for colour-blind readers (the busiest type first; any further types are grey). Patrol tracks use their own, deeper colours.
+Each event type keeps one colour on the map, the sunburst, the chart over time and the storyboards, busiest type first: the first eight stay distinct for colour-blind readers, the next eight add more hues, and any types past sixteen are grey. Patrol tracks use their own, deeper colours.
 
 ---
 

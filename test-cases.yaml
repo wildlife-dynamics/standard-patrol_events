@@ -49,6 +49,8 @@ costaecuador:
       title: Reporte de patrullajes y eventos
       subtitle: Costa Ecuador
       details_intro: ''
+    incident_storyboards:
+      var: false
 
 apn:
   name: apn
@@ -100,6 +102,8 @@ apn:
       subtitle: Parque Nacional Los Alerces
       details_intro: ''
       sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
+    incident_storyboards:
+      var: false
 
 mep:
   name: mep
@@ -151,6 +155,8 @@ mep:
       subtitle: mep test site
       details_intro: ''
       sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
+    incident_storyboards:
+      var: true
 
 empty_period:
   name: empty_period
@@ -201,6 +207,8 @@ empty_period:
       title: Reporte de patrullajes y eventos
       subtitle: Costa Ecuador
       details_intro: ''
+    incident_storyboards:
+      var: false
 
 belize:
   name: belize
@@ -253,6 +261,8 @@ belize:
       subtitle: SACD Belize
       details_intro: ''
       sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
+    incident_storyboards:
+      var: false
 
 apncentral:
   name: apncentral
@@ -304,6 +314,8 @@ apncentral:
       subtitle: APN Central
       details_intro: ''
       sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
+    incident_storyboards:
+      var: false
 
 apncentral_patrol70:
   name: apncentral_patrol70
@@ -358,6 +370,8 @@ apncentral_patrol70:
       subtitle: APN Central
       details_intro: ''
       sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
+    incident_storyboards:
+      var: false
 
 mep_team:
   name: mep_team
@@ -412,6 +426,8 @@ mep_team:
       subtitle: mep test site
       details_intro: ''
       sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
+    incident_storyboards:
+      var: false
 
 mep_area:
   name: mep_area
@@ -464,6 +480,8 @@ mep_area:
       subtitle: mep test site
       details_intro: ''
       sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
+    incident_storyboards:
+      var: false
 
 apn_leader:
   name: apn_leader
@@ -517,3 +535,5 @@ apn_leader:
       subtitle: Parque Nacional Los Alerces
       details_intro: ''
       sections: [headline_stats, personnel, time_density, event_density, events_chart, conclusions]
+    incident_storyboards:
+      var: false

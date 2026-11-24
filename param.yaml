@@ -43,3 +43,5 @@ report_text:
   title: Reporte de patrullajes y eventos
   subtitle: Costa Ecuador
   details_intro: ''
+incident_storyboards:
+  var: false
