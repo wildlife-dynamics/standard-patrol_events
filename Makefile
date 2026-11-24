@@ -69,7 +69,7 @@ link:
 		if [ -d $$d ] && [ ! -f $$d/METADATA ]; then rm -f $$d/top_level.txt && rmdir $$d; fi; \
 	done; done
 	# Report the version spec.yaml pins, so wt-compiler --from-env accepts the editable install.
-	SETUPTOOLS_SCM_PRETEND_VERSION_FOR_ECOSCOPE_WORKFLOWS_EXT_STANDARD_PATROL_EVENTS=$(SPE_VERSION) \
+	SETUPTOOLS_SCM_PRETEND_VERSION=$(SPE_VERSION) \
 		$(DEV_ENV)/bin/python -m pip install -q --no-deps \
 		-e $(EXT_SPE)
 	# Listed in RECORD, so pip removes it with the package on the next reinstall (no stub).

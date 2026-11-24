@@ -239,6 +239,11 @@ tag("{%p endif %}")
 # Who went on patrol: number and date merged over a patrol's legs; patrol type, time,
 # leader, members per leg.
 section(None, "L_patrol_effort", lambda: (p("{{ L_effort_intro }}", color=MUTED), table_block("effort")))
+# Individual ranger effort: only when switched on in Patrol Effort (the table is skipped otherwise).
+tag("{%p if ranger_effort is defined and ranger_effort.tbl_contents %}")
+doc.add_heading("{{ L_ranger_effort }}", 2)
+dynamic_table("ranger_effort")
+tag("{%p endif %}")
 section("show_personnel", "L_personnel", lambda: table_block(
     "personnel", widths_cm=[1.6, 2.2, 3.0, 2.6, 2.6, 5.0], merge_cols=2))
 section(None, "L_maps", lambda: (

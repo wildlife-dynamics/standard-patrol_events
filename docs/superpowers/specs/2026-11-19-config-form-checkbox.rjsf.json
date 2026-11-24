@@ -811,6 +811,12 @@
                 }
               ]
             }
+          },
+          "ranger_effort": {
+            "title": "Individual Ranger Effort",
+            "type": "boolean",
+            "default": false,
+            "description": "Add a table of each ranger's effort (every member of a patrol leg), with the same columns."
           }
         },
         "required": [
@@ -986,7 +992,8 @@
       "ui:order": [
         "group_by",
         "map_layer",
-        "columns"
+        "columns",
+        "ranger_effort"
       ]
     },
     "event_grouping": {

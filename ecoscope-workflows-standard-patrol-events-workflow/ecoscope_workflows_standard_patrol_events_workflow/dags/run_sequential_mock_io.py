@@ -221,10 +221,7 @@ from ecoscope.platform.tasks.results import (
     create_scatterplot_layer as create_scatterplot_layer,
 )
 from ecoscope.platform.tasks.results import draw_map as draw_map
-from ecoscope.platform.tasks.results import draw_pie_chart as draw_pie_chart
-from ecoscope.platform.tasks.results import (
-    draw_time_series_bar_chart as draw_time_series_bar_chart,
-)
+from ecoscope.platform.tasks.results import draw_sunburst_chart as draw_sunburst_chart
 from ecoscope.platform.tasks.skip import all_geometry_are_none as all_geometry_are_none
 from ecoscope.platform.tasks.transformation import (
     apply_classification as apply_classification,
@@ -266,6 +263,9 @@ from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
     collect_map_layers as collect_map_layers,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
+    draw_value_trends as draw_value_trends,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
     fit_view_state as fit_view_state,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
@@ -284,6 +284,9 @@ from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
     events_by_type_table as events_by_type_table,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    explode_members as explode_members,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
     index_tracks_by_area as index_tracks_by_area,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
@@ -299,39 +302,9 @@ sanitize_attachments = create_func_magicmock(  # 🧪
     anchor="ecoscope_workflows_ext_standard_patrol_events.tasks.io",  # 🧪
     func_name="sanitize_attachments",  # 🧪
 )  # 🧪
-from ecoscope.platform.tasks.analysis import (
-    dataframe_column_mean as dataframe_column_mean,
-)
-from ecoscope.platform.tasks.analysis import (
-    dataframe_column_nunique as dataframe_column_nunique,
-)
-from ecoscope.platform.tasks.analysis import (
-    dataframe_column_sum as dataframe_column_sum,
-)
-from ecoscope.platform.tasks.analysis import dataframe_count as dataframe_count
-from ecoscope.platform.tasks.analysis import (
-    set_encounter_rate_metrics as set_encounter_rate_metrics,
-)
-from ecoscope.platform.tasks.results import (
-    create_files_single_view as create_files_single_view,
-)
-from ecoscope.platform.tasks.results import (
-    create_map_widget_single_view as create_map_widget_single_view,
-)
 from ecoscope.platform.tasks.results import (
     create_plot_widget_single_view as create_plot_widget_single_view,
 )
-from ecoscope.platform.tasks.results import (
-    create_single_value_widget_single_view as create_single_value_widget_single_view,
-)
-from ecoscope.platform.tasks.results import (
-    create_table_widget_single_view as create_table_widget_single_view,
-)
-from ecoscope.platform.tasks.results import gather_dashboard as gather_dashboard
-from ecoscope.platform.tasks.transformation import (
-    concat_dataframes as concat_dataframes,
-)
-from ecoscope.platform.tasks.transformation import with_unit as with_unit
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     load_report_template as load_report_template,
 )
@@ -345,7 +318,37 @@ from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
     create_docx as create_docx,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
+    draw_rate_kpi as draw_rate_kpi,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
+    draw_sparkline_kpi as draw_sparkline_kpi,
+)
+
+get_incident_events = create_func_magicmock(  # 🧪
+    anchor="ecoscope.platform.tasks.io",  # 🧪
+    func_name="get_incident_events",  # 🧪
+)  # 🧪
+from ecoscope.platform.tasks.results import (
+    create_files_single_view as create_files_single_view,
+)
+from ecoscope.platform.tasks.results import (
+    create_map_widget_single_view as create_map_widget_single_view,
+)
+from ecoscope.platform.tasks.results import (
+    create_table_widget_single_view as create_table_widget_single_view,
+)
+from ecoscope.platform.tasks.results import (
+    draw_incident_storyboard as draw_incident_storyboard,
+)
+from ecoscope.platform.tasks.results import gather_dashboard as gather_dashboard
+from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
     draw_wrapped_table as draw_wrapped_table,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
+    present_widgets as present_widgets,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
+    extend_color_map as extend_color_map,
 )
 
 
@@ -613,6 +616,27 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             collection=patrol_effort,
             key="metrics",
             **(params.get("effort_metric_list") or {}),
+        )
+        .call()
+    )
+
+    ranger_effort_on = (
+        task(pick_setting)
+        .validate()
+        .set_task_instance_id("ranger_effort_on")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            collection=patrol_effort,
+            key="ranger_effort",
+            **(params.get("ranger_effort_on") or {}),
         )
         .call()
     )
@@ -2240,6 +2264,139 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    ranger_tracks = (
+        task(explode_members)
+        .validate()
+        .set_task_instance_id("ranger_tracks")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_tracks,
+            enabled=ranger_effort_on,
+            **(params.get("ranger_tracks") or {}),
+        )
+        .call()
+    )
+
+    ranger_legs = (
+        task(explode_members)
+        .validate()
+        .set_task_instance_id("ranger_legs")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_legs,
+            enabled=ranger_effort_on,
+            **(params.get("ranger_legs") or {}),
+        )
+        .call()
+    )
+
+    ranger_by_tracks = (
+        task(summarize_df)
+        .validate()
+        .set_task_instance_id("ranger_by_tracks")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=ranger_tracks,
+            summary_params=effort_track_metrics,
+            groupby_cols=["patrol_member_names"],
+            reset_index=True,
+            **(params.get("ranger_by_tracks") or {}),
+        )
+        .call()
+    )
+
+    ranger_by_legs = (
+        task(summarize_df)
+        .validate()
+        .set_task_instance_id("ranger_by_legs")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=ranger_legs,
+            summary_params=effort_leg_metrics,
+            groupby_cols=["patrol_member_names"],
+            reset_index=True,
+            **(params.get("ranger_by_legs") or {}),
+        )
+        .call()
+    )
+
+    ranger_summary = (
+        task(join_summary_tables)
+        .validate()
+        .set_task_instance_id("ranger_summary")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            tables=[ranger_by_tracks, ranger_by_legs],
+            **(params.get("ranger_summary") or {}),
+        )
+        .call()
+    )
+
+    ranger_effort = (
+        task(format_effort_table)
+        .validate()
+        .set_task_instance_id("ranger_effort")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            summary=ranger_summary,
+            totals=effort_totals,
+            patrols=patrol_teams,
+            legs=legs_local,
+            grouper="patrol_member_names",
+            labels=labels,
+            **(params.get("ranger_effort") or {}),
+        )
+        .call()
+    )
+
     no_team_label = (
         task(pick_setting)
         .validate()
@@ -2296,7 +2453,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             df=tracks_teamed,
             input_column_name=patrol_grouping,
-            colormap="Dark2",
+            colormap=["#1a5fb0", "#b4530f", "#008a7e", "#8a3fb5", "#5b7f12"],
             output_column_name="patrol_color",
             **(params.get("tracks_colored") or {}),
         )
@@ -2488,26 +2645,54 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             df=events,
             input_column_name=event_grouping,
             colormap=[
-                "#1f77b4",
-                "#ff7f0e",
-                "#2ca02c",
-                "#d62728",
-                "#9467bd",
-                "#8c564b",
-                "#e377c2",
-                "#7f7f7f",
-                "#bcbd22",
-                "#17becf",
-                "#aec7e8",
-                "#ffbb78",
-                "#98df8a",
-                "#ff9896",
-                "#c5b0d5",
-                "#c49c94",
-                "#f7b6d2",
-                "#c7c7c7",
-                "#dbdb8d",
-                "#9edae5",
+                "#2a78d6",
+                "#eb6834",
+                "#1baf7a",
+                "#eda100",
+                "#e87ba4",
+                "#008300",
+                "#6250d6",
+                "#e34948",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
             ],
             **(params.get("event_colors") or {}),
         )
@@ -3477,7 +3662,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     events_pie_html = (
-        task(draw_pie_chart)
+        task(draw_sunburst_chart)
         .validate()
         .set_task_instance_id("events_pie_html")
         .handle_errors()
@@ -3490,12 +3675,22 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            label_column=None,
-            plot_style=None,
-            layout_style=None,
             dataframe=events_charted,
-            value_column=event_grouping,
+            ring_columns=["event_category_display", "event_type_display"],
+            value_column=None,
             color_column="event_color",
+            color_ring=1,
+            palette=["#e4e4e1"],
+            top_n=8,
+            pinned_values=None,
+            other_color="#a3a3a3",
+            expand_other=True,
+            plot_style={
+                "texttemplate": "%{label}<br>%{percentRoot:.1%}",
+                "insidetextorientation": "radial",
+                "leaf_opacity": 1,
+            },
+            layout_style=None,
             **(params.get("events_pie_html") or {}),
         )
         .call()
@@ -3524,7 +3719,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     monthly_html = (
-        task(draw_time_series_bar_chart)
+        task(draw_value_trends)
         .validate()
         .set_task_instance_id("monthly_html")
         .handle_errors()
@@ -3537,15 +3732,12 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
+            df=events_charted,
+            column=event_grouping,
+            time_column="time",
             color_column="event_color",
-            plot_style=None,
-            layout_style=None,
-            dataframe=events_charted,
-            x_axis="time",
-            y_axis="serial_number",
-            category=event_grouping,
-            agg_function="count",
-            time_interval="month",
+            time_range=report_range,
+            period="auto",
             **(params.get("monthly_html") or {}),
         )
         .call()
@@ -3865,6 +4057,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                     {"item_type": "table", "key": "effort", "value": effort},
                     {
                         "item_type": "table",
+                        "key": "ranger_effort",
+                        "value": ranger_effort,
+                    },
+                    {
+                        "item_type": "table",
                         "key": "events_by_type",
                         "value": events_by_type,
                     },
@@ -3929,10 +4126,39 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    kpi_patrols = (
-        task(dataframe_column_nunique)
+    kpi_patrols_html = (
+        task(draw_sparkline_kpi)
         .validate()
-        .set_task_instance_id("kpi_patrols")
+        .set_task_instance_id("kpi_patrols_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=patrol_teams,
+            time_column="start",
+            metric="nunique",
+            value_column="patrol_id",
+            time_range=report_range,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            decimal_places=None,
+            scale=1.0,
+            unit="",
+            **(params.get("kpi_patrols_html") or {}),
+        )
+        .call()
+    )
+
+    kpi_patrols_card = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("kpi_patrols_card")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -3943,15 +4169,16 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=patrol_teams,
-            column_name="patrol_id",
-            **(params.get("kpi_patrols") or {}),
+            text=kpi_patrols_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="kpi_patrols",
+            **(params.get("kpi_patrols_card") or {}),
         )
         .call()
     )
 
     kpi_patrols_widget = (
-        task(create_single_value_widget_single_view)
+        task(create_plot_widget_single_view)
         .validate()
         .set_task_instance_id("kpi_patrols_widget")
         .handle_errors()
@@ -3963,37 +4190,46 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            decimal_places=0,
             title="Patrols",
-            data=kpi_patrols,
+            data=kpi_patrols_card,
             **(params.get("kpi_patrols_widget") or {}),
         )
         .call()
     )
 
-    kpi_km = (
-        task(dataframe_column_sum)
+    kpi_km_html = (
+        task(draw_sparkline_kpi)
         .validate()
-        .set_task_instance_id("kpi_km")
+        .set_task_instance_id("kpi_km_html")
         .handle_errors()
         .with_tracing()
         .skipif(
             conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
+                never,
             ],
             unpack_depth=1,
         )
         .partial(
-            df=trajectory, column_name="dist_meters", **(params.get("kpi_km") or {})
+            df=effort_tracks,
+            time_column="segment_start",
+            metric="sum",
+            value_column="dist_meters",
+            scale=0.001,
+            unit="km",
+            time_range=report_range,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            decimal_places=None,
+            **(params.get("kpi_km_html") or {}),
         )
         .call()
     )
 
-    kpi_km_unit = (
-        task(with_unit)
+    kpi_km_card = (
+        task(persist_text)
         .validate()
-        .set_task_instance_id("kpi_km_unit")
+        .set_task_instance_id("kpi_km_card")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -4004,16 +4240,16 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            value=kpi_km,
-            original_unit="m",
-            new_unit="km",
-            **(params.get("kpi_km_unit") or {}),
+            text=kpi_km_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="kpi_km",
+            **(params.get("kpi_km_card") or {}),
         )
         .call()
     )
 
     kpi_km_widget = (
-        task(create_single_value_widget_single_view)
+        task(create_plot_widget_single_view)
         .validate()
         .set_task_instance_id("kpi_km_widget")
         .handle_errors()
@@ -4025,18 +4261,44 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            title="Distance",
-            data=kpi_km_unit,
-            decimal_places=0,
-            **(params.get("kpi_km_widget") or {}),
+            title="Distance", data=kpi_km_card, **(params.get("kpi_km_widget") or {})
         )
         .call()
     )
 
-    kpi_hours = (
-        task(dataframe_column_sum)
+    kpi_hours_html = (
+        task(draw_sparkline_kpi)
         .validate()
-        .set_task_instance_id("kpi_hours")
+        .set_task_instance_id("kpi_hours_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_tracks,
+            time_column="segment_start",
+            metric="sum",
+            value_column="timespan_seconds",
+            scale=0.000277777778,
+            unit="h",
+            time_range=report_range,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            decimal_places=None,
+            **(params.get("kpi_hours_html") or {}),
+        )
+        .call()
+    )
+
+    kpi_hours_card = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("kpi_hours_card")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -4047,37 +4309,16 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=trajectory,
-            column_name="timespan_seconds",
-            **(params.get("kpi_hours") or {}),
-        )
-        .call()
-    )
-
-    kpi_hours_unit = (
-        task(with_unit)
-        .validate()
-        .set_task_instance_id("kpi_hours_unit")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            value=kpi_hours,
-            original_unit="s",
-            new_unit="h",
-            **(params.get("kpi_hours_unit") or {}),
+            text=kpi_hours_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="kpi_hours",
+            **(params.get("kpi_hours_card") or {}),
         )
         .call()
     )
 
     kpi_hours_widget = (
-        task(create_single_value_widget_single_view)
+        task(create_plot_widget_single_view)
         .validate()
         .set_task_instance_id("kpi_hours_widget")
         .handle_errors()
@@ -4090,17 +4331,45 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         )
         .partial(
             title="Patrol hours",
-            data=kpi_hours_unit,
-            decimal_places=0,
+            data=kpi_hours_card,
             **(params.get("kpi_hours_widget") or {}),
         )
         .call()
     )
 
-    kpi_events = (
-        task(dataframe_count)
+    kpi_events_html = (
+        task(draw_sparkline_kpi)
         .validate()
-        .set_task_instance_id("kpi_events")
+        .set_task_instance_id("kpi_events_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=events,
+            time_column="time",
+            metric="count",
+            time_range=report_range,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            decimal_places=None,
+            scale=1.0,
+            unit="",
+            value_column=None,
+            **(params.get("kpi_events_html") or {}),
+        )
+        .call()
+    )
+
+    kpi_events_card = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("kpi_events_card")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -4110,12 +4379,17 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(df=events, **(params.get("kpi_events") or {}))
+        .partial(
+            text=kpi_events_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="kpi_events",
+            **(params.get("kpi_events_card") or {}),
+        )
         .call()
     )
 
     kpi_events_widget = (
-        task(create_single_value_widget_single_view)
+        task(create_plot_widget_single_view)
         .validate()
         .set_task_instance_id("kpi_events_widget")
         .handle_errors()
@@ -4127,9 +4401,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            decimal_places=0,
             title="Events",
-            data=kpi_events,
+            data=kpi_events_card,
             **(params.get("kpi_events_widget") or {}),
         )
         .call()
@@ -4158,31 +4431,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    enc_metrics = (
-        task(set_encounter_rate_metrics)
+    kpi_enc_html = (
+        task(draw_rate_kpi)
         .validate()
-        .set_task_instance_id("enc_metrics")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            aggregation=None,
-            metrics=[{"metric": "encounters_per_distance", "unit": "km"}],
-            **(params.get("enc_metrics") or {}),
-        )
-        .call()
-    )
-
-    enc_frame = (
-        task(concat_dataframes)
-        .validate()
-        .set_task_instance_id("enc_frame")
+        .set_task_instance_id("kpi_enc_html")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -4192,18 +4444,26 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            dfs=[trajectory, enc_events],
-            ensure_columns=["event_type", "dist_meters"],
-            reset_index=True,
-            **(params.get("enc_frame") or {}),
+            events=enc_events,
+            effort=effort_tracks,
+            events_time_column="time",
+            effort_time_column="segment_start",
+            effort_column="dist_meters",
+            effort_scale=0.001,
+            time_range=report_range,
+            decimal_places=2,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            **(params.get("kpi_enc_html") or {}),
         )
         .call()
     )
 
-    enc_summary = (
-        task(summarize_df)
+    kpi_enc_card = (
+        task(persist_text)
         .validate()
-        .set_task_instance_id("enc_summary")
+        .set_task_instance_id("kpi_enc_card")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -4214,36 +4474,16 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=enc_frame,
-            summary_params=enc_metrics,
-            groupby_cols=None,
-            reset_index=False,
-            **(params.get("enc_summary") or {}),
-        )
-        .call()
-    )
-
-    kpi_enc = (
-        task(dataframe_column_mean)
-        .validate()
-        .set_task_instance_id("kpi_enc")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=enc_summary, column_name="Events per Km", **(params.get("kpi_enc") or {})
+            text=kpi_enc_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="kpi_enc",
+            **(params.get("kpi_enc_card") or {}),
         )
         .call()
     )
 
     kpi_enc_widget = (
-        task(create_single_value_widget_single_view)
+        task(create_plot_widget_single_view)
         .validate()
         .set_task_instance_id("kpi_enc_widget")
         .handle_errors()
@@ -4255,10 +4495,285 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            decimal_places=2,
             title="Encounters per km",
-            data=kpi_enc,
+            data=kpi_enc_card,
             **(params.get("kpi_enc_widget") or {}),
+        )
+        .call()
+    )
+
+    incident_events = (
+        task(get_incident_events)
+        # 🧪 validation omitted for mocked IO task (returns pre-loaded example data)
+        .set_task_instance_id("incident_events")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            client=er_client,
+            time_range=time_range,
+            max_depth=5,
+            include_icons=True,
+            **(params.get("incident_events") or {}),
+        )
+        .call()
+    )
+
+    incident_events_local = (
+        task(convert_values_to_timezone)
+        .validate()
+        .set_task_instance_id("incident_events_local")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=incident_events,
+            timezone=timezone,
+            columns=["time"],
+            **(params.get("incident_events_local") or {}),
+        )
+        .call()
+    )
+
+    incident_colors = (
+        task(extend_color_map)
+        .validate()
+        .set_task_instance_id("incident_colors")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            colormap=event_colors,
+            df=incident_events_local,
+            column="event_type_display",
+            palette=[
+                "#2a78d6",
+                "#eb6834",
+                "#1baf7a",
+                "#eda100",
+                "#e87ba4",
+                "#008300",
+                "#6250d6",
+                "#e34948",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+                "#a3a3a3",
+            ],
+            **(params.get("incident_colors") or {}),
+        )
+        .call()
+    )
+
+    incident_data = (
+        task(apply_color_map)
+        .validate()
+        .set_task_instance_id("incident_data")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=incident_events_local,
+            input_column_name="event_type_display",
+            output_column_name="event_type_color",
+            colormap=incident_colors,
+            **(params.get("incident_data") or {}),
+        )
+        .call()
+    )
+
+    storyboard_html = (
+        task(draw_incident_storyboard)
+        .validate()
+        .set_task_instance_id("storyboard_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            dataframe=incident_data,
+            group_column="incident",
+            group_time_column="incident_time",
+            time_column="time",
+            type_column="event_type_display",
+            id_column="serial_number",
+            icon_column="icon",
+            color_column="event_type_color",
+            palette=None,
+            merge_window_hours=12,
+            **(params.get("storyboard_html") or {}),
+        )
+        .call()
+    )
+
+    storyboard = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("storyboard")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=storyboard_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="incident_storyboards",
+            **(params.get("storyboard") or {}),
+        )
+        .call()
+    )
+
+    storyboard_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("storyboard_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Incident storyboards",
+            data=storyboard,
+            **(params.get("storyboard_widget") or {}),
+        )
+        .call()
+    )
+
+    ranger_effort_html = (
+        task(draw_wrapped_table)
+        .validate()
+        .set_task_instance_id("ranger_effort_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            wrap_min_chars=30,
+            table_config=None,
+            dataframe=ranger_effort,
+            **(params.get("ranger_effort_html") or {}),
+        )
+        .call()
+    )
+
+    ranger_effort_table = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("ranger_effort_table")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=ranger_effort_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="ranger_effort_table",
+            **(params.get("ranger_effort_table") or {}),
+        )
+        .call()
+    )
+
+    ranger_effort_widget = (
+        task(create_table_widget_single_view)
+        .validate()
+        .set_task_instance_id("ranger_effort_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Individual ranger effort",
+            data=ranger_effort_table,
+            **(params.get("ranger_effort_widget") or {}),
         )
         .call()
     )
@@ -4480,7 +4995,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            title="Events by month",
+            title="Events over time",
             data=monthly_chart,
             **(params.get("monthly_widget") or {}),
         )
@@ -4632,10 +5147,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    dashboard = (
-        task(gather_dashboard)
+    dashboard_widgets = (
+        task(present_widgets)
         .validate()
-        .set_task_instance_id("dashboard")
+        .set_task_instance_id("dashboard_widgets")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -4645,8 +5160,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            details=workflow_details,
-            time_range=report_range,
             widgets=[
                 kpi_patrols_widget,
                 kpi_km_widget,
@@ -4662,7 +5175,30 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                 event_records_widget,
                 legs_widget,
                 kpi_enc_widget,
+                storyboard_widget,
+                ranger_effort_widget,
             ],
+            **(params.get("dashboard_widgets") or {}),
+        )
+        .call()
+    )
+
+    dashboard = (
+        task(gather_dashboard)
+        .validate()
+        .set_task_instance_id("dashboard")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            details=workflow_details,
+            time_range=report_range,
+            widgets=dashboard_widgets,
             files=report_files,
             **(params.get("dashboard") or {}),
         )

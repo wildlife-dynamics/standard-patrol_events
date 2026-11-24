@@ -5,20 +5,20 @@
 
 ```yaml
 # fingerprint:
-artifacts_sha256_basic: df8d8e279e0eecbd894be485050f6d55d701fcba9c42e7942fbd7eb10e8732d8
-artifacts_sha256_strict: 069320220134ca41cff6611f084c4d17a51f839e338d81a6c719e49c132e0bcf
+artifacts_sha256_basic: d465619e5c76a6f57410ffe629e18661e1e9a1091b99aee304c2b66512e81a29
+artifacts_sha256_strict: 0c041e66ce1d949b9d3ef3a6b0ba5814101b652ddfd8624f15da4a83ec531d2c
 installed_requirements:
 - channel: https://repo.prefix.dev/ecoscope-workflows/
   name: ecoscope-platform
   version: {version: ==2.39.1}
 - channel: https://repo.prefix.dev/ecoscope-workflows-custom/
   name: ecoscope-workflows-ext-standard-patrol-events
-  version: {version: ==0.0.4}
+  version: {version: ==0.0.6}
 - channel: conda-forge
   name: pydeck
   version: {version: ==0.9.2}
-params_sha256: 2a5c7c70a2f6428971ec3a590aeb4a50103df6b92a58d128d086b6603569eb0e
-spec_sha256: 066fda5f5a31d1dd3f8c9e6902f60eda973c287d7fc6efe4f5ac88f26b6a25f9
+params_sha256: 5314d55833d1aa319a87f9b5e0569116e59612e7a04d589fc04f4d33c629ffb2
+spec_sha256: 30e587a62151dfaeeab939c353f9bd61909553390aa1a98a9c58e70e286d9e7f
 
 ```
 
