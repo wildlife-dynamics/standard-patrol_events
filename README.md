@@ -19,7 +19,7 @@ Open the workflow in Ecoscope and fill in the config page from top to bottom. On
 3. **Time Range:** the reporting period, usually a month or a quarter, with the site's timezone.
 4. **Patrol Filter** (optional): tick **Team**, **Team Leader** or **Single Patrol** to narrow the patrols. A single patrol hides the settings that don't apply to it.
 5. **Patrol Type:** which patrol types to include; empty means all.
-6. **Patrol Effort:** how the effort table is grouped (patrol type, team, leader, individual patrol or an area of a map layer) and which columns it shows.
+6. **Patrol Effort:** how the effort table is grouped (patrol type, team, leader, individual patrol or an area of a map layer) and which columns it shows. Tick **Individual Ranger Effort** to add a table with one row per ranger.
 7. **Patrol Grouping:** how patrol tracks are coloured on the map.
 8. **Events:** all events in the period, or only the events linked to the patrols.
 9. **Event Type** and **Event State:** which events to include; empty means all.
@@ -35,6 +35,7 @@ Open the workflow in Ecoscope and fill in the config page from top to bottom. On
 
 - **Patrols** in the period, with their type, team and GPS route. Where the site records patrols as **legs** (a new leg when the transport, leader or team changes), each leg keeps its own leader, team and form.
 - **Events** recorded in the period, with their type, category, state, priority, details and photos.
+- **Incidents** (EarthRanger's collections of related events) dated in the period, with all of their events, for the storyboards.
 - **Map layers** (optional), when you group patrol effort by area.
 
 The report can only show what was recorded: a patrol without a GPS route has no distance, and a site that doesn't use legs or event states simply shows less.
@@ -44,10 +45,10 @@ The report can only show what was recorded: a patrol without a GPS route has no 
 ## The dashboard
 
 <p align="center">
-  <img src="docs/images/dashboard.svg" alt="The dashboard: four headline numbers, the tracks and events map, the effort and legs tables, density maps, event charts and event tables" width="100%">
+  <img src="docs/images/dashboard.svg" alt="The dashboard: headline numbers, the tracks and events map, the effort and legs tables, density maps, event charts and event tables" width="100%">
 </p>
 
-The four numbers at the top give the period at a glance. Below them, the map shows where patrols went and where events were recorded, the tables show effort and legs, and the density maps and charts show where and when things happened. The Word report is in the dashboard's files, ready to download.
+The five numbers at the top give the period at a glance, each with a line showing how it changed over the period (by month, week or day, depending on its length). Below them, the map shows where patrols went and where events were recorded, the tables show effort and legs, and the density maps and charts show where and when things happened. The Word report is in the dashboard's files, ready to download.
 
 | On the dashboard | What it shows |
 |---|---|
@@ -55,15 +56,20 @@ The four numbers at the top give the period at a glance. Below them, the map sho
 | Distance | How far they travelled, measured on the GPS routes |
 | Patrol hours | How long they lasted in total |
 | Events | How many events were recorded |
+| Encounters per km | Events recorded within patrols for every km patrolled |
 | Patrol tracks and events | The routes coloured by the patrol grouping, with the events marked |
 | Patrol effort | Patrols, distance, hours and more for each group, with a total; groups run from least to most distance |
+| Individual ranger effort | The same columns for each ranger (leader or member of a leg), when switched on |
 | Patrol legs | Each leg's patrol, type, leader, team, start, end, distance and time |
 | Patrol time density | Where patrols spent their time, as a share of all patrol time |
 | Event density | How many events were recorded in each grid cell |
-| Events | Events by type or category |
-| Events by month | Event counts over time |
+| Events | A sunburst: event categories in the centre, their types around them. Click a category to open it, click the centre to go back |
+| Events over time | Events per week, month or quarter, stacked by type; switch to shares (100%) or lines |
 | Event summary | Counts by type or category |
 | Event records | One row per event, with the chosen details |
+| Incident storyboards | Each incident's events in time order, with the time between them |
+
+Each event type keeps one colour on the map, the sunburst, the chart over time and the storyboards, from a set of eight that stay distinct for colour-blind readers (the busiest type first; any further types are grey). Patrol tracks use their own, deeper colours.
 
 ---
 
@@ -77,10 +83,11 @@ The report follows the order a technician would write it in, with numbered secti
 
 - **Cover.** The title, subtitle, period, who generated it and when.
 - **Headline figures.** Patrols, distance, hours, patrol days and events.
+- **Individual ranger effort.** When switched on, the effort columns for each ranger.
 - **Personnel.** Who went on patrol, leg by leg.
 - **Patrol effort.** The effort table, grouped as you chose.
 - **Maps.** The patrol tracks with events, the patrol time density map and the event density map.
-- **Event summary.** Events by type or category, events by month, and events by category and priority.
+- **Event summary.** Events by type or category, the events sunburst, events over time, and events by category and priority.
 - **Event details.** One table of every event with its details, or one table per event type.
 - **Photos.** The event photos with their captions.
 - **Conclusions.** An empty box for the technician to write in.

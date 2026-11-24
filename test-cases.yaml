@@ -231,6 +231,7 @@ belize:
       - patrol_count
       - total_distance
       - total_duration
+      ranger_effort: true
     patrol_grouping:
       var: patrol_type
     event_scope:

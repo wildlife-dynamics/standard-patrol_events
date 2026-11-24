@@ -9,7 +9,7 @@ requirements:
     version: "==2.39.1"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-standard-patrol-events
-    version: "==0.0.4"
+    version: "==0.0.5"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
   - name: pydeck
     version: 0.9.2
@@ -180,6 +180,11 @@ rjsf-overrides:
             title: Person-Days
           - const: area_covered_merged
             title: Area Covered (km²)
+      ranger_effort:
+        title: Individual Ranger Effort
+        type: boolean
+        default: false
+        description: Add a table of each ranger's effort (every member of a patrol leg), with the same columns.
     patrol_effort.if:
       properties:
         group_by:
@@ -604,6 +609,12 @@ workflow:
     partial:
       collection: ${{ workflow.patrol_effort.return }}
       key: metrics
+
+  - id: ranger_effort_on
+    task: pick_setting
+    partial:
+      collection: ${{ workflow.patrol_effort.return }}
+      key: ranger_effort
 
   - id: effort_grouper  # a single patrol keeps one row, grouped by patrol
     task: effort_grouper_for
@@ -1166,6 +1177,51 @@ workflow:
       grouper: ${{ workflow.effort_grouper.return }}
       labels: ${{ workflow.labels.return }}
 
+  # ── Individual ranger effort (optional): the effort columns per patrol member ──────
+  # Off: explode_members returns empty frames, so these steps and the widget are skipped.
+  - id: ranger_tracks
+    task: explode_members
+    partial:
+      df: ${{ workflow.effort_tracks.return }}
+      enabled: ${{ workflow.ranger_effort_on.return }}
+
+  - id: ranger_legs
+    task: explode_members
+    partial:
+      df: ${{ workflow.effort_legs.return }}
+      enabled: ${{ workflow.ranger_effort_on.return }}
+
+  - id: ranger_by_tracks
+    task: summarize_df
+    partial:
+      df: ${{ workflow.ranger_tracks.return }}
+      summary_params: ${{ workflow.effort_track_metrics.return }}
+      groupby_cols: [patrol_member_names]
+      reset_index: true
+
+  - id: ranger_by_legs
+    task: summarize_df
+    partial:
+      df: ${{ workflow.ranger_legs.return }}
+      summary_params: ${{ workflow.effort_leg_metrics.return }}
+      groupby_cols: [patrol_member_names]
+      reset_index: true
+
+  - id: ranger_summary
+    task: join_summary_tables
+    partial:
+      tables: ["${{ workflow.ranger_by_tracks.return }}", "${{ workflow.ranger_by_legs.return }}"]
+
+  - id: ranger_effort
+    task: format_effort_table
+    partial:
+      summary: ${{ workflow.ranger_summary.return }}
+      totals: ${{ workflow.effort_totals.return }}
+      patrols: ${{ workflow.patrol_teams.return }}
+      legs: ${{ workflow.legs_local.return }}
+      grouper: patrol_member_names
+      labels: ${{ workflow.labels.return }}
+
   - id: no_team_label
     task: pick_setting
     partial:
@@ -1184,7 +1240,7 @@ workflow:
     partial:
       df: ${{ workflow.tracks_teamed.return }}
       input_column_name: ${{ workflow.patrol_grouping.return }}
-      colormap: Dark2  # not tab20's colours, which the events use
+      colormap: ["#1a5fb0", "#b4530f", "#008a7e", "#8a3fb5", "#5b7f12"]  # deeper than the event colours (validated set)
       output_column_name: patrol_color
 
   - id: td_legend_title
@@ -1251,7 +1307,8 @@ workflow:
     partial:
       df: ${{ workflow.events.return }}
       input_column_name: ${{ workflow.event_grouping.return }}
-      colormap: ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf", "#aec7e8", "#ffbb78", "#98df8a", "#ff9896", "#c5b0d5", "#c49c94", "#f7b6d2", "#c7c7c7", "#dbdb8d", "#9edae5"]
+      # 8 colour-blind-safe hues in a fixed order, busiest type first; the rest grey (folded as "other")
+      colormap: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3"]
 
   - id: events_colored
     task: apply_color_map
@@ -1620,15 +1677,26 @@ workflow:
       colormap: ${{ workflow.event_colors.return }}
       output_column_name: event_color
 
+  # Events sunburst (QENP style, nested and clickable): categories in the centre, their types
+  # outside in the event colours. Click a category to open it; click the centre to go back.
   - id: events_pie_html
-    task: draw_pie_chart
+    task: draw_sunburst_chart
     partial:
-      label_column: null
-      plot_style: null
-      layout_style: null
       dataframe: ${{ workflow.events_charted.return }}
-      value_column: ${{ workflow.event_grouping.return }}
-      color_column: event_color
+      ring_columns: [event_category_display, event_type_display]
+      value_column: null
+      color_column: event_color  # grouped by category, each type takes its category's colour
+      color_ring: 1
+      palette: ["#e4e4e1"]  # categories: neutral, so the event colours stand out
+      top_n: 8  # per category; the rest merge into "Other", which opens on click
+      pinned_values: null
+      other_color: "#a3a3a3"
+      expand_other: true
+      plot_style:
+        texttemplate: "%{label}<br>%{percentRoot:.1%}"
+        insidetextorientation: radial
+        leaf_opacity: 1
+      layout_style: null
 
   - id: events_pie
     task: persist_text
@@ -1637,18 +1705,15 @@ workflow:
       root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       filename_suffix: events_pie
 
-  - id: monthly_html
-    task: draw_time_series_bar_chart
+  - id: monthly_html  # event-details-categorical style: stacked bars, switch to 100% or lines
+    task: draw_value_trends
     partial:
+      df: ${{ workflow.events_charted.return }}
+      column: ${{ workflow.event_grouping.return }}
+      time_column: time
       color_column: event_color
-      plot_style: null
-      layout_style: null
-      dataframe: ${{ workflow.events_charted.return }}
-      x_axis: time
-      y_axis: serial_number
-      category: ${{ workflow.event_grouping.return }}
-      agg_function: count
-      time_interval: month
+      time_range: ${{ workflow.report_range.return }}
+      period: auto
 
   - id: monthly_chart
     task: persist_text
@@ -1778,6 +1843,7 @@ workflow:
           - {item_type: text, key: detail_mode, value: "${{ workflow.detail_mode.return }}"}
           - {item_type: table, key: personnel, value: "${{ workflow.personnel.return }}"}
           - {item_type: table, key: effort, value: "${{ workflow.effort.return }}"}
+          - {item_type: table, key: ranger_effort, value: "${{ workflow.ranger_effort.return }}"}
           - {item_type: table, key: events_by_type, value: "${{ workflow.events_by_type.return }}"}
           - {item_type: table, key: category_priority, value: "${{ workflow.category_priority.return }}"}
           - {item_type: table, key: event_details, value: "${{ workflow.event_details.return }}"}
@@ -1790,85 +1856,123 @@ workflow:
           - {item_type: image_list, key: images, value: "${{ workflow.images.return }}", width_inches: 3.4}
 
   # ── Dashboard ───────────────────────────────────────────────────────────────────
-  - id: kpi_patrols
-    task: dataframe_column_nunique
+  # ── Dashboard: stat cards with a sparkline of the period (QENP style) ─────────────
+  - id: kpi_patrols_html
+    task: draw_sparkline_kpi
+    skipif:  # no data: 0, not a blank card
+      conditions:
+        - never
     partial:
       df: ${{ workflow.patrol_teams.return }}
-      column_name: patrol_id
+      time_column: start
+      metric: nunique
+      value_column: patrol_id
+      time_range: ${{ workflow.report_range.return }}
+
+  - id: kpi_patrols_card
+    task: persist_text
+    partial:
+      text: ${{ workflow.kpi_patrols_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: kpi_patrols
 
   - id: kpi_patrols_widget
-    task: create_single_value_widget_single_view
+    task: create_plot_widget_single_view
     skipif:
       conditions:
         - never
     partial:
-      decimal_places: 0
       title: Patrols
-      data: ${{ workflow.kpi_patrols.return }}
+      data: ${{ workflow.kpi_patrols_card.return }}
 
-  - id: kpi_km
-    task: dataframe_column_sum
+  - id: kpi_km_html
+    task: draw_sparkline_kpi
+    skipif:  # no data: 0, not a blank card
+      conditions:
+        - never
     partial:
-      df: ${{ workflow.trajectory.return }}
-      column_name: dist_meters
+      df: ${{ workflow.effort_tracks.return }}
+      time_column: segment_start
+      metric: sum
+      value_column: dist_meters
+      scale: 0.001
+      unit: km
+      time_range: ${{ workflow.report_range.return }}
 
-  - id: kpi_km_unit
-    task: with_unit
+  - id: kpi_km_card
+    task: persist_text
     partial:
-      value: ${{ workflow.kpi_km.return }}
-      original_unit: m
-      new_unit: km
+      text: ${{ workflow.kpi_km_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: kpi_km
 
   - id: kpi_km_widget
-    task: create_single_value_widget_single_view
+    task: create_plot_widget_single_view
     skipif:
       conditions:
         - never
     partial:
       title: Distance
-      data: ${{ workflow.kpi_km_unit.return }}
-      decimal_places: 0
+      data: ${{ workflow.kpi_km_card.return }}
 
-  - id: kpi_hours
-    task: dataframe_column_sum
+  - id: kpi_hours_html
+    task: draw_sparkline_kpi
+    skipif:  # no data: 0, not a blank card
+      conditions:
+        - never
     partial:
-      df: ${{ workflow.trajectory.return }}
-      column_name: timespan_seconds
+      df: ${{ workflow.effort_tracks.return }}
+      time_column: segment_start
+      metric: sum
+      value_column: timespan_seconds
+      scale: 0.000277777778
+      unit: h
+      time_range: ${{ workflow.report_range.return }}
 
-  - id: kpi_hours_unit
-    task: with_unit
+  - id: kpi_hours_card
+    task: persist_text
     partial:
-      value: ${{ workflow.kpi_hours.return }}
-      original_unit: s
-      new_unit: h
+      text: ${{ workflow.kpi_hours_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: kpi_hours
 
   - id: kpi_hours_widget
-    task: create_single_value_widget_single_view
+    task: create_plot_widget_single_view
     skipif:
       conditions:
         - never
     partial:
       title: Patrol hours
-      data: ${{ workflow.kpi_hours_unit.return }}
-      decimal_places: 0
+      data: ${{ workflow.kpi_hours_card.return }}
 
-  - id: kpi_events
-    task: dataframe_count
+  - id: kpi_events_html
+    task: draw_sparkline_kpi
+    skipif:  # no data: 0, not a blank card
+      conditions:
+        - never
     partial:
       df: ${{ workflow.events.return }}
+      time_column: time
+      metric: count
+      time_range: ${{ workflow.report_range.return }}
+
+  - id: kpi_events_card
+    task: persist_text
+    partial:
+      text: ${{ workflow.kpi_events_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: kpi_events
 
   - id: kpi_events_widget
-    task: create_single_value_widget_single_view
+    task: create_plot_widget_single_view
     skipif:
       conditions:
         - never
     partial:
-      decimal_places: 0
       title: Events
-      data: ${{ workflow.kpi_events.return }}
+      data: ${{ workflow.kpi_events_card.return }}
 
-  # Encounters per km: events recorded within patrols over the distance patrolled
-  # (core's encounters_per_distance ratio, as in the catalogue's encounter-rate stats).
+  # Encounters per km: events recorded within patrols over the distance patrolled.
   - id: enc_events
     task: filter_linked_events
     partial:
@@ -1877,46 +1981,119 @@ workflow:
       retrieval: linked_only
       patrol_serial: ${{ workflow.patrol_serial.return }}
 
-  - id: enc_metrics
-    task: set_encounter_rate_metrics
-    partial:
-      aggregation: null
-      metrics:
-        - {metric: encounters_per_distance, unit: km}
-
-  - id: enc_frame
-    task: concat_dataframes
-    skipif:  # no patrol events: the ratio is 0, not a skip
+  - id: kpi_enc_html
+    task: draw_rate_kpi
+    skipif:  # no events within patrols: a rate of 0, not a blank card
       conditions:
         - never
     partial:
-      dfs: ["${{ workflow.trajectory.return }}", "${{ workflow.enc_events.return }}"]
-      ensure_columns: [event_type, dist_meters]
-      reset_index: true
+      events: ${{ workflow.enc_events.return }}
+      effort: ${{ workflow.effort_tracks.return }}
+      events_time_column: time
+      effort_time_column: segment_start
+      effort_column: dist_meters
+      effort_scale: 0.001
+      time_range: ${{ workflow.report_range.return }}
+      decimal_places: 2
 
-  - id: enc_summary
-    task: summarize_df
+  - id: kpi_enc_card
+    task: persist_text
     partial:
-      df: ${{ workflow.enc_frame.return }}
-      summary_params: ${{ workflow.enc_metrics.return }}
-      groupby_cols: null
-      reset_index: false
-
-  - id: kpi_enc
-    task: dataframe_column_mean
-    partial:
-      df: ${{ workflow.enc_summary.return }}
-      column_name: Events per Km
+      text: ${{ workflow.kpi_enc_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: kpi_enc
 
   - id: kpi_enc_widget
-    task: create_single_value_widget_single_view
+    task: create_plot_widget_single_view
     skipif:
       conditions:
         - never
     partial:
-      decimal_places: 2
       title: Encounters per km
-      data: ${{ workflow.kpi_enc.return }}
+      data: ${{ workflow.kpi_enc_card.return }}
+
+  # ── Incident storyboards: each incident's events in time order (as incident-storyboard) ──
+  - id: incident_events
+    task: get_incident_events
+    partial:
+      client: ${{ workflow.er_client.return }}
+      time_range: ${{ workflow.time_range.return }}
+      max_depth: 5
+      include_icons: true
+
+  - id: incident_events_local
+    task: convert_values_to_timezone
+    partial:
+      df: ${{ workflow.incident_events.return }}
+      timezone: ${{ workflow.timezone.return }}
+      columns: [time]
+
+  - id: incident_colors  # the event colours, plus one for types found only in incidents
+    task: extend_color_map
+    partial:
+      colormap: ${{ workflow.event_colors.return }}
+      df: ${{ workflow.incident_events_local.return }}
+      column: event_type_display
+      palette: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3"]
+
+  - id: incident_data
+    task: apply_color_map
+    partial:
+      df: ${{ workflow.incident_events_local.return }}
+      input_column_name: event_type_display
+      output_column_name: event_type_color
+      colormap: ${{ workflow.incident_colors.return }}
+
+  - id: storyboard_html
+    task: draw_incident_storyboard
+    partial:
+      dataframe: ${{ workflow.incident_data.return }}
+      group_column: incident
+      group_time_column: incident_time
+      time_column: time
+      type_column: event_type_display
+      id_column: serial_number
+      icon_column: icon
+      color_column: event_type_color
+      palette: null
+      merge_window_hours: 12
+
+  - id: storyboard
+    task: persist_text
+    partial:
+      text: ${{ workflow.storyboard_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: incident_storyboards
+
+  - id: storyboard_widget
+    task: create_plot_widget_single_view
+    skipif:  # no incidents: an empty widget, not a failed run
+      conditions:
+        - never
+    partial:
+      title: Incident storyboards
+      data: ${{ workflow.storyboard.return }}
+
+  # ── Individual ranger effort widget (optional: skipped when switched off) ──────────
+  - id: ranger_effort_html
+    task: draw_wrapped_table
+    partial:
+      wrap_min_chars: 30
+      table_config: null
+      dataframe: ${{ workflow.ranger_effort.return }}
+
+  - id: ranger_effort_table
+    task: persist_text
+    partial:
+      text: ${{ workflow.ranger_effort_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: ranger_effort_table
+
+  - id: ranger_effort_widget
+    task: create_table_widget_single_view
+    partial:
+      title: Individual ranger effort
+      data: ${{ workflow.ranger_effort_table.return }}
 
   - id: tracks_widget
     task: create_map_widget_single_view
@@ -2006,7 +2183,7 @@ workflow:
       conditions:
         - never
     partial:
-      title: Events by month
+      title: Events over time
       data: ${{ workflow.monthly_chart.return }}
 
   - id: event_summary_html
@@ -2062,14 +2239,12 @@ workflow:
       files:
         - ${{ workflow.report.return }}
 
-  - id: dashboard
-    task: gather_dashboard
+  - id: dashboard_widgets  # skipped (switched-off) widgets dropped; they are last, so the layout holds
+    task: present_widgets
     skipif:
       conditions:
         - never
     partial:
-      details: ${{ workflow.workflow_details.return }}
-      time_range: ${{ workflow.report_range.return }}
       widgets:
         - ${{ workflow.kpi_patrols_widget.return }}
         - ${{ workflow.kpi_km_widget.return }}
@@ -2085,4 +2260,16 @@ workflow:
         - ${{ workflow.event_records_widget.return }}
         - ${{ workflow.legs_widget.return }}
         - ${{ workflow.kpi_enc_widget.return }}
+        - ${{ workflow.storyboard_widget.return }}
+        - ${{ workflow.ranger_effort_widget.return }}
+
+  - id: dashboard
+    task: gather_dashboard
+    skipif:
+      conditions:
+        - never
+    partial:
+      details: ${{ workflow.workflow_details.return }}
+      time_range: ${{ workflow.report_range.return }}
+      widgets: ${{ workflow.dashboard_widgets.return }}
       files: ${{ workflow.report_files.return }}

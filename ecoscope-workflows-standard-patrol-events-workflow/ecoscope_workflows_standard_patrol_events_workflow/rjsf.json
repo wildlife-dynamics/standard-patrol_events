@@ -721,6 +721,243 @@
       "required": [],
       "title": "Report Settings",
       "description": "Name the report, choose its language and pick what it includes."
+    },
+    "kpi_patrols_html": {
+      "additionalProperties": false,
+      "properties": {
+        "scale": {
+          "default": 1.0,
+          "description": "Multiplies summed values, e.g. 0.001 for m to km.",
+          "title": "Scale",
+          "type": "number"
+        },
+        "unit": {
+          "default": "",
+          "description": "Shown after the number, e.g. km.",
+          "title": "Unit",
+          "type": "string"
+        },
+        "interval": {
+          "default": "auto",
+          "description": "Sparkline step; auto = monthly over 2 months, weekly over 2 weeks, else daily.",
+          "ecoscope:advanced": true,
+          "enum": [
+            "auto",
+            "month",
+            "week",
+            "day"
+          ],
+          "title": "Interval",
+          "type": "string"
+        },
+        "color": {
+          "default": "#2a78d6",
+          "description": "Sparkline colour (hex).",
+          "ecoscope:advanced": true,
+          "title": "Color",
+          "type": "string"
+        },
+        "font_size": {
+          "default": 28,
+          "description": "Headline number size (px).",
+          "ecoscope:advanced": true,
+          "exclusiveMinimum": 0,
+          "title": "Font Size",
+          "type": "integer"
+        },
+        "decimal_places": {
+          "default": null,
+          "description": "Default: 1 decimal under 10, else none.",
+          "ecoscope:advanced": true,
+          "title": "Decimal Places",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": ""
+    },
+    "kpi_km_html": {
+      "additionalProperties": false,
+      "properties": {
+        "interval": {
+          "default": "auto",
+          "description": "Sparkline step; auto = monthly over 2 months, weekly over 2 weeks, else daily.",
+          "ecoscope:advanced": true,
+          "enum": [
+            "auto",
+            "month",
+            "week",
+            "day"
+          ],
+          "title": "Interval",
+          "type": "string"
+        },
+        "color": {
+          "default": "#2a78d6",
+          "description": "Sparkline colour (hex).",
+          "ecoscope:advanced": true,
+          "title": "Color",
+          "type": "string"
+        },
+        "font_size": {
+          "default": 28,
+          "description": "Headline number size (px).",
+          "ecoscope:advanced": true,
+          "exclusiveMinimum": 0,
+          "title": "Font Size",
+          "type": "integer"
+        },
+        "decimal_places": {
+          "default": null,
+          "description": "Default: 1 decimal under 10, else none.",
+          "ecoscope:advanced": true,
+          "title": "Decimal Places",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": ""
+    },
+    "kpi_hours_html": {
+      "additionalProperties": false,
+      "properties": {
+        "interval": {
+          "default": "auto",
+          "description": "Sparkline step; auto = monthly over 2 months, weekly over 2 weeks, else daily.",
+          "ecoscope:advanced": true,
+          "enum": [
+            "auto",
+            "month",
+            "week",
+            "day"
+          ],
+          "title": "Interval",
+          "type": "string"
+        },
+        "color": {
+          "default": "#2a78d6",
+          "description": "Sparkline colour (hex).",
+          "ecoscope:advanced": true,
+          "title": "Color",
+          "type": "string"
+        },
+        "font_size": {
+          "default": 28,
+          "description": "Headline number size (px).",
+          "ecoscope:advanced": true,
+          "exclusiveMinimum": 0,
+          "title": "Font Size",
+          "type": "integer"
+        },
+        "decimal_places": {
+          "default": null,
+          "description": "Default: 1 decimal under 10, else none.",
+          "ecoscope:advanced": true,
+          "title": "Decimal Places",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": ""
+    },
+    "kpi_events_html": {
+      "additionalProperties": false,
+      "properties": {
+        "value_column": {
+          "default": null,
+          "title": "Value Column",
+          "type": "string"
+        },
+        "scale": {
+          "default": 1.0,
+          "description": "Multiplies summed values, e.g. 0.001 for m to km.",
+          "title": "Scale",
+          "type": "number"
+        },
+        "unit": {
+          "default": "",
+          "description": "Shown after the number, e.g. km.",
+          "title": "Unit",
+          "type": "string"
+        },
+        "interval": {
+          "default": "auto",
+          "description": "Sparkline step; auto = monthly over 2 months, weekly over 2 weeks, else daily.",
+          "ecoscope:advanced": true,
+          "enum": [
+            "auto",
+            "month",
+            "week",
+            "day"
+          ],
+          "title": "Interval",
+          "type": "string"
+        },
+        "color": {
+          "default": "#2a78d6",
+          "description": "Sparkline colour (hex).",
+          "ecoscope:advanced": true,
+          "title": "Color",
+          "type": "string"
+        },
+        "font_size": {
+          "default": 28,
+          "description": "Headline number size (px).",
+          "ecoscope:advanced": true,
+          "exclusiveMinimum": 0,
+          "title": "Font Size",
+          "type": "integer"
+        },
+        "decimal_places": {
+          "default": null,
+          "description": "Default: 1 decimal under 10, else none.",
+          "ecoscope:advanced": true,
+          "title": "Decimal Places",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": ""
+    },
+    "kpi_enc_html": {
+      "additionalProperties": false,
+      "properties": {
+        "interval": {
+          "default": "auto",
+          "description": "Sparkline step; auto = monthly over 2 months, weekly over 2 weeks, else daily.",
+          "ecoscope:advanced": true,
+          "enum": [
+            "auto",
+            "month",
+            "week",
+            "day"
+          ],
+          "title": "Interval",
+          "type": "string"
+        },
+        "color": {
+          "default": "#2a78d6",
+          "description": "Sparkline colour (hex).",
+          "ecoscope:advanced": true,
+          "title": "Color",
+          "type": "string"
+        },
+        "font_size": {
+          "default": 28,
+          "description": "Headline number size (px).",
+          "ecoscope:advanced": true,
+          "exclusiveMinimum": 0,
+          "title": "Font Size",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": ""
     }
   },
   "$defs": {
@@ -822,7 +1059,8 @@
       "ui:order": [
         "group_by",
         "map_layer",
-        "columns"
+        "columns",
+        "ranger_effort"
       ],
       "ui:options": {
         "expandable": false
@@ -874,6 +1112,50 @@
         "ui:widget": "textarea",
         "ui:placeholder": "e.g. Events recorded by rangers during the period."
       }
+    },
+    "kpi_patrols_html": {
+      "ui:order": [
+        "scale",
+        "unit",
+        "interval",
+        "color",
+        "font_size",
+        "decimal_places"
+      ]
+    },
+    "kpi_km_html": {
+      "ui:order": [
+        "interval",
+        "color",
+        "font_size",
+        "decimal_places"
+      ]
+    },
+    "kpi_hours_html": {
+      "ui:order": [
+        "interval",
+        "color",
+        "font_size",
+        "decimal_places"
+      ]
+    },
+    "kpi_events_html": {
+      "ui:order": [
+        "value_column",
+        "scale",
+        "unit",
+        "interval",
+        "color",
+        "font_size",
+        "decimal_places"
+      ]
+    },
+    "kpi_enc_html": {
+      "ui:order": [
+        "interval",
+        "color",
+        "font_size"
+      ]
     },
     "ui:order": [
       "workflow_details",
@@ -1028,6 +1310,12 @@
                 }
               ]
             }
+          },
+          "ranger_effort": {
+            "title": "Individual Ranger Effort",
+            "type": "boolean",
+            "default": false,
+            "description": "Add a table of each ranger's effort (every member of a patrol leg), with the same columns."
           }
         },
         "type": "object",

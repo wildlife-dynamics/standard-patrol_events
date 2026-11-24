@@ -56,6 +56,7 @@ IO_TASKS_IMPORTABLE_REFERENCES = [
     "ecoscope_workflows_ext_standard_patrol_events.tasks.transformation.area_regions",
     "ecoscope_workflows_ext_standard_patrol_events.tasks.io.download_event_attachments",
     "ecoscope_workflows_ext_standard_patrol_events.tasks.io.sanitize_attachments",
+    "ecoscope.platform.tasks.io.get_incident_events",
 ]
 
 yaml = ruamel.yaml.YAML(typ="safe")
