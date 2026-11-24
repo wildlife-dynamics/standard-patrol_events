@@ -44,8 +44,10 @@ def cell_body(w: dict) -> str:
 views = {}
 for key, widgets in sorted(dash["views"].items(), key=lambda kv: view_label(kv[0])):
     cells = []
+    if isinstance(widgets, dict):  # newer results nest the widgets under "dashboard"
+        widgets = widgets["dashboard"]
     for i, w in enumerate(widgets):
-        pos = layout.get(i, {"x": 0, "y": 1000 + i, "w": 10, "h": 10})
+        pos = layout.get(w.get("id", i), {"x": 0, "y": 1000 + i, "w": 10, "h": 10})
         style = f"grid-column:{pos['x'] + 1}/span {pos['w']};grid-row:{pos['y'] + 1}/span {pos['h']}"
         cells.append(f'<div class="card" style="{style}"><h3>{html.escape(w["title"])}</h3>{cell_body(w)}</div>')
     views[view_label(key)] = "".join(cells)

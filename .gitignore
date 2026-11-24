@@ -7,3 +7,4 @@ workflows/*/ecoscope-workflows-*-workflow/.pixi
 _version.py
 __pycache__/
 .pytest_cache/
+output/
