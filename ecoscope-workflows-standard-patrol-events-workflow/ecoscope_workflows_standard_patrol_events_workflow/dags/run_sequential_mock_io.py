@@ -220,8 +220,8 @@ from ecoscope.platform.tasks.results import (
 from ecoscope.platform.tasks.results import (
     create_scatterplot_layer as create_scatterplot_layer,
 )
-from ecoscope.platform.tasks.results import draw_bar_chart as draw_bar_chart
 from ecoscope.platform.tasks.results import draw_map as draw_map
+from ecoscope.platform.tasks.results import draw_pie_chart as draw_pie_chart
 from ecoscope.platform.tasks.results import (
     draw_time_series_bar_chart as draw_time_series_bar_chart,
 )
@@ -235,6 +235,9 @@ from ecoscope.platform.tasks.transformation import (
 )
 from ecoscope.platform.tasks.transformation import (
     apportion_legs_by_spatial_index as apportion_legs_by_spatial_index,
+)
+from ecoscope.platform.tasks.transformation import (
+    color_map_by_frequency as color_map_by_frequency,
 )
 from ecoscope.platform.tasks.transformation import (
     convert_column_values_to_string as convert_column_values_to_string,
@@ -297,12 +300,18 @@ sanitize_attachments = create_func_magicmock(  # 🧪
     func_name="sanitize_attachments",  # 🧪
 )  # 🧪
 from ecoscope.platform.tasks.analysis import (
+    dataframe_column_mean as dataframe_column_mean,
+)
+from ecoscope.platform.tasks.analysis import (
     dataframe_column_nunique as dataframe_column_nunique,
 )
 from ecoscope.platform.tasks.analysis import (
     dataframe_column_sum as dataframe_column_sum,
 )
 from ecoscope.platform.tasks.analysis import dataframe_count as dataframe_count
+from ecoscope.platform.tasks.analysis import (
+    set_encounter_rate_metrics as set_encounter_rate_metrics,
+)
 from ecoscope.platform.tasks.results import (
     create_files_single_view as create_files_single_view,
 )
@@ -318,8 +327,10 @@ from ecoscope.platform.tasks.results import (
 from ecoscope.platform.tasks.results import (
     create_table_widget_single_view as create_table_widget_single_view,
 )
-from ecoscope.platform.tasks.results import draw_table as draw_table
 from ecoscope.platform.tasks.results import gather_dashboard as gather_dashboard
+from ecoscope.platform.tasks.transformation import (
+    concat_dataframes as concat_dataframes,
+)
 from ecoscope.platform.tasks.transformation import with_unit as with_unit
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     load_report_template as load_report_template,
@@ -332,6 +343,9 @@ from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
     create_docx as create_docx,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
+    draw_wrapped_table as draw_wrapped_table,
 )
 
 
@@ -2282,7 +2296,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             df=tracks_teamed,
             input_column_name=patrol_grouping,
-            colormap="tab10",
+            colormap="Dark2",
             output_column_name="patrol_color",
             **(params.get("tracks_colored") or {}),
         )
@@ -2457,6 +2471,49 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    event_colors = (
+        task(color_map_by_frequency)
+        .validate()
+        .set_task_instance_id("event_colors")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=events,
+            input_column_name=event_grouping,
+            colormap=[
+                "#1f77b4",
+                "#ff7f0e",
+                "#2ca02c",
+                "#d62728",
+                "#9467bd",
+                "#8c564b",
+                "#e377c2",
+                "#7f7f7f",
+                "#bcbd22",
+                "#17becf",
+                "#aec7e8",
+                "#ffbb78",
+                "#98df8a",
+                "#ff9896",
+                "#c5b0d5",
+                "#c49c94",
+                "#f7b6d2",
+                "#c7c7c7",
+                "#dbdb8d",
+                "#9edae5",
+            ],
+            **(params.get("event_colors") or {}),
+        )
+        .call()
+    )
+
     events_colored = (
         task(apply_color_map)
         .validate()
@@ -2473,7 +2530,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             df=events_located,
             input_column_name=event_grouping,
-            colormap="tab20",
+            colormap=event_colors,
             output_column_name="event_color",
             **(params.get("events_colored") or {}),
         )
@@ -3396,10 +3453,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    events_bar_html = (
-        task(draw_bar_chart)
+    events_charted = (
+        task(apply_color_map)
         .validate()
-        .set_task_instance_id("events_bar_html")
+        .set_task_instance_id("events_charted")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -3410,21 +3467,19 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            layout_kwargs=None,
-            dataframe=events,
-            category=event_grouping,
-            bar_chart_configs=[
-                {"column": "serial_number", "agg_func": "count", "label": "Events"}
-            ],
-            **(params.get("events_bar_html") or {}),
+            df=events,
+            input_column_name=event_grouping,
+            colormap=event_colors,
+            output_column_name="event_color",
+            **(params.get("events_charted") or {}),
         )
         .call()
     )
 
-    events_bar = (
-        task(persist_text)
+    events_pie_html = (
+        task(draw_pie_chart)
         .validate()
-        .set_task_instance_id("events_bar")
+        .set_task_instance_id("events_pie_html")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -3435,10 +3490,35 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            text=events_bar_html,
+            label_column=None,
+            plot_style=None,
+            layout_style=None,
+            dataframe=events_charted,
+            value_column=event_grouping,
+            color_column="event_color",
+            **(params.get("events_pie_html") or {}),
+        )
+        .call()
+    )
+
+    events_pie = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("events_pie")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=events_pie_html,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            filename_suffix="events_bar",
-            **(params.get("events_bar") or {}),
+            filename_suffix="events_pie",
+            **(params.get("events_pie") or {}),
         )
         .call()
     )
@@ -3457,10 +3537,10 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            color_column=None,
+            color_column="event_color",
             plot_style=None,
             layout_style=None,
-            dataframe=events,
+            dataframe=events_charted,
             x_axis="time",
             y_axis="serial_number",
             category=event_grouping,
@@ -3827,7 +3907,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                     {
                         "item_type": "image",
                         "key": "events_bar",
-                        "value": events_bar,
+                        "value": events_pie,
                         "width_inches": 6.6,
                     },
                     {
@@ -4055,6 +4135,134 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    enc_events = (
+        task(filter_linked_events)
+        .validate()
+        .set_task_instance_id("enc_events")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            events=events,
+            patrol_events=linked_events,
+            retrieval="linked_only",
+            patrol_serial=patrol_serial,
+            **(params.get("enc_events") or {}),
+        )
+        .call()
+    )
+
+    enc_metrics = (
+        task(set_encounter_rate_metrics)
+        .validate()
+        .set_task_instance_id("enc_metrics")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            aggregation=None,
+            metrics=[{"metric": "encounters_per_distance", "unit": "km"}],
+            **(params.get("enc_metrics") or {}),
+        )
+        .call()
+    )
+
+    enc_frame = (
+        task(concat_dataframes)
+        .validate()
+        .set_task_instance_id("enc_frame")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            dfs=[trajectory, enc_events],
+            ensure_columns=["event_type", "dist_meters"],
+            reset_index=True,
+            **(params.get("enc_frame") or {}),
+        )
+        .call()
+    )
+
+    enc_summary = (
+        task(summarize_df)
+        .validate()
+        .set_task_instance_id("enc_summary")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=enc_frame,
+            summary_params=enc_metrics,
+            groupby_cols=None,
+            reset_index=False,
+            **(params.get("enc_summary") or {}),
+        )
+        .call()
+    )
+
+    kpi_enc = (
+        task(dataframe_column_mean)
+        .validate()
+        .set_task_instance_id("kpi_enc")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=enc_summary, column_name="Events per Km", **(params.get("kpi_enc") or {})
+        )
+        .call()
+    )
+
+    kpi_enc_widget = (
+        task(create_single_value_widget_single_view)
+        .validate()
+        .set_task_instance_id("kpi_enc_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            decimal_places=2,
+            title="Encounters per km",
+            data=kpi_enc,
+            **(params.get("kpi_enc_widget") or {}),
+        )
+        .call()
+    )
+
     tracks_widget = (
         task(create_map_widget_single_view)
         .validate()
@@ -4076,7 +4284,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     effort_table_html = (
-        task(draw_table)
+        task(draw_wrapped_table)
         .validate()
         .set_task_instance_id("effort_table_html")
         .handle_errors()
@@ -4089,7 +4297,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            columns=None,
+            wrap_min_chars=30,
             table_config=None,
             dataframe=effort,
             **(params.get("effort_table_html") or {}),
@@ -4140,7 +4348,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     legs_table_html = (
-        task(draw_table)
+        task(draw_wrapped_table)
         .validate()
         .set_task_instance_id("legs_table_html")
         .handle_errors()
@@ -4153,7 +4361,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            columns=None,
+            wrap_min_chars=30,
             table_config=None,
             dataframe=personnel,
             **(params.get("legs_table_html") or {}),
@@ -4254,7 +4462,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            title="Events", data=events_bar, **(params.get("events_bar_widget") or {})
+            title="Events", data=events_pie, **(params.get("events_bar_widget") or {})
         )
         .call()
     )
@@ -4280,7 +4488,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     event_summary_html = (
-        task(draw_table)
+        task(draw_wrapped_table)
         .validate()
         .set_task_instance_id("event_summary_html")
         .handle_errors()
@@ -4293,7 +4501,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            columns=None,
+            wrap_min_chars=30,
             table_config=None,
             dataframe=events_by_type,
             **(params.get("event_summary_html") or {}),
@@ -4344,7 +4552,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     event_records_html = (
-        task(draw_table)
+        task(draw_wrapped_table)
         .validate()
         .set_task_instance_id("event_records_html")
         .handle_errors()
@@ -4357,7 +4565,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            columns=None,
+            wrap_min_chars=30,
             table_config=None,
             dataframe=event_details,
             **(params.get("event_records_html") or {}),
@@ -4453,6 +4661,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                 event_summary_widget,
                 event_records_widget,
                 legs_widget,
+                kpi_enc_widget,
             ],
             files=report_files,
             **(params.get("dashboard") or {}),
