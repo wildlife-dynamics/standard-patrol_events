@@ -27,7 +27,8 @@ Open the workflow in Ecoscope and fill in the config page from top to bottom. On
 11. **Event Details:** show every field, or choose the fields per event type.
 12. **Report Settings:** the title, subtitle and language, and which sections the report includes (all are on by default).
 13. **Download Event Attachments:** event photos are included in the report, up to 50 by default. Tick **Leave Out Event Photos** to skip them.
-14. Press **Run**.
+14. **Incident Storyboards** (optional): tick **Show Incident Storyboards** to add them to the dashboard. They are off by default.
+15. Press **Run**.
 
 **Base Maps** sits under Advanced and is already set up, so you can leave it as it is.
 
@@ -67,7 +68,7 @@ The five numbers at the top give the period at a glance, each with a line showin
 | Events over time | Events per week, month or quarter, stacked by type; switch to shares (100%) or lines |
 | Event summary | Counts by type or category |
 | Event records | One row per event, with the chosen details |
-| Incident storyboards | Each incident's events in time order, with the time between them |
+| Incident storyboards | Each incident's events in time order, with the time between them, when switched on |
 
 Each event type keeps one colour on the map, the sunburst, the chart over time and the storyboards, busiest type first: the first eight stay distinct for colour-blind readers, the next eight add more hues, and any types past sixteen are grey. Patrol tracks use their own, deeper colours.
 
