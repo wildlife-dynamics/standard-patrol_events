@@ -41,6 +41,7 @@ from ecoscope.platform.tasks.io import (
 from ecoscope.platform.tasks.io import (
     get_patrol_segments_from_patrols_df as get_patrol_segments_from_patrols_df,
 )
+from ecoscope.platform.tasks.io import persist_df_wrapper as persist_df_wrapper
 from ecoscope.platform.tasks.io import persist_text as persist_text
 from ecoscope.platform.tasks.io import process_events_details as process_events_details
 from ecoscope.platform.tasks.io import set_er_connection as set_er_connection
@@ -3142,6 +3143,52 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    export_patrol_tracks = (
+        task(persist_df_wrapper)
+        .validate()
+        .set_task_instance_id("export_patrol_tracks")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=trajectory,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_prefix="patrol_tracks",
+            sanitize=True,
+            **(params.get("export_patrol_tracks") or {}),
+        )
+        .call()
+    )
+
+    export_patrol_events = (
+        task(persist_df_wrapper)
+        .validate()
+        .set_task_instance_id("export_patrol_events")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=events_located,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_prefix="patrol_events",
+            sanitize=True,
+            **(params.get("export_patrol_events") or {}),
+        )
+        .call()
+    )
+
     td_meshgrid = (
         task(create_meshgrid)
         .validate()
@@ -5693,6 +5740,42 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    patrol_tracks_files = (
+        task(create_files_single_view)
+        .validate()
+        .set_task_instance_id("patrol_tracks_files")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            files=export_patrol_tracks, **(params.get("patrol_tracks_files") or {})
+        )
+        .call()
+    )
+
+    patrol_events_files = (
+        task(create_files_single_view)
+        .validate()
+        .set_task_instance_id("patrol_events_files")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            files=export_patrol_events, **(params.get("patrol_events_files") or {})
+        )
+        .call()
+    )
+
     dashboard_widgets = (
         task(present_widgets)
         .validate()
@@ -5745,7 +5828,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             details=workflow_details,
             time_range=report_range,
             widgets=dashboard_widgets,
-            files=report_files,
+            files=[report_files, patrol_tracks_files, patrol_events_files],
             **(params.get("dashboard") or {}),
         )
         .call()

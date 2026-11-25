@@ -704,6 +704,63 @@
           ]
         }
       }
+    },
+    "Data Export": {
+      "type": "object",
+      "description": "",
+      "ecoscope:task_group": true,
+      "properties": {
+        "export_patrol_tracks": {
+          "additionalProperties": false,
+          "properties": {
+            "filetypes": {
+              "default": [
+                "geoparquet"
+              ],
+              "description": "File formats for the patrol tracks shown on the map. Pick one or more; GeoParquet and GeoPackage open in QGIS/ArcGIS.",
+              "items": {
+                "enum": [
+                  "geoparquet",
+                  "gpkg",
+                  "csv"
+                ],
+                "type": "string"
+              },
+              "title": "Patrol Tracks File Formats",
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          "required": [],
+          "type": "object",
+          "title": ""
+        },
+        "export_patrol_events": {
+          "additionalProperties": false,
+          "properties": {
+            "filetypes": {
+              "default": [
+                "geoparquet"
+              ],
+              "description": "File formats for the events shown on the map. Pick one or more; GeoParquet and GeoPackage open in QGIS/ArcGIS.",
+              "items": {
+                "enum": [
+                  "geoparquet",
+                  "gpkg",
+                  "csv"
+                ],
+                "type": "string"
+              },
+              "title": "Event File Formats",
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          "required": [],
+          "type": "object",
+          "title": ""
+        }
+      }
     }
   },
   "if": {
@@ -993,6 +1050,7 @@
       "report",
       "download_attachments",
       "incident_storyboards",
+      "Data Export",
       "*"
     ],
     "patrols": {

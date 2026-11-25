@@ -338,6 +338,16 @@ rjsf-overrides:
       Add the incident storyboards to the dashboard: each incident (a collection of related
       events) dated in the period, with its events in time order.
     incident_storyboards.properties.var.default: false
+    Data Export.properties.export_patrol_tracks.properties.filetypes.title: Patrol Tracks File Formats
+    Data Export.properties.export_patrol_tracks.properties.filetypes.description: File formats for the patrol tracks shown on the map. Pick one or more; GeoParquet and GeoPackage open in QGIS/ArcGIS.
+    Data Export.properties.export_patrol_tracks.properties.filetypes.default:
+      - geoparquet
+    Data Export.properties.export_patrol_tracks.properties.filetypes.items.enum: [geoparquet, gpkg, csv]  # plain parquet = same file as geoparquet here
+    Data Export.properties.export_patrol_events.properties.filetypes.title: Event File Formats
+    Data Export.properties.export_patrol_events.properties.filetypes.description: File formats for the events shown on the map. Pick one or more; GeoParquet and GeoPackage open in QGIS/ArcGIS.
+    Data Export.properties.export_patrol_events.properties.filetypes.default:
+      - geoparquet
+    Data Export.properties.export_patrol_events.properties.filetypes.items.enum: [geoparquet, gpkg, csv]  # plain parquet = same file as geoparquet here
   uiSchema:
     ui:order:
     - workflow_details
@@ -356,6 +366,7 @@ rjsf-overrides:
     - report_text
     - download_attachments
     - incident_storyboards
+    - Data Export
     - '*'
     patrol_grouping.var:
       ui:options:
@@ -1407,6 +1418,27 @@ workflow:
       root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       filename_suffix: tracks_map_static
 
+  # Same data as the map, as files for GIS (QGIS/ArcGIS) or further analysis
+  - title: Data Export
+    type: task-group
+    description: ""
+    tasks:
+      - id: export_patrol_tracks
+        task: persist_df_wrapper
+        partial:
+          df: ${{ workflow.trajectory.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_prefix: patrol_tracks
+          sanitize: true
+
+      - id: export_patrol_events
+        task: persist_df_wrapper
+        partial:
+          df: ${{ workflow.events_located.return }}
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_prefix: patrol_events
+          sanitize: true  # event_details is a dict column; parquet needs it as JSON text
+
   # patrol time density
   - id: td_meshgrid
     task: create_meshgrid
@@ -2291,6 +2323,24 @@ workflow:
       files:
         - ${{ workflow.report.return }}
 
+  # The desktop's Files tab lists only files declared here, not the rest of the results folder.
+  # skipif never: a skipped export (no tracks / no events) becomes an empty list, not a skipped dashboard.
+  - id: patrol_tracks_files
+    task: create_files_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      files: ${{ workflow.export_patrol_tracks.return }}
+
+  - id: patrol_events_files
+    task: create_files_single_view
+    skipif:
+      conditions:
+        - never
+    partial:
+      files: ${{ workflow.export_patrol_events.return }}
+
   - id: dashboard_widgets  # skipped (switched-off) widgets dropped; they are last, so the layout holds
     task: present_widgets
     skipif:
@@ -2324,4 +2374,7 @@ workflow:
       details: ${{ workflow.workflow_details.return }}
       time_range: ${{ workflow.report_range.return }}
       widgets: ${{ workflow.dashboard_widgets.return }}
-      files: ${{ workflow.report_files.return }}
+      files:
+        - ${{ workflow.report_files.return }}
+        - ${{ workflow.patrol_tracks_files.return }}
+        - ${{ workflow.patrol_events_files.return }}
