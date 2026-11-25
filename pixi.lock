@@ -560,7 +560,7 @@ environments:
       - conda: https://repo.prefix.dev/ecoscope-workflows-custom/noarch/ecoscope-workflows-ext-standard-patrol-events-0.0.8-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/earthranger-client-1.0.49-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-2.39.4-pyh4616a5c_5.conda
-      - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-earthranger-io-core-0.0.29rc1-pyh4616a5c_0.conda
+      - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-earthranger-io-core-0.0.28-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-platform-2.39.4-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/lonboard-0.0.8-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/wt-compiler-0.10.2-pyh4616a5c_0.conda
@@ -1072,7 +1072,7 @@ environments:
       - conda: https://repo.prefix.dev/ecoscope-workflows-custom/noarch/ecoscope-workflows-ext-standard-patrol-events-0.0.8-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/earthranger-client-1.0.49-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-2.39.4-pyh4616a5c_5.conda
-      - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-earthranger-io-core-0.0.29rc1-pyh4616a5c_0.conda
+      - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-earthranger-io-core-0.0.28-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-platform-2.39.4-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/lonboard-0.0.8-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/wt-compiler-0.10.2-pyh4616a5c_0.conda
@@ -1573,7 +1573,7 @@ environments:
       - conda: https://repo.prefix.dev/ecoscope-workflows-custom/noarch/ecoscope-workflows-ext-standard-patrol-events-0.0.8-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/earthranger-client-1.0.49-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-2.39.4-pyh4616a5c_5.conda
-      - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-earthranger-io-core-0.0.29rc1-pyh4616a5c_0.conda
+      - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-earthranger-io-core-0.0.28-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-platform-2.39.4-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/lonboard-0.0.8-pyh4616a5c_0.conda
       - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/wt-compiler-0.10.2-pyh4616a5c_0.conda
@@ -21142,23 +21142,6 @@ packages:
   run_exports: {}
   size: 32538
   timestamp: 1792782432810
-- conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-earthranger-io-core-0.0.29rc1-pyh4616a5c_0.conda
-  sha256: 07790c74bca21b85a67460cff2ca621a219217aca1c1f3eb1c023fff65c04934
-  md5: e5adbbb1451b78d175376575badd6b0d
-  depends:
-  - python >=3.10,<3.13
-  - pydantic >=2.0.0,<3
-  - pyarrow >=20.0.0,<24
-  - geoarrow-pyarrow >=0.2.0,<0.3
-  - geopandas >=1.1.0,<2
-  - pandera >=0.24.0,<0.32
-  - httpx >=0.27.0
-  - fastapi >=0.115.0
-  - python
-  license: BSD-3-Clause
-  run_exports: {}
-  size: 32042
-  timestamp: 1795522776733
 - conda: https://repo.prefix.dev/ecoscope-workflows/noarch/ecoscope-platform-2.39.1-pyh4616a5c_0.conda
   sha256: 08a6ba796f20b11e90a9fa3fdef9fb68218cb45724f8c2856f839ae2b43c717d
   md5: a166acdb97b04c2a791792303027cd9e

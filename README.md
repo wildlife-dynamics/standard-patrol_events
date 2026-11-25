@@ -50,7 +50,7 @@ The report can only show what was recorded: a patrol without a GPS route has no 
   <img src="docs/images/dashboard.svg" alt="The dashboard: headline numbers, the tracks and events map, the effort and legs tables, density maps, event charts and event tables" width="100%">
 </p>
 
-The five numbers at the top give the period at a glance, each with a line showing how it changed over the period (by month, week or day, depending on its length). Below them, the map shows where patrols went and where events were recorded, the tables show effort and legs, and the density maps and charts show where and when things happened. The Word report is in the dashboard's files, ready to download, next to the map's data: the patrol tracks and the events as GIS files (GeoParquet by default; choose GeoPackage, CSV or Parquet under **Data Export**).
+The five numbers at the top give the period at a glance, each with a line showing how it changed over the period (by month, week or day, depending on its length). Below them, the map shows where patrols went and where events were recorded, the tables show effort and legs, and the density maps and charts show where and when things happened. The Word report is in the dashboard's files, ready to download, next to the map's data: the patrol tracks and the events as GIS files (GeoParquet by default; choose GeoPackage or CSV under **Data Export**). They are listed in the **Files** tab.
 
 | On the dashboard | What it shows |
 |---|---|
