@@ -212,6 +212,7 @@ from ecoscope.platform.tasks.analysis import (
     set_patrol_summary_metrics as set_patrol_summary_metrics,
 )
 from ecoscope.platform.tasks.analysis import summarize_df as summarize_df
+from ecoscope.platform.tasks.io import persist_df_wrapper as persist_df_wrapper
 from ecoscope.platform.tasks.io import persist_text as persist_text
 from ecoscope.platform.tasks.results import create_path_layer as create_path_layer
 from ecoscope.platform.tasks.results import (
@@ -3187,6 +3188,52 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             filename_suffix="tracks_map_static",
             **(params.get("tracks_map_static") or {}),
+        )
+        .call()
+    )
+
+    export_patrol_tracks = (
+        task(persist_df_wrapper)
+        .validate()
+        .set_task_instance_id("export_patrol_tracks")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=trajectory,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_prefix="patrol_tracks",
+            sanitize=True,
+            **(params.get("export_patrol_tracks") or {}),
+        )
+        .call()
+    )
+
+    export_patrol_events = (
+        task(persist_df_wrapper)
+        .validate()
+        .set_task_instance_id("export_patrol_events")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=events_located,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_prefix="patrol_events",
+            sanitize=True,
+            **(params.get("export_patrol_events") or {}),
         )
         .call()
     )

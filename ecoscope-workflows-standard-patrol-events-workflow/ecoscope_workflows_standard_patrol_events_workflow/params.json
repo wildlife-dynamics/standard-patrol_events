@@ -565,6 +565,58 @@
       "required": [],
       "title": "Report Settings"
     },
+    "export_patrol_tracks": {
+      "additionalProperties": false,
+      "properties": {
+        "filetypes": {
+          "default": [
+            "csv"
+          ],
+          "description": "The output format",
+          "items": {
+            "enum": [
+              "csv",
+              "gpkg",
+              "geoparquet",
+              "parquet"
+            ],
+            "type": "string"
+          },
+          "title": "Filetypes",
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": ""
+    },
+    "export_patrol_events": {
+      "additionalProperties": false,
+      "properties": {
+        "filetypes": {
+          "default": [
+            "csv"
+          ],
+          "description": "The output format",
+          "items": {
+            "enum": [
+              "csv",
+              "gpkg",
+              "geoparquet",
+              "parquet"
+            ],
+            "type": "string"
+          },
+          "title": "Filetypes",
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": ""
+    },
     "incident_storyboards": {
       "additionalProperties": false,
       "properties": {
@@ -714,6 +766,8 @@
       "event_details_settings",
       "download_attachments",
       "report_text",
+      "export_patrol_tracks",
+      "export_patrol_events",
       "incident_storyboards"
     ]
   },

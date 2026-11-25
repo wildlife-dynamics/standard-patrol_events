@@ -28,7 +28,8 @@ Open the workflow in Ecoscope and fill in the config page from top to bottom. On
 12. **Report Settings:** the title, subtitle and language, and which sections the report includes (all are on by default).
 13. **Download Event Attachments:** event photos are included in the report, up to 50 by default. Tick **Leave Out Event Photos** to skip them.
 14. **Incident Storyboards** (optional): tick **Show Incident Storyboards** to add them to the dashboard. They are off by default.
-15. Press **Run**.
+15. **Data Export** (optional): file formats for the map's patrol tracks and events; GeoParquet by default.
+16. Press **Run**.
 
 **Base Maps** sits under Advanced and is already set up, so you can leave it as it is.
 
@@ -49,7 +50,7 @@ The report can only show what was recorded: a patrol without a GPS route has no 
   <img src="docs/images/dashboard.svg" alt="The dashboard: headline numbers, the tracks and events map, the effort and legs tables, density maps, event charts and event tables" width="100%">
 </p>
 
-The five numbers at the top give the period at a glance, each with a line showing how it changed over the period (by month, week or day, depending on its length). Below them, the map shows where patrols went and where events were recorded, the tables show effort and legs, and the density maps and charts show where and when things happened. The Word report is in the dashboard's files, ready to download.
+The five numbers at the top give the period at a glance, each with a line showing how it changed over the period (by month, week or day, depending on its length). Below them, the map shows where patrols went and where events were recorded, the tables show effort and legs, and the density maps and charts show where and when things happened. The Word report is in the dashboard's files, ready to download, next to the map's data: the patrol tracks and the events as GIS files (GeoParquet by default; choose GeoPackage, CSV or Parquet under **Data Export**).
 
 | On the dashboard | What it shows |
 |---|---|
