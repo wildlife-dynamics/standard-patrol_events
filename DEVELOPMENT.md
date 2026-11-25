@@ -16,7 +16,7 @@
 pixi run bash dev/pytest-cli.sh standard_patrol_events --case apncentral
 ```
 
-CI runs every test case; it needs the repo secrets `APN_*`, `APNCENTRAL_*`, `BELIZE_*`, `COSTAECUADOR_*` and `MEP_*` (`_SERVER`, `_USERNAME`, `_PASSWORD`).
+CI runs the MEP test cases (`mep`, `mep_team`, `mep_area`); it needs the repo secrets `MEP_SERVER`, `MEP_USERNAME` and `MEP_PASSWORD`. Run the other cases locally.
 
 ## Dev loop (editable tasks)
 
