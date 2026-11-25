@@ -721,6 +721,22 @@
       "required": [],
       "title": "Report Settings",
       "description": "Name the report, choose its language and pick what it includes."
+    },
+    "incident_storyboards": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "Show Incident Storyboards",
+          "type": "boolean",
+          "description": "Add the incident storyboards to the dashboard: each incident (a collection of related events) dated in the period, with its events in time order.",
+          "default": false
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": "Incident Storyboards"
     }
   },
   "$defs": {
@@ -892,6 +908,7 @@
       "event_details_settings",
       "report_text",
       "download_attachments",
+      "incident_storyboards",
       "*"
     ],
     "patrol_grouping": {

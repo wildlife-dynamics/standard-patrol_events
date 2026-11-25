@@ -564,6 +564,20 @@
       "type": "object",
       "required": [],
       "title": "Report Settings"
+    },
+    "incident_storyboards": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": "Incident Storyboards"
     }
   },
   "$defs": {
@@ -699,7 +713,8 @@
       "event_grouping",
       "event_details_settings",
       "download_attachments",
-      "report_text"
+      "report_text",
+      "incident_storyboards"
     ]
   },
   "additionalProperties": false

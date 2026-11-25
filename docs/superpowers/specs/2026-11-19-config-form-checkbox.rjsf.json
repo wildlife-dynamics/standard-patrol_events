@@ -374,6 +374,22 @@
         }
       }
     },
+    "incident_storyboards": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "Show Incident Storyboards",
+          "type": "boolean",
+          "description": "Add the incident storyboards to the dashboard: each incident (a collection of related events) dated in the period, with its events in time order.",
+          "default": false
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": "Incident Storyboards"
+    },
     "report": {
       "type": "object",
       "title": "Report Settings",
@@ -976,6 +992,7 @@
       "event_details",
       "report",
       "download_attachments",
+      "incident_storyboards",
       "*"
     ],
     "patrols": {

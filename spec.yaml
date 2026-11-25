@@ -333,6 +333,11 @@ rjsf-overrides:
         title: Events by Category and Priority
       - const: conclusions
         title: Conclusions Box
+    incident_storyboards.properties.var.title: Show Incident Storyboards
+    incident_storyboards.properties.var.description: >-
+      Add the incident storyboards to the dashboard: each incident (a collection of related
+      events) dated in the period, with its events in time order.
+    incident_storyboards.properties.var.default: false
   uiSchema:
     ui:order:
     - workflow_details
@@ -350,6 +355,7 @@ rjsf-overrides:
     - event_details_settings
     - report_text
     - download_attachments
+    - incident_storyboards
     - '*'
     patrol_grouping.var:
       ui:options:
@@ -1307,8 +1313,9 @@ workflow:
     partial:
       df: ${{ workflow.events.return }}
       input_column_name: ${{ workflow.event_grouping.return }}
-      # 8 colour-blind-safe hues in a fixed order, busiest type first; the rest grey (folded as "other")
-      colormap: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3"]
+      # busiest type first: 8 colour-blind-safe hues, then 8 more (the incident workflows' set); past 16, grey
+      # (300 entries: core cycles the list, and a site can record dozens of types)
+      colormap: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948", "#0f9fb5", "#8c5a3c", "#a6b51b", "#b14fc5", "#1f4e8c", "#7cc4f0", "#9b2f5f", "#d4a3e8", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3"]
 
   - id: events_colored
     task: apply_color_map
@@ -2037,6 +2044,15 @@ workflow:
       data: ${{ workflow.kpi_enc_card.return }}
 
   # ── Incident storyboards: each incident's events in time order (as incident-storyboard) ──
+  - name: Incident Storyboards
+    id: incident_storyboards
+    task: set_bool_var
+
+  - id: storyboards_off
+    task: invert_bool
+    partial:
+      value: ${{ workflow.incident_storyboards.return }}
+
   - id: incident_events
     task: get_incident_events
     partial:
@@ -2045,10 +2061,16 @@ workflow:
       max_depth: 5
       include_icons: true
 
+  - id: incident_events_on  # switched off: skipped from here on, and the widget is dropped
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.incident_events.return }}
+      skip: ${{ workflow.storyboards_off.return }}
+
   - id: incident_events_local
     task: convert_values_to_timezone
     partial:
-      df: ${{ workflow.incident_events.return }}
+      df: ${{ workflow.incident_events_on.return }}
       timezone: ${{ workflow.timezone.return }}
       columns: [time]
 
@@ -2058,7 +2080,7 @@ workflow:
       colormap: ${{ workflow.event_colors.return }}
       df: ${{ workflow.incident_events_local.return }}
       column: event_type_display
-      palette: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3"]
+      palette: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948", "#0f9fb5", "#8c5a3c", "#a6b51b", "#b14fc5", "#1f4e8c", "#7cc4f0", "#9b2f5f", "#d4a3e8", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3"]
 
   - id: incident_data
     task: apply_color_map
@@ -2089,11 +2111,8 @@ workflow:
       root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       filename_suffix: incident_storyboards
 
-  - id: storyboard_widget
+  - id: storyboard_widget  # switched off, or no incidents in the period: dropped from the dashboard
     task: create_plot_widget_single_view
-    skipif:  # no incidents: an empty widget, not a failed run
-      conditions:
-        - never
     partial:
       title: Incident storyboards
       data: ${{ workflow.storyboard.return }}
