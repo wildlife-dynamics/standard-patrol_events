@@ -130,26 +130,18 @@ jobs:
         with:
           pixi-version: v0.84.2
 
-      - name: Run all workflow test cases
+      - name: Run the MEP test cases
         shell: bash
         env:
-          # Each data source the test cases use, from this repo's GitHub secrets (Settings → Secrets
-          # and variables → Actions).
-          ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__APN__SERVER: ${{ secrets.APN_SERVER }}
-          ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__APN__USERNAME: ${{ secrets.APN_USERNAME }}
-          ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__APN__PASSWORD: ${{ secrets.APN_PASSWORD }}
-          ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__APNCENTRAL__SERVER: ${{ secrets.APNCENTRAL_SERVER }}
-          ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__APNCENTRAL__USERNAME: ${{ secrets.APNCENTRAL_USERNAME }}
-          ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__APNCENTRAL__PASSWORD: ${{ secrets.APNCENTRAL_PASSWORD }}
-          ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__BELIZE__SERVER: ${{ secrets.BELIZE_SERVER }}
-          ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__BELIZE__USERNAME: ${{ secrets.BELIZE_USERNAME }}
-          ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__BELIZE__PASSWORD: ${{ secrets.BELIZE_PASSWORD }}
-          ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__COSTAECUADOR__SERVER: ${{ secrets.COSTAECUADOR_SERVER }}
-          ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__COSTAECUADOR__USERNAME: ${{ secrets.COSTAECUADOR_USERNAME }}
-          ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__COSTAECUADOR__PASSWORD: ${{ secrets.COSTAECUADOR_PASSWORD }}
+          # CI uses only the MEP login, from this repo's GitHub secrets (Settings → Secrets and variables → Actions),
+          # so CI runs only the cases on that data source. The others run locally (DEVELOPMENT.md).
           ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__MEP__SERVER: ${{ secrets.MEP_SERVER }}
           ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__MEP__USERNAME: ${{ secrets.MEP_USERNAME }}
           ECOSCOPE_WORKFLOWS__CONNECTIONS__EARTHRANGER__MEP__PASSWORD: ${{ secrets.MEP_PASSWORD }}
         run: |
           chmod +x dev/pytest-cli.sh || true
-          pixi run --manifest-path pixi.toml -e default bash dev/pytest-cli.sh ${{ needs.discover.outputs.workflow_id }} --all
+          wf=${{ needs.discover.outputs.workflow_id }}
+          pixi run --manifest-path pixi.toml -e default bash dev/pytest-cli.sh $wf --case mep
+          for c in mep_team mep_area; do
+            pixi run --manifest-path pixi.toml -e default bash dev/pytest-cli.sh $wf --case $c --skip-setup
+          done
