@@ -9,7 +9,7 @@ requirements:
     version: "==2.39.1"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-standard-patrol-events
-    version: "==0.0.6"
+    version: "==0.0.7"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
   - name: pydeck
     version: 0.9.2
@@ -1788,6 +1788,14 @@ workflow:
       labels: ${{ workflow.labels.return }}
 
   # ── 10-11 · Report ──────────────────────────────────────────────────────────────
+  - id: enc_events
+    task: filter_linked_events
+    partial:
+      events: ${{ workflow.events.return }}
+      patrol_events: ${{ workflow.linked_events.return }}
+      retrieval: linked_only
+      patrol_serial: ${{ workflow.patrol_serial.return }}
+
   - id: headline
     task: headline_stats
     skipif:
@@ -1798,6 +1806,7 @@ workflow:
       trajectory: ${{ workflow.trajectory.return }}
       events: ${{ workflow.events.return }}
       totals: ${{ workflow.effort_totals.return }}
+      encounters: ${{ workflow.enc_events.return }}
 
   - id: template_path  # one template, set here (not on the form)
     task: load_report_template
@@ -1821,6 +1830,81 @@ workflow:
     partial:
       collection: ${{ workflow.report_text.return }}
       key: details_intro
+
+  # ── Incident storyboards: each incident's events in time order (as incident-storyboard) ──
+  - name: Incident Storyboards
+    id: incident_storyboards
+    task: set_bool_var
+
+  - id: storyboards_off
+    task: invert_bool
+    partial:
+      value: ${{ workflow.incident_storyboards.return }}
+
+  - id: incident_events
+    task: get_incident_events
+    partial:
+      client: ${{ workflow.er_client.return }}
+      time_range: ${{ workflow.time_range.return }}
+      max_depth: 5
+      include_icons: true
+
+  - id: incident_events_on  # switched off: skipped from here on, and the widget is dropped
+    task: maybe_skip_df
+    partial:
+      df: ${{ workflow.incident_events.return }}
+      skip: ${{ workflow.storyboards_off.return }}
+
+  - id: incident_events_local
+    task: convert_values_to_timezone
+    partial:
+      df: ${{ workflow.incident_events_on.return }}
+      timezone: ${{ workflow.timezone.return }}
+      columns: [time]
+
+  - id: incident_colors  # the event colours, plus one for types found only in incidents
+    task: extend_color_map
+    partial:
+      colormap: ${{ workflow.event_colors.return }}
+      df: ${{ workflow.incident_events_local.return }}
+      column: event_type_display
+      palette: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948", "#0f9fb5", "#8c5a3c", "#a6b51b", "#b14fc5", "#1f4e8c", "#7cc4f0", "#9b2f5f", "#d4a3e8", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3"]
+
+  - id: incident_data
+    task: apply_color_map
+    partial:
+      df: ${{ workflow.incident_events_local.return }}
+      input_column_name: event_type_display
+      output_column_name: event_type_color
+      colormap: ${{ workflow.incident_colors.return }}
+
+  - id: storyboard_html
+    task: draw_incident_storyboard
+    partial:
+      dataframe: ${{ workflow.incident_data.return }}
+      group_column: incident
+      group_time_column: incident_time
+      time_column: time
+      type_column: event_type_display
+      id_column: serial_number
+      icon_column: icon
+      color_column: event_type_color
+      palette: null
+      merge_window_hours: 12
+
+  - id: storyboard
+    task: persist_text
+    partial:
+      text: ${{ workflow.storyboard_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      filename_suffix: incident_storyboards
+
+  - id: storyboard_report_pages  # the report: a few incidents per image, so each fits a page
+    task: storyboard_pages
+    partial:
+      html: ${{ workflow.storyboard_html.return }}
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      incidents_per_page: 8
 
   - id: report
     task: create_docx
@@ -1861,6 +1945,7 @@ workflow:
           - {item_type: image, key: events_bar, value: "${{ workflow.events_pie.return }}", width_inches: 6.6}
           - {item_type: image, key: monthly_chart, value: "${{ workflow.monthly_chart.return }}", width_inches: 6.6}
           - {item_type: image_list, key: images, value: "${{ workflow.images.return }}", width_inches: 3.4}
+          - {item_type: image_list, key: storyboard_pages, value: "${{ workflow.storyboard_report_pages.return }}", width_inches: 6.6}
 
   # ── Dashboard ───────────────────────────────────────────────────────────────────
   # ── Dashboard: stat cards with a sparkline of the period (QENP style) ─────────────
@@ -2001,14 +2086,6 @@ workflow:
       data: ${{ workflow.kpi_events_card.return }}
 
   # Encounters per km: events recorded within patrols over the distance patrolled.
-  - id: enc_events
-    task: filter_linked_events
-    partial:
-      events: ${{ workflow.events.return }}
-      patrol_events: ${{ workflow.linked_events.return }}
-      retrieval: linked_only
-      patrol_serial: ${{ workflow.patrol_serial.return }}
-
   - id: kpi_enc_html
     task: draw_rate_kpi
     skipif:  # no events within patrols: a rate of 0, not a blank card
@@ -2042,74 +2119,6 @@ workflow:
     partial:
       title: Encounters per km
       data: ${{ workflow.kpi_enc_card.return }}
-
-  # ── Incident storyboards: each incident's events in time order (as incident-storyboard) ──
-  - name: Incident Storyboards
-    id: incident_storyboards
-    task: set_bool_var
-
-  - id: storyboards_off
-    task: invert_bool
-    partial:
-      value: ${{ workflow.incident_storyboards.return }}
-
-  - id: incident_events
-    task: get_incident_events
-    partial:
-      client: ${{ workflow.er_client.return }}
-      time_range: ${{ workflow.time_range.return }}
-      max_depth: 5
-      include_icons: true
-
-  - id: incident_events_on  # switched off: skipped from here on, and the widget is dropped
-    task: maybe_skip_df
-    partial:
-      df: ${{ workflow.incident_events.return }}
-      skip: ${{ workflow.storyboards_off.return }}
-
-  - id: incident_events_local
-    task: convert_values_to_timezone
-    partial:
-      df: ${{ workflow.incident_events_on.return }}
-      timezone: ${{ workflow.timezone.return }}
-      columns: [time]
-
-  - id: incident_colors  # the event colours, plus one for types found only in incidents
-    task: extend_color_map
-    partial:
-      colormap: ${{ workflow.event_colors.return }}
-      df: ${{ workflow.incident_events_local.return }}
-      column: event_type_display
-      palette: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948", "#0f9fb5", "#8c5a3c", "#a6b51b", "#b14fc5", "#1f4e8c", "#7cc4f0", "#9b2f5f", "#d4a3e8", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3", "#a3a3a3"]
-
-  - id: incident_data
-    task: apply_color_map
-    partial:
-      df: ${{ workflow.incident_events_local.return }}
-      input_column_name: event_type_display
-      output_column_name: event_type_color
-      colormap: ${{ workflow.incident_colors.return }}
-
-  - id: storyboard_html
-    task: draw_incident_storyboard
-    partial:
-      dataframe: ${{ workflow.incident_data.return }}
-      group_column: incident
-      group_time_column: incident_time
-      time_column: time
-      type_column: event_type_display
-      id_column: serial_number
-      icon_column: icon
-      color_column: event_type_color
-      palette: null
-      merge_window_hours: 12
-
-  - id: storyboard
-    task: persist_text
-    partial:
-      text: ${{ workflow.storyboard_html.return }}
-      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
-      filename_suffix: incident_storyboards
 
   - id: storyboard_widget  # switched off, or no incidents in the period: dropped from the dashboard
     task: create_plot_widget_single_view

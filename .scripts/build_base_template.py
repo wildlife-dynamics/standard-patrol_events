@@ -216,7 +216,8 @@ tag(on("show_headline_stats"))
 figures = [("n_patrols", "L_patrols"), ("total_km", "L_distance"), ("total_hours", "L_hours"),
            ("patrol_days", "L_patrol_days"), ("{%tc if area_km2 %}", None), ("area_km2", "area_covered"),
            ("{%tc endif %}", None), ("{%tc if person_days %}", None), ("person_days", "member_days"),
-           ("{%tc endif %}", None), ("n_events", "L_events")]
+           ("{%tc endif %}", None), ("n_events", "L_events"),
+           ("{%tc if enc_per_km %}", None), ("enc_per_km", "L_enc_per_km"), ("{%tc endif %}", None)]
 stats = doc.add_table(rows=2, cols=len(figures))
 borders(stats, "E5E7EB")
 full_width(stats)
@@ -258,6 +259,20 @@ section(None, "L_event_summary", lambda: (
     tag(on("show_category_priority")), doc.add_heading("{{ L_category_priority }}", 2),
     table_block("category_priority"), tag("{%p endif %}"),
 ))
+
+
+def storyboards():
+    tag("{%p for s in storyboard_pages %}")
+    p("{{ s.image }}", align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
+    tag("{%p endfor %}")
+    p("{{ L_fig_storyboards }}", size=8.5, color=MUTED, align=WD_ALIGN_PARAGRAPH.CENTER)
+
+
+# Incident storyboards: only when switched on and there are incidents (an empty list otherwise).
+tag("{%p if storyboard_pages %}")
+doc.add_heading("{{ L_storyboards }}", 1)
+storyboards()
+tag("{%p endif %}")
 
 
 def page(orientation):

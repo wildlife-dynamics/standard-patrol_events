@@ -77,18 +77,19 @@ Each event type keeps one colour on the map, the sunburst, the chart over time a
 ## The Word report
 
 <p align="center">
-  <img src="docs/images/word-report.svg" alt="The Word report page by page: cover and personnel, patrol effort, maps, event summary, event details, photos and conclusions" width="100%">
+  <img src="docs/images/word-report.svg" alt="The Word report page by page: cover and personnel, patrol effort, maps, event summary, incident storyboards and event details, photos and conclusions" width="100%">
 </p>
 
 The report follows the order a technician would write it in, with numbered sections. A section you switch off in **Report Settings** disappears and the numbering closes up.
 
 - **Cover.** The title, subtitle, period, who generated it and when.
-- **Headline figures.** Patrols, distance, hours, patrol days and events.
+- **Headline figures.** Patrols, distance, hours, patrol days, events and encounters per km (events within patrols per km, as on the dashboard).
 - **Individual ranger effort.** When switched on, the effort columns for each ranger.
 - **Personnel.** Who went on patrol, leg by leg.
 - **Patrol effort.** The effort table, grouped as you chose.
 - **Maps.** The patrol tracks with events, the patrol time density map and the event density map.
 - **Event summary.** Events by type or category, the events sunburst, events over time, and events by category and priority.
+- **Incident storyboards.** When switched on and there are incidents, each incident's events in time order, a few incidents per page.
 - **Event details.** One table of every event with its details, or one table per event type.
 - **Photos.** The event photos with their captions.
 - **Conclusions.** An empty box for the technician to write in.

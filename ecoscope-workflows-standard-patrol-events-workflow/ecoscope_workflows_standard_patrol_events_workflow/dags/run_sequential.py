@@ -245,6 +245,9 @@ from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
 from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
     present_widgets as present_widgets,
 )
+from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
+    storyboard_pages as storyboard_pages,
+)
 from ecoscope_workflows_ext_standard_patrol_events.tasks.transformation import (
     add_event_display_columns as add_event_display_columns,
 )
@@ -4126,6 +4129,29 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    enc_events = (
+        task(filter_linked_events)
+        .validate()
+        .set_task_instance_id("enc_events")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            events=events,
+            patrol_events=linked_events,
+            retrieval="linked_only",
+            patrol_serial=patrol_serial,
+            **(params.get("enc_events") or {}),
+        )
+        .call()
+    )
+
     headline = (
         task(headline_stats)
         .validate()
@@ -4143,6 +4169,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             trajectory=trajectory,
             events=events,
             totals=effort_totals,
+            encounters=enc_events,
             **(params.get("headline") or {}),
         )
         .call()
@@ -4222,488 +4249,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             collection=report_text,
             key="details_intro",
             **(params.get("detail_intro") or {}),
-        )
-        .call()
-    )
-
-    report = (
-        task(create_docx)
-        .validate()
-        .set_task_instance_id("report")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            groupers=None,
-            skip=False,
-            missing_text=None,
-            template_path=template_path,
-            output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            filename_prefix="standard_patrol_events",
-            extra_text=[headline, report_blocks, labels],
-            context={
-                "items": [
-                    {"item_type": "text", "key": "title", "value": report_title},
-                    {"item_type": "text", "key": "subtitle", "value": report_subtitle},
-                    {"item_type": "text", "key": "period", "value": report_period},
-                    {"item_type": "text", "key": "generated_by", "value": generated_by},
-                    {
-                        "item_type": "text",
-                        "key": "date_generated",
-                        "value": date_generated,
-                    },
-                    {"item_type": "text", "key": "detail_intro", "value": detail_intro},
-                    {"item_type": "text", "key": "detail_mode", "value": detail_mode},
-                    {"item_type": "table", "key": "personnel", "value": personnel},
-                    {"item_type": "table", "key": "effort", "value": effort},
-                    {
-                        "item_type": "table",
-                        "key": "ranger_effort",
-                        "value": ranger_effort,
-                    },
-                    {
-                        "item_type": "table",
-                        "key": "events_by_type",
-                        "value": events_by_type,
-                    },
-                    {
-                        "item_type": "table",
-                        "key": "category_priority",
-                        "value": category_priority,
-                    },
-                    {
-                        "item_type": "table",
-                        "key": "event_details",
-                        "value": event_details,
-                    },
-                    {
-                        "item_type": "table_list",
-                        "key": "event_detail_tables",
-                        "value": event_detail_tables,
-                    },
-                    {
-                        "item_type": "image",
-                        "key": "tracks_map",
-                        "value": tracks_map_static,
-                        "width_inches": 6.6,
-                        "screenshot_config": {"full_page": False},
-                    },
-                    {
-                        "item_type": "image",
-                        "key": "time_density_map",
-                        "value": time_density_map_static,
-                        "width_inches": 6.6,
-                        "screenshot_config": {"full_page": False},
-                    },
-                    {
-                        "item_type": "image",
-                        "key": "event_density_map",
-                        "value": event_density_map_static,
-                        "width_inches": 6.6,
-                        "screenshot_config": {"full_page": False},
-                    },
-                    {
-                        "item_type": "image",
-                        "key": "events_bar",
-                        "value": events_pie,
-                        "width_inches": 6.6,
-                    },
-                    {
-                        "item_type": "image",
-                        "key": "monthly_chart",
-                        "value": monthly_chart,
-                        "width_inches": 6.6,
-                    },
-                    {
-                        "item_type": "image_list",
-                        "key": "images",
-                        "value": images,
-                        "width_inches": 3.4,
-                    },
-                ]
-            },
-            **(params.get("report") or {}),
-        )
-        .call()
-    )
-
-    kpi_patrols_html = (
-        task(draw_sparkline_kpi)
-        .validate()
-        .set_task_instance_id("kpi_patrols_html")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=patrol_teams,
-            time_column="start",
-            metric="nunique",
-            value_column="patrol_id",
-            time_range=report_range,
-            interval="auto",
-            color="#2a78d6",
-            font_size=28,
-            decimal_places=None,
-            scale=1.0,
-            unit="",
-            **(params.get("kpi_patrols_html") or {}),
-        )
-        .call()
-    )
-
-    kpi_patrols_card = (
-        task(persist_text)
-        .validate()
-        .set_task_instance_id("kpi_patrols_card")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            text=kpi_patrols_html,
-            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            filename_suffix="kpi_patrols",
-            **(params.get("kpi_patrols_card") or {}),
-        )
-        .call()
-    )
-
-    kpi_patrols_widget = (
-        task(create_plot_widget_single_view)
-        .validate()
-        .set_task_instance_id("kpi_patrols_widget")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            title="Patrols",
-            data=kpi_patrols_card,
-            **(params.get("kpi_patrols_widget") or {}),
-        )
-        .call()
-    )
-
-    kpi_km_html = (
-        task(draw_sparkline_kpi)
-        .validate()
-        .set_task_instance_id("kpi_km_html")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=effort_tracks,
-            time_column="segment_start",
-            metric="sum",
-            value_column="dist_meters",
-            scale=0.001,
-            unit="km",
-            time_range=report_range,
-            interval="auto",
-            color="#2a78d6",
-            font_size=28,
-            decimal_places=None,
-            **(params.get("kpi_km_html") or {}),
-        )
-        .call()
-    )
-
-    kpi_km_card = (
-        task(persist_text)
-        .validate()
-        .set_task_instance_id("kpi_km_card")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            text=kpi_km_html,
-            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            filename_suffix="kpi_km",
-            **(params.get("kpi_km_card") or {}),
-        )
-        .call()
-    )
-
-    kpi_km_widget = (
-        task(create_plot_widget_single_view)
-        .validate()
-        .set_task_instance_id("kpi_km_widget")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            title="Distance", data=kpi_km_card, **(params.get("kpi_km_widget") or {})
-        )
-        .call()
-    )
-
-    kpi_hours_html = (
-        task(draw_sparkline_kpi)
-        .validate()
-        .set_task_instance_id("kpi_hours_html")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=effort_tracks,
-            time_column="segment_start",
-            metric="sum",
-            value_column="timespan_seconds",
-            scale=0.000277777778,
-            unit="h",
-            time_range=report_range,
-            interval="auto",
-            color="#2a78d6",
-            font_size=28,
-            decimal_places=None,
-            **(params.get("kpi_hours_html") or {}),
-        )
-        .call()
-    )
-
-    kpi_hours_card = (
-        task(persist_text)
-        .validate()
-        .set_task_instance_id("kpi_hours_card")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            text=kpi_hours_html,
-            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            filename_suffix="kpi_hours",
-            **(params.get("kpi_hours_card") or {}),
-        )
-        .call()
-    )
-
-    kpi_hours_widget = (
-        task(create_plot_widget_single_view)
-        .validate()
-        .set_task_instance_id("kpi_hours_widget")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            title="Patrol hours",
-            data=kpi_hours_card,
-            **(params.get("kpi_hours_widget") or {}),
-        )
-        .call()
-    )
-
-    kpi_events_html = (
-        task(draw_sparkline_kpi)
-        .validate()
-        .set_task_instance_id("kpi_events_html")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=events,
-            time_column="time",
-            metric="count",
-            time_range=report_range,
-            interval="auto",
-            color="#2a78d6",
-            font_size=28,
-            decimal_places=None,
-            scale=1.0,
-            unit="",
-            value_column=None,
-            **(params.get("kpi_events_html") or {}),
-        )
-        .call()
-    )
-
-    kpi_events_card = (
-        task(persist_text)
-        .validate()
-        .set_task_instance_id("kpi_events_card")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            text=kpi_events_html,
-            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            filename_suffix="kpi_events",
-            **(params.get("kpi_events_card") or {}),
-        )
-        .call()
-    )
-
-    kpi_events_widget = (
-        task(create_plot_widget_single_view)
-        .validate()
-        .set_task_instance_id("kpi_events_widget")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            title="Events",
-            data=kpi_events_card,
-            **(params.get("kpi_events_widget") or {}),
-        )
-        .call()
-    )
-
-    enc_events = (
-        task(filter_linked_events)
-        .validate()
-        .set_task_instance_id("enc_events")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            events=events,
-            patrol_events=linked_events,
-            retrieval="linked_only",
-            patrol_serial=patrol_serial,
-            **(params.get("enc_events") or {}),
-        )
-        .call()
-    )
-
-    kpi_enc_html = (
-        task(draw_rate_kpi)
-        .validate()
-        .set_task_instance_id("kpi_enc_html")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            events=enc_events,
-            effort=effort_tracks,
-            events_time_column="time",
-            effort_time_column="segment_start",
-            effort_column="dist_meters",
-            effort_scale=0.001,
-            time_range=report_range,
-            decimal_places=2,
-            interval="auto",
-            color="#2a78d6",
-            font_size=28,
-            **(params.get("kpi_enc_html") or {}),
-        )
-        .call()
-    )
-
-    kpi_enc_card = (
-        task(persist_text)
-        .validate()
-        .set_task_instance_id("kpi_enc_card")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            text=kpi_enc_html,
-            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            filename_suffix="kpi_enc",
-            **(params.get("kpi_enc_card") or {}),
-        )
-        .call()
-    )
-
-    kpi_enc_widget = (
-        task(create_plot_widget_single_view)
-        .validate()
-        .set_task_instance_id("kpi_enc_widget")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            title="Encounters per km",
-            data=kpi_enc_card,
-            **(params.get("kpi_enc_widget") or {}),
         )
         .call()
     )
@@ -5202,6 +4747,493 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             filename_suffix="incident_storyboards",
             **(params.get("storyboard") or {}),
+        )
+        .call()
+    )
+
+    storyboard_report_pages = (
+        task(storyboard_pages)
+        .validate()
+        .set_task_instance_id("storyboard_report_pages")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            html=storyboard_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            incidents_per_page=8,
+            **(params.get("storyboard_report_pages") or {}),
+        )
+        .call()
+    )
+
+    report = (
+        task(create_docx)
+        .validate()
+        .set_task_instance_id("report")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            groupers=None,
+            skip=False,
+            missing_text=None,
+            template_path=template_path,
+            output_dir=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_prefix="standard_patrol_events",
+            extra_text=[headline, report_blocks, labels],
+            context={
+                "items": [
+                    {"item_type": "text", "key": "title", "value": report_title},
+                    {"item_type": "text", "key": "subtitle", "value": report_subtitle},
+                    {"item_type": "text", "key": "period", "value": report_period},
+                    {"item_type": "text", "key": "generated_by", "value": generated_by},
+                    {
+                        "item_type": "text",
+                        "key": "date_generated",
+                        "value": date_generated,
+                    },
+                    {"item_type": "text", "key": "detail_intro", "value": detail_intro},
+                    {"item_type": "text", "key": "detail_mode", "value": detail_mode},
+                    {"item_type": "table", "key": "personnel", "value": personnel},
+                    {"item_type": "table", "key": "effort", "value": effort},
+                    {
+                        "item_type": "table",
+                        "key": "ranger_effort",
+                        "value": ranger_effort,
+                    },
+                    {
+                        "item_type": "table",
+                        "key": "events_by_type",
+                        "value": events_by_type,
+                    },
+                    {
+                        "item_type": "table",
+                        "key": "category_priority",
+                        "value": category_priority,
+                    },
+                    {
+                        "item_type": "table",
+                        "key": "event_details",
+                        "value": event_details,
+                    },
+                    {
+                        "item_type": "table_list",
+                        "key": "event_detail_tables",
+                        "value": event_detail_tables,
+                    },
+                    {
+                        "item_type": "image",
+                        "key": "tracks_map",
+                        "value": tracks_map_static,
+                        "width_inches": 6.6,
+                        "screenshot_config": {"full_page": False},
+                    },
+                    {
+                        "item_type": "image",
+                        "key": "time_density_map",
+                        "value": time_density_map_static,
+                        "width_inches": 6.6,
+                        "screenshot_config": {"full_page": False},
+                    },
+                    {
+                        "item_type": "image",
+                        "key": "event_density_map",
+                        "value": event_density_map_static,
+                        "width_inches": 6.6,
+                        "screenshot_config": {"full_page": False},
+                    },
+                    {
+                        "item_type": "image",
+                        "key": "events_bar",
+                        "value": events_pie,
+                        "width_inches": 6.6,
+                    },
+                    {
+                        "item_type": "image",
+                        "key": "monthly_chart",
+                        "value": monthly_chart,
+                        "width_inches": 6.6,
+                    },
+                    {
+                        "item_type": "image_list",
+                        "key": "images",
+                        "value": images,
+                        "width_inches": 3.4,
+                    },
+                    {
+                        "item_type": "image_list",
+                        "key": "storyboard_pages",
+                        "value": storyboard_report_pages,
+                        "width_inches": 6.6,
+                    },
+                ]
+            },
+            **(params.get("report") or {}),
+        )
+        .call()
+    )
+
+    kpi_patrols_html = (
+        task(draw_sparkline_kpi)
+        .validate()
+        .set_task_instance_id("kpi_patrols_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=patrol_teams,
+            time_column="start",
+            metric="nunique",
+            value_column="patrol_id",
+            time_range=report_range,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            decimal_places=None,
+            scale=1.0,
+            unit="",
+            **(params.get("kpi_patrols_html") or {}),
+        )
+        .call()
+    )
+
+    kpi_patrols_card = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("kpi_patrols_card")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=kpi_patrols_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="kpi_patrols",
+            **(params.get("kpi_patrols_card") or {}),
+        )
+        .call()
+    )
+
+    kpi_patrols_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("kpi_patrols_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Patrols",
+            data=kpi_patrols_card,
+            **(params.get("kpi_patrols_widget") or {}),
+        )
+        .call()
+    )
+
+    kpi_km_html = (
+        task(draw_sparkline_kpi)
+        .validate()
+        .set_task_instance_id("kpi_km_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_tracks,
+            time_column="segment_start",
+            metric="sum",
+            value_column="dist_meters",
+            scale=0.001,
+            unit="km",
+            time_range=report_range,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            decimal_places=None,
+            **(params.get("kpi_km_html") or {}),
+        )
+        .call()
+    )
+
+    kpi_km_card = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("kpi_km_card")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=kpi_km_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="kpi_km",
+            **(params.get("kpi_km_card") or {}),
+        )
+        .call()
+    )
+
+    kpi_km_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("kpi_km_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Distance", data=kpi_km_card, **(params.get("kpi_km_widget") or {})
+        )
+        .call()
+    )
+
+    kpi_hours_html = (
+        task(draw_sparkline_kpi)
+        .validate()
+        .set_task_instance_id("kpi_hours_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=effort_tracks,
+            time_column="segment_start",
+            metric="sum",
+            value_column="timespan_seconds",
+            scale=0.000277777778,
+            unit="h",
+            time_range=report_range,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            decimal_places=None,
+            **(params.get("kpi_hours_html") or {}),
+        )
+        .call()
+    )
+
+    kpi_hours_card = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("kpi_hours_card")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=kpi_hours_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="kpi_hours",
+            **(params.get("kpi_hours_card") or {}),
+        )
+        .call()
+    )
+
+    kpi_hours_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("kpi_hours_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Patrol hours",
+            data=kpi_hours_card,
+            **(params.get("kpi_hours_widget") or {}),
+        )
+        .call()
+    )
+
+    kpi_events_html = (
+        task(draw_sparkline_kpi)
+        .validate()
+        .set_task_instance_id("kpi_events_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=events,
+            time_column="time",
+            metric="count",
+            time_range=report_range,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            decimal_places=None,
+            scale=1.0,
+            unit="",
+            value_column=None,
+            **(params.get("kpi_events_html") or {}),
+        )
+        .call()
+    )
+
+    kpi_events_card = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("kpi_events_card")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=kpi_events_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="kpi_events",
+            **(params.get("kpi_events_card") or {}),
+        )
+        .call()
+    )
+
+    kpi_events_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("kpi_events_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Events",
+            data=kpi_events_card,
+            **(params.get("kpi_events_widget") or {}),
+        )
+        .call()
+    )
+
+    kpi_enc_html = (
+        task(draw_rate_kpi)
+        .validate()
+        .set_task_instance_id("kpi_enc_html")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            events=enc_events,
+            effort=effort_tracks,
+            events_time_column="time",
+            effort_time_column="segment_start",
+            effort_column="dist_meters",
+            effort_scale=0.001,
+            time_range=report_range,
+            decimal_places=2,
+            interval="auto",
+            color="#2a78d6",
+            font_size=28,
+            **(params.get("kpi_enc_html") or {}),
+        )
+        .call()
+    )
+
+    kpi_enc_card = (
+        task(persist_text)
+        .validate()
+        .set_task_instance_id("kpi_enc_card")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            text=kpi_enc_html,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            filename_suffix="kpi_enc",
+            **(params.get("kpi_enc_card") or {}),
+        )
+        .call()
+    )
+
+    kpi_enc_widget = (
+        task(create_plot_widget_single_view)
+        .validate()
+        .set_task_instance_id("kpi_enc_widget")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            title="Encounters per km",
+            data=kpi_enc_card,
+            **(params.get("kpi_enc_widget") or {}),
         )
         .call()
     )
