@@ -9,7 +9,7 @@ requirements:
     version: "==2.39.1"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-standard-patrol-events
-    version: "==0.0.8"
+    version: "==0.0.9"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
   - name: pydeck
     version: 0.9.2
@@ -333,6 +333,12 @@ rjsf-overrides:
         title: Events by Category and Priority
       - const: conclusions
         title: Conclusions Box
+    density_grid.properties.var.title: Grid Cell Size (m)
+    density_grid.properties.var.description: >-
+      Size of the cells on the patrol time and event density maps, in metres. Leave at 0 to
+      size them from the patrols (a twentieth of a typical patrol, e.g. 250 m).
+    density_grid.properties.var.default: 0
+    density_grid.properties.var.minimum: 0
     incident_storyboards.properties.var.title: Show Incident Storyboards
     incident_storyboards.properties.var.description: >-
       Add the incident storyboards to the dashboard: each incident (a collection of related
@@ -363,6 +369,7 @@ rjsf-overrides:
     - state_events
     - event_grouping
     - event_details_settings
+    - density_grid
     - report_text
     - download_attachments
     - incident_storyboards
@@ -932,6 +939,11 @@ workflow:
     id: event_grouping
     task: set_string_var
 
+  # ── Density maps: one grid cell size for both (0 = sized from the patrols) ─────────
+  - name: Density Maps
+    id: density_grid
+    task: set_float_var
+
   # ── 8 · Event details ───────────────────────────────────────────────────────────
   - name: Event Details
     id: event_details_settings
@@ -1252,25 +1264,42 @@ workflow:
       df: ${{ workflow.effort_tracks_named.return }}
       no_team: ${{ workflow.no_team_label.return }}
 
+  - id: track_colors
+    task: color_map_by_frequency
+    partial:
+      df: ${{ workflow.tracks_teamed.return }}
+      input_column_name: ${{ workflow.patrol_grouping.return }}
+      # one colour per patrol type (or team/leader), busiest first: 10 deep hues, deeper than the
+      # event colours (dataviz-validated, colour-blind safe), then dark grey (core cycles the list)
+      colormap: ["#1a5fb0", "#b4530f", "#008a7e", "#8a3fb5", "#5b7f12", "#a3245e", "#0b7fa6", "#8f6b00", "#4f5fc4", "#9e2a2b", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e", "#6e6e6e"]
+
   - id: tracks_colored
     task: apply_color_map
     partial:
       df: ${{ workflow.tracks_teamed.return }}
       input_column_name: ${{ workflow.patrol_grouping.return }}
-      colormap: ["#1a5fb0", "#b4530f", "#008a7e", "#8a3fb5", "#5b7f12"]  # deeper than the event colours (validated set)
+      colormap: ${{ workflow.track_colors.return }}
       output_column_name: patrol_color
 
-  - id: td_legend_title
-    task: pick_setting
+  - id: grid_size  # ground metres; automatic: a 20th of the typical patrol's extent
+    task: density_cell_size
     partial:
-      collection: ${{ workflow.labels.return }}
-      key: time_density_legend
+      tracks: ${{ workflow.trajectory.return }}
+      cell_size_m: ${{ workflow.density_grid.return }}
 
-  - id: ed_legend_title
-    task: pick_setting
+  - id: td_legend_title  # e.g. "Events per 500 m cell", in the report language
+    task: density_legend
     partial:
-      collection: ${{ workflow.labels.return }}
+      labels: ${{ workflow.labels.return }}
+      key: time_density_legend
+      cell_size_m: ${{ workflow.grid_size.return }}
+
+  - id: ed_legend_title  # e.g. "Events per 500 m cell", in the report language
+    task: density_legend
+    partial:
+      labels: ${{ workflow.labels.return }}
       key: event_density_legend
+      cell_size_m: ${{ workflow.grid_size.return }}
 
   # legend titles follow the chosen grouping, in the report language
   - id: patrol_legend_title
@@ -1439,14 +1468,13 @@ workflow:
           filename_prefix: patrol_events
           sanitize: true  # event_details is a dict column; parquet needs it as JSON text
 
-  # patrol time density
+  # patrol time density: grid cells only where the tracks are (a site can span a whole
+  # country); core computes the time in each cell
   - id: td_meshgrid
-    task: create_meshgrid
+    task: cells_covering
     partial:
-      auto_scale_or_custom_cell_size: {"auto_scale_or_custom": "Auto-scale"}
-      crs: "EPSG:3857"
       aoi: ${{ workflow.trajectory.return }}
-      intersecting_only: false
+      cell_size_m: ${{ workflow.grid_size.return }}
 
   - id: td_density
     task: calculate_linear_time_density
@@ -1565,8 +1593,8 @@ workflow:
   # event density (ordered classes, as ops-dashboard)
   # ~30 cells across the events' extent: readable on the map at any site size
   # (core auto-scale makes ~1 km cells, invisible on a 100+ km map view).
-  - id: ed_cell_size
-    task: grid_cell_size_for_extent
+  - id: ed_meshgrid  # cells only where events are, the same size as the time density map
+    task: cells_covering
     skipif:
       conditions:
         - any_is_empty_df
@@ -1574,21 +1602,7 @@ workflow:
         - all_geometry_are_none
     partial:
       aoi: ${{ workflow.events_located.return }}
-      cells_across: 30
-      min_size_m: 250.0
-
-  - id: ed_meshgrid
-    task: create_meshgrid
-    skipif:
-      conditions:
-        - any_is_empty_df
-        - any_dependency_skipped
-        - all_geometry_are_none
-    partial:
-      crs: "EPSG:3857"
-      aoi: ${{ workflow.events_located.return }}
-      intersecting_only: false
-      auto_scale_or_custom_cell_size: ${{ workflow.ed_cell_size.return }}  # never a fixed size: mep (US..Kenya) made 33M cells
+      cell_size_m: ${{ workflow.grid_size.return }}
 
   - id: ed_density
     task: calculate_feature_density
@@ -1828,6 +1842,37 @@ workflow:
       retrieval: linked_only
       patrol_serial: ${{ workflow.patrol_serial.return }}
 
+  # Encounters per km is core's: encounters_per_distance over the tracks plus the events
+  # recorded within patrols (as the catalogue's encounter-rate stats); the card and the
+  # report only show it.
+  - id: enc_metrics
+    task: set_encounter_rate_metrics
+    partial:
+      aggregation: null
+      metrics:
+        - {metric: encounters_per_distance, unit: km}
+
+  - id: enc_frame
+    task: concat_dataframes
+    skipif:  # no patrol events: the ratio is 0, not a skip
+      conditions:
+        - never
+    partial:
+      dfs: ["${{ workflow.trajectory.return }}", "${{ workflow.enc_events.return }}"]
+      ensure_columns: [event_type, dist_meters]
+      reset_index: true
+
+  - id: enc_summary
+    task: summarize_df
+    skipif:
+      conditions:
+        - never
+    partial:
+      df: ${{ workflow.enc_frame.return }}
+      summary_params: ${{ workflow.enc_metrics.return }}
+      groupby_cols: null
+      reset_index: false
+
   - id: headline
     task: headline_stats
     skipif:
@@ -1838,7 +1883,7 @@ workflow:
       trajectory: ${{ workflow.trajectory.return }}
       events: ${{ workflow.events.return }}
       totals: ${{ workflow.effort_totals.return }}
-      encounters: ${{ workflow.enc_events.return }}
+      encounters: ${{ workflow.enc_summary.return }}
 
   - id: template_path  # one template, set here (not on the form)
     task: load_report_template
@@ -2117,19 +2162,17 @@ workflow:
       title: Events
       data: ${{ workflow.kpi_events_card.return }}
 
-  # Encounters per km: events recorded within patrols over the distance patrolled.
+  # Encounters per km on patrols: core's encounters_per_distance (enc_metrics), overall and
+  # per period, drawn as a card.
   - id: kpi_enc_html
-    task: draw_rate_kpi
+    task: draw_core_rate_kpi
     skipif:  # no events within patrols: a rate of 0, not a blank card
       conditions:
         - never
     partial:
-      events: ${{ workflow.enc_events.return }}
-      effort: ${{ workflow.effort_tracks.return }}
-      events_time_column: time
-      effort_time_column: segment_start
-      effort_column: dist_meters
-      effort_scale: 0.001
+      frame: ${{ workflow.enc_frame.return }}
+      summary_params: ${{ workflow.enc_metrics.return }}
+      time_columns: [segment_start, time]
       time_range: ${{ workflow.report_range.return }}
       decimal_places: 2
       interval: auto
@@ -2149,7 +2192,7 @@ workflow:
       conditions:
         - never
     partial:
-      title: Encounters per km
+      title: Encounters per km on patrols
       data: ${{ workflow.kpi_enc_card.return }}
 
   - id: storyboard_widget  # switched off, or no incidents in the period: dropped from the dashboard
