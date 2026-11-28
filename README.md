@@ -25,11 +25,12 @@ Open the workflow in Ecoscope and fill in the config page from top to bottom. On
 9. **Event Type** and **Event State:** which events to include; empty means all.
 10. **Event Grouping:** group events by event type or by event category, in the tables, charts and map.
 11. **Event Details:** show every field, or choose the fields per event type.
-12. **Report Settings:** the title, subtitle and language, and which sections the report includes (all are on by default).
-13. **Download Event Attachments:** event photos are included in the report, up to 50 by default. Tick **Leave Out Event Photos** to skip them.
-14. **Incident Storyboards** (optional): tick **Show Incident Storyboards** to add them to the dashboard. They are off by default.
-15. **Data Export** (optional): file formats for the map's patrol tracks and events; GeoParquet by default.
-16. Press **Run**.
+12. **Density Maps:** the grid cell size, in metres, for both density maps. Leave it at 0 to size the cells from the patrols (a twentieth of a typical patrol, e.g. 250 m).
+13. **Report Settings:** the title, subtitle and language, and which sections the report includes (all are on by default).
+14. **Download Event Attachments:** event photos are included in the report, up to 50 by default. Tick **Leave Out Event Photos** to skip them.
+15. **Incident Storyboards** (optional): tick **Show Incident Storyboards** to add them to the dashboard. They are off by default.
+16. **Data Export** (optional): file formats for the map's patrol tracks and events; GeoParquet by default.
+17. Press **Run**.
 
 **Base Maps** sits under Advanced and is already set up, so you can leave it as it is.
 
@@ -58,20 +59,20 @@ The five numbers at the top give the period at a glance, each with a line showin
 | Distance | How far they travelled, measured on the GPS routes |
 | Patrol hours | How long they lasted in total |
 | Events | How many events were recorded |
-| Encounters per km | Events recorded within patrols for every km patrolled |
+| Encounters per km on patrols | Events recorded within patrols for every km patrolled: core ecoscope's encounters per distance |
 | Patrol tracks and events | The routes coloured by the patrol grouping, with the events marked |
 | Patrol effort | Patrols, distance, hours and more for each group, with a total; groups run from least to most distance |
 | Individual ranger effort | The same columns for each ranger (leader or member of a leg), when switched on |
 | Patrol legs | Each leg's patrol, type, leader, team, start, end, distance and time |
-| Patrol time density | Where patrols spent their time, as a share of all patrol time |
-| Event density | How many events were recorded in each grid cell |
+| Patrol time density | Where patrols spent their time, as a share of all patrol time, per grid cell |
+| Event density | How many events were recorded in each grid cell. Both density maps use the same cell size, named in the legend |
 | Events | A sunburst: event categories in the centre, their types around them. Click a category to open it, click the centre to go back |
-| Events over time | Events per week, month or quarter, stacked by type; switch to shares (100%) or lines |
+| Events over time | Events per week, month or quarter, stacked by type; switch to shares (100%) or lines. Each bar is labelled with its period's start; part periods at either end are starred and lighter |
 | Event summary | Counts by type or category |
 | Event records | One row per event, with the chosen details |
 | Incident storyboards | Each incident's events in time order, with the time between them, when switched on |
 
-Each event type keeps one colour on the map, the sunburst, the chart over time and the storyboards, busiest type first: the first eight stay distinct for colour-blind readers, the next eight add more hues, and any types past sixteen are grey. Patrol tracks use their own, deeper colours.
+Each event type keeps one colour on the map, the sunburst, the chart over time and the storyboards, busiest type first: the first eight stay distinct for colour-blind readers, the next eight add more hues, and any types past sixteen are grey. Patrol tracks use their own, deeper colours: one per patrol type (or team or leader), busiest first, ten distinct colours and then grey.
 
 ---
 
@@ -84,7 +85,7 @@ Each event type keeps one colour on the map, the sunburst, the chart over time a
 The report follows the order a technician would write it in, with numbered sections. A section you switch off in **Report Settings** disappears and the numbering closes up.
 
 - **Cover.** The title, subtitle, period, who generated it and when.
-- **Headline figures.** Patrols, distance, hours, patrol days, events and encounters per km (events within patrols per km, as on the dashboard).
+- **Headline figures.** Patrols, distance, hours, patrol days, events and encounters per km on patrols (core ecoscope's value, as on the dashboard).
 - **Individual ranger effort.** When switched on, the effort columns for each ranger.
 - **Personnel.** Who went on patrol, leg by leg.
 - **Patrol effort.** The effort table, grouped as you chose.

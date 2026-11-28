@@ -353,6 +353,23 @@
         }
       }
     },
+    "density_grid": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "Grid Cell Size (m)",
+          "type": "number",
+          "description": "Size of the cells on the patrol time and event density maps, in metres. Leave at 0 to size them from the patrols (a twentieth of a typical patrol, e.g. 250 m).",
+          "default": 0,
+          "minimum": 0
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": "Density Maps"
+    },
     "download_attachments": {
       "type": "object",
       "title": "Download Event Attachments",
@@ -1047,6 +1064,7 @@
       "event_state",
       "event_grouping",
       "event_details",
+      "density_grid",
       "report",
       "download_attachments",
       "incident_storyboards",

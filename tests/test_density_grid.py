@@ -1,34 +1,47 @@
-"""Density grids must stay small for any site extent. A fixed 2 km cell made
-APN (stray 0,0 points) build 10M cells and mep (US..Kenya) 33M cells: hours of CPU.
-Runs only where ecoscope is installed (importorskip)."""
+"""Density grids must stay small for any site extent, and fine enough to read. A fixed 2 km
+cell made APN (stray 0,0 points) build 10M cells and mep (US..Kenya) 33M cells; core's
+auto-scale over a country-wide site (APN Central) made ~113 km cells. Both maps now use one
+cell size taken from the typical patrol, with cells only where the data is.
+Runs only where the task package is installed (importorskip)."""
 
 import re
 from pathlib import Path
 
 import pytest
 
-pytest.importorskip("ecoscope")
+pytest.importorskip("ecoscope_workflows_ext_standard_patrol_events")
 
 import geopandas as gpd  # noqa: E402
-from ecoscope.platform.tasks.analysis import create_meshgrid  # noqa: E402
-from wt_task import task  # noqa: E402
-from shapely.geometry import Point  # noqa: E402
+from ecoscope_workflows_ext_standard_patrol_events.tasks.analysis import (  # noqa: E402
+    cells_covering,
+    density_cell_size,
+)
+from shapely.geometry import LineString, Point  # noqa: E402
 
 SPEC = Path(__file__).parents[1] / "spec.yaml"
 
 
-def test_spec_meshgrids_auto_scale():
-    sizes = re.findall(r"auto_scale_or_custom_cell_size: (.*)", SPEC.read_text())
-    # time density: core auto-scale; event density: sized from the data extent. Never a fixed size.
-    assert len(sizes) == 2 and not any("grid_cell_size" in s for s in sizes), sizes
+def test_both_density_maps_share_one_cell_size():
+    spec = SPEC.read_text()
+    assert len(re.findall(r"task: cells_covering", spec)) == 2
+    assert len(re.findall(r"cell_size_m: \$\{\{ workflow\.grid_size\.return \}\}", spec)) == 4  # 2 grids, 2 legends
+    assert "create_meshgrid" not in spec  # never core's auto-scale over the whole extent
 
 
-@pytest.mark.parametrize("points", [
-    [(-71.9, -43.1), (-71.5, -42.6)],  # one park (APN)
-    [(-124.7, 48.1), (57.5, -4.1)],    # worldwide dev site (mep)
-    [(-71.9, -43.1), (0.0, 0.0)],      # park plus a stray 0,0 point
-])
-def test_auto_scale_grid_is_bounded(points):
-    aoi = gpd.GeoDataFrame(geometry=[Point(p) for p in points], crs=4326)
-    grid = task(create_meshgrid).validate().call(aoi=aoi, auto_scale_or_custom_cell_size={"auto_scale_or_custom": "Auto-scale"})
-    assert 100 < len(grid) < 50_000
+@pytest.mark.parametrize("extra", [
+    [],                                      # one park (APN)
+    [(-65.20, -22.90), (-65.16, -22.86)],    # plus a park 2,200 km away (APN Central)
+    [(0.0, 0.0), (0.001, 0.001)],            # plus a stray 0,0 track
+])  # fmt: skip
+def test_grid_is_fine_and_bounded_for_any_extent(extra):
+    lines = [[(-71.80, -42.80), (-71.75, -42.76)]] + ([extra] if extra else [])
+    tracks = gpd.GeoDataFrame(
+        {"extra__patrol_id": [f"p{i}" for i in range(len(lines))]},
+        geometry=[LineString(pts) for pts in lines],
+        crs=4326,
+    )
+    size = density_cell_size(tracks)
+    cells = cells_covering(tracks, size)
+    assert size <= 500 and 10 < len(cells) < 50_000
+    events = gpd.GeoDataFrame(geometry=[Point(p) for p in lines[0] + extra], crs=4326)
+    assert len(cells_covering(events, size)) <= len(lines[0] + extra)

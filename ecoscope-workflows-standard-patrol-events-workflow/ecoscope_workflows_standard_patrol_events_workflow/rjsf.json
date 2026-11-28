@@ -534,6 +534,23 @@
       "title": "Event Grouping",
       "description": "Choose how events are grouped in the tables, charts and map colours."
     },
+    "density_grid": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "Grid Cell Size (m)",
+          "type": "number",
+          "description": "Size of the cells on the patrol time and event density maps, in metres. Leave at 0 to size them from the patrols (a twentieth of a typical patrol, e.g. 250 m).",
+          "default": 0,
+          "minimum": 0
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": "Density Maps"
+    },
     "event_details_settings": {
       "additionalProperties": true,
       "properties": {
@@ -969,6 +986,7 @@
       "state_events",
       "event_grouping",
       "event_details_settings",
+      "density_grid",
       "report_text",
       "download_attachments",
       "incident_storyboards",

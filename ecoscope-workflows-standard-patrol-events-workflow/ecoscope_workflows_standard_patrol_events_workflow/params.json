@@ -454,6 +454,20 @@
       "type": "object",
       "title": "Event Grouping"
     },
+    "density_grid": {
+      "additionalProperties": false,
+      "properties": {
+        "var": {
+          "title": "",
+          "type": "number"
+        }
+      },
+      "required": [
+        "var"
+      ],
+      "type": "object",
+      "title": "Density Maps"
+    },
     "event_details_settings": {
       "additionalProperties": false,
       "properties": {
@@ -763,6 +777,7 @@
       "event_type",
       "state_events",
       "event_grouping",
+      "density_grid",
       "event_details_settings",
       "download_attachments",
       "report_text",

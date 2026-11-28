@@ -149,6 +149,7 @@ get_event_type_lookup = create_func_magicmock(  # 🧪
     anchor="ecoscope_workflows_ext_standard_patrol_events.tasks.io",  # 🧪
     func_name="get_event_type_lookup",  # 🧪
 )  # 🧪
+from ecoscope.platform.tasks.config import set_float_var as set_float_var
 from ecoscope.platform.tasks.skip import never as never
 from ecoscope.platform.tasks.transformation import (
     add_leg_names_to_tracks as add_leg_names_to_tracks,
@@ -202,7 +203,6 @@ from ecoscope.platform.tasks.analysis import (
 from ecoscope.platform.tasks.analysis import (
     calculate_linear_time_density as calculate_linear_time_density,
 )
-from ecoscope.platform.tasks.analysis import create_meshgrid as create_meshgrid
 from ecoscope.platform.tasks.analysis import join_summary_tables as join_summary_tables
 from ecoscope.platform.tasks.analysis import select_leg_metrics as select_leg_metrics
 from ecoscope.platform.tasks.analysis import (
@@ -255,10 +255,16 @@ from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     grouping_label as grouping_label,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks.analysis import (
-    format_effort_table as format_effort_table,
+    cells_covering as cells_covering,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks.analysis import (
-    grid_cell_size_for_extent as grid_cell_size_for_extent,
+    density_cell_size as density_cell_size,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.analysis import (
+    density_legend as density_legend,
+)
+from ecoscope_workflows_ext_standard_patrol_events.tasks.analysis import (
+    format_effort_table as format_effort_table,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
     collect_map_layers as collect_map_layers,
@@ -303,8 +309,14 @@ sanitize_attachments = create_func_magicmock(  # 🧪
     anchor="ecoscope_workflows_ext_standard_patrol_events.tasks.io",  # 🧪
     func_name="sanitize_attachments",  # 🧪
 )  # 🧪
+from ecoscope.platform.tasks.analysis import (
+    set_encounter_rate_metrics as set_encounter_rate_metrics,
+)
 from ecoscope.platform.tasks.config import set_bool_var as set_bool_var
 from ecoscope.platform.tasks.skip import invert_bool as invert_bool
+from ecoscope.platform.tasks.transformation import (
+    concat_dataframes as concat_dataframes,
+)
 from ecoscope_workflows_ext_standard_patrol_events.tasks import (
     load_report_template as load_report_template,
 )
@@ -340,7 +352,7 @@ from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
     create_docx as create_docx,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
-    draw_rate_kpi as draw_rate_kpi,
+    draw_core_rate_kpi as draw_core_rate_kpi,
 )
 from ecoscope_workflows_ext_standard_patrol_events.tasks.results import (
     draw_sparkline_kpi as draw_sparkline_kpi,
@@ -1508,6 +1520,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    density_grid = (
+        task(set_float_var)
+        .validate()
+        .set_task_instance_id("density_grid")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("density_grid") or {}))
+        .call()
+    )
+
     event_details_settings = (
         task(set_event_details)
         .validate()
@@ -2444,6 +2473,329 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    track_colors = (
+        task(color_map_by_frequency)
+        .validate()
+        .set_task_instance_id("track_colors")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=tracks_teamed,
+            input_column_name=patrol_grouping,
+            colormap=[
+                "#1a5fb0",
+                "#b4530f",
+                "#008a7e",
+                "#8a3fb5",
+                "#5b7f12",
+                "#a3245e",
+                "#0b7fa6",
+                "#8f6b00",
+                "#4f5fc4",
+                "#9e2a2b",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+                "#6e6e6e",
+            ],
+            **(params.get("track_colors") or {}),
+        )
+        .call()
+    )
+
     tracks_colored = (
         task(apply_color_map)
         .validate()
@@ -2460,15 +2812,36 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             df=tracks_teamed,
             input_column_name=patrol_grouping,
-            colormap=["#1a5fb0", "#b4530f", "#008a7e", "#8a3fb5", "#5b7f12"],
+            colormap=track_colors,
             output_column_name="patrol_color",
             **(params.get("tracks_colored") or {}),
         )
         .call()
     )
 
+    grid_size = (
+        task(density_cell_size)
+        .validate()
+        .set_task_instance_id("grid_size")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            tracks=trajectory,
+            cell_size_m=density_grid,
+            **(params.get("grid_size") or {}),
+        )
+        .call()
+    )
+
     td_legend_title = (
-        task(pick_setting)
+        task(density_legend)
         .validate()
         .set_task_instance_id("td_legend_title")
         .handle_errors()
@@ -2481,15 +2854,16 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            collection=labels,
+            labels=labels,
             key="time_density_legend",
+            cell_size_m=grid_size,
             **(params.get("td_legend_title") or {}),
         )
         .call()
     )
 
     ed_legend_title = (
-        task(pick_setting)
+        task(density_legend)
         .validate()
         .set_task_instance_id("ed_legend_title")
         .handle_errors()
@@ -2502,8 +2876,9 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            collection=labels,
+            labels=labels,
             key="event_density_legend",
+            cell_size_m=grid_size,
             **(params.get("ed_legend_title") or {}),
         )
         .call()
@@ -3239,7 +3614,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     td_meshgrid = (
-        task(create_meshgrid)
+        task(cells_covering)
         .validate()
         .set_task_instance_id("td_meshgrid")
         .handle_errors()
@@ -3252,11 +3627,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            auto_scale_or_custom_cell_size={"auto_scale_or_custom": "Auto-scale"},
-            crs="EPSG:3857",
-            aoi=trajectory,
-            intersecting_only=False,
-            **(params.get("td_meshgrid") or {}),
+            aoi=trajectory, cell_size_m=grid_size, **(params.get("td_meshgrid") or {})
         )
         .call()
     )
@@ -3576,31 +3947,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    ed_cell_size = (
-        task(grid_cell_size_for_extent)
-        .validate()
-        .set_task_instance_id("ed_cell_size")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-                all_geometry_are_none,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            aoi=events_located,
-            cells_across=30,
-            min_size_m=250.0,
-            **(params.get("ed_cell_size") or {}),
-        )
-        .call()
-    )
-
     ed_meshgrid = (
-        task(create_meshgrid)
+        task(cells_covering)
         .validate()
         .set_task_instance_id("ed_meshgrid")
         .handle_errors()
@@ -3614,10 +3962,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            crs="EPSG:3857",
             aoi=events_located,
-            intersecting_only=False,
-            auto_scale_or_custom_cell_size=ed_cell_size,
+            cell_size_m=grid_size,
             **(params.get("ed_meshgrid") or {}),
         )
         .call()
@@ -4248,6 +4594,70 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    enc_metrics = (
+        task(set_encounter_rate_metrics)
+        .validate()
+        .set_task_instance_id("enc_metrics")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            aggregation=None,
+            metrics=[{"metric": "encounters_per_distance", "unit": "km"}],
+            **(params.get("enc_metrics") or {}),
+        )
+        .call()
+    )
+
+    enc_frame = (
+        task(concat_dataframes)
+        .validate()
+        .set_task_instance_id("enc_frame")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            dfs=[trajectory, enc_events],
+            ensure_columns=["event_type", "dist_meters"],
+            reset_index=True,
+            **(params.get("enc_frame") or {}),
+        )
+        .call()
+    )
+
+    enc_summary = (
+        task(summarize_df)
+        .validate()
+        .set_task_instance_id("enc_summary")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=enc_frame,
+            summary_params=enc_metrics,
+            groupby_cols=None,
+            reset_index=False,
+            **(params.get("enc_summary") or {}),
+        )
+        .call()
+    )
+
     headline = (
         task(headline_stats)
         .validate()
@@ -4265,7 +4675,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             trajectory=trajectory,
             events=events,
             totals=effort_totals,
-            encounters=enc_events,
+            encounters=enc_summary,
             **(params.get("headline") or {}),
         )
         .call()
@@ -5264,7 +5674,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
     )
 
     kpi_enc_html = (
-        task(draw_rate_kpi)
+        task(draw_core_rate_kpi)
         .validate()
         .set_task_instance_id("kpi_enc_html")
         .handle_errors()
@@ -5276,12 +5686,9 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            events=enc_events,
-            effort=effort_tracks,
-            events_time_column="time",
-            effort_time_column="segment_start",
-            effort_column="dist_meters",
-            effort_scale=0.001,
+            frame=enc_frame,
+            summary_params=enc_metrics,
+            time_columns=["segment_start", "time"],
             time_range=report_range,
             decimal_places=2,
             interval="auto",
@@ -5327,7 +5734,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            title="Encounters per km",
+            title="Encounters per km on patrols",
             data=kpi_enc_card,
             **(params.get("kpi_enc_widget") or {}),
         )
